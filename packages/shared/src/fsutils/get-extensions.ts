@@ -4,8 +4,8 @@ import { Extension, ExtensionManifestRaw } from '../types';
 import { resolvePackage } from './resolve-package';
 import { listFolders } from './list-folders';
 import { EXTENSION_NAME_REGEX, EXTENSION_PKG_KEY, EXTENSION_TYPES } from '../constants';
-import { pluralize } from './pluralize';
-import { validateExtensionManifest } from './validate-extension-manifest';
+import { pluralize } from '../utils';
+import { validateExtensionManifest } from '../utils';
 
 export async function getPackageExtensions(root: string): Promise<Extension[]> {
 	let pkg: { dependencies?: Record<string, string> };
