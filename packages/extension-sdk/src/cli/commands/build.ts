@@ -5,6 +5,7 @@ import ora from 'ora';
 import { OutputOptions as RollupOutputOptions, rollup, RollupOptions } from 'rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
 import { terser } from 'rollup-plugin-terser';
 import styles from 'rollup-plugin-styles';
 import vue from 'rollup-plugin-vue';
@@ -12,8 +13,9 @@ import { EXTENSION_PKG_KEY, EXTENSION_TYPES, APP_SHARED_DEPS, API_SHARED_DEPS } 
 import { isAppExtension, isExtension, validateExtensionManifest } from '@directus/shared/utils';
 import { ExtensionManifestRaw } from '@directus/shared/types';
 import log from '../utils/logger';
+import { getLanguageFromPath, isLanguage, Language } from '../utils/languages';
 
-type BuildOptions = { type: string; input: string; output: string; force: boolean };
+type BuildOptions = { type: string; input: string; output: string; language: string; force: boolean };
 
 export default async function build(options: BuildOptions): Promise<void> {
 	const packagePath = path.resolve('package.json');
@@ -55,11 +57,18 @@ export default async function build(options: BuildOptions): Promise<void> {
 		process.exit(1);
 	}
 
+	const language = options.language || getLanguageFromPath(input);
+
+	if (!isLanguage(language)) {
+		log(`Language ${chalk.bold(language)} is not supported.`, 'error');
+		process.exit(1);
+	}
+
 	const isApp = isAppExtension(type);
 
 	const spinner = ora('Building Directus extension...').start();
 
-	const rollupOptions = getRollupOptions(isApp, input);
+	const rollupOptions = getRollupOptions(isApp, language, input);
 	const rollupOutputOptions = getRollupOutputOptions(isApp, output);
 
 	const bundle = await rollup(rollupOptions);
@@ -71,25 +80,48 @@ export default async function build(options: BuildOptions): Promise<void> {
 	spinner.succeed('Done');
 }
 
-function getRollupOptions(isApp: boolean, input: string): RollupOptions {
+function getRollupOptions(isApp: boolean, language: Language, input: string): RollupOptions {
 	if (isApp) {
-		return {
-			input,
-			external: APP_SHARED_DEPS,
-			plugins: [
-				vue({ preprocessStyles: true }),
-				styles(),
-				nodeResolve(),
-				commonjs({ esmExternals: true, sourceMap: false }),
-				terser(),
-			],
-		};
+		if (language === 'javascript') {
+			return {
+				input,
+				external: APP_SHARED_DEPS,
+				plugins: [
+					vue({ preprocessStyles: true }),
+					styles(),
+					nodeResolve(),
+					commonjs({ esmExternals: true, sourceMap: false }),
+					terser(),
+				],
+			};
+		} else {
+			return {
+				input,
+				external: APP_SHARED_DEPS,
+				plugins: [
+					vue({ preprocessStyles: true }),
+					typescript({ include: /\.vue\?.*?lang=ts/ }),
+					styles(),
+					nodeResolve(),
+					commonjs({ esmExternals: true, sourceMap: false }),
+					terser(),
+				],
+			};
+		}
 	} else {
-		return {
-			input,
-			external: API_SHARED_DEPS,
-			plugins: [nodeResolve(), commonjs({ sourceMap: false }), terser()],
-		};
+		if (language === 'javascript') {
+			return {
+				input,
+				external: API_SHARED_DEPS,
+				plugins: [nodeResolve(), commonjs({ sourceMap: false }), terser()],
+			};
+		} else {
+			return {
+				input,
+				external: API_SHARED_DEPS,
+				plugins: [typescript(), nodeResolve(), commonjs({ sourceMap: false }), terser()],
+			};
+		}
 	}
 }
 

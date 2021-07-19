@@ -73,6 +73,7 @@
 		"@directus/drive-azure": "9.0.0-rc.85",
 		"@directus/drive-gcs": "9.0.0-rc.85",
 		"@directus/drive-s3": "9.0.0-rc.85",
+		"@directus/extension-sdk": "9.0.0-rc.85",
 		"@directus/format-title": "9.0.0-rc.85",
 		"@directus/schema": "9.0.0-rc.85",
 		"@directus/shared": "9.0.0-rc.85",

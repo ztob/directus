@@ -1,5 +1,5 @@
-type Language = 'javascript' | 'typescript';
-type LanguageShort = 'js' | 'ts';
+export type Language = 'javascript' | 'typescript';
+export type LanguageShort = 'js' | 'ts';
 
 export const LANGUAGES: Language[] = ['javascript', 'typescript'];
 
@@ -12,5 +12,17 @@ export function languageToShort(language: Language): LanguageShort {
 		return 'js';
 	} else {
 		return 'ts';
+	}
+}
+
+export function getLanguageFromPath(path: string): string {
+	const fileExtension = path.substring(path.lastIndexOf('.') + 1);
+
+	if (fileExtension === 'js') {
+		return 'javascript';
+	} else if (fileExtension === 'ts') {
+		return 'typescript';
+	} else {
+		return fileExtension;
 	}
 }
