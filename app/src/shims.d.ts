@@ -46,7 +46,7 @@ declare module '@directus-extensions-layout' {
 }
 
 declare module '@directus-extensions-module' {
-	import { ModuleConfig } from '@/modules/types';
+	import { ModuleConfig } from '@directus/shared/types';
 	const modules: ModuleConfig[];
 	export default modules;
 }

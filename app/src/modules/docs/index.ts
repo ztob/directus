@@ -1,4 +1,4 @@
-import { defineModule } from '@/modules/define';
+import { defineModule } from '@directus/shared/utils';
 import docs, { DocsRoutes } from '@directus/docs';
 import { RouteRecordRaw } from 'vue-router';
 import NotFound from './routes/not-found.vue';
