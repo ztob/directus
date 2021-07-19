@@ -1,4 +1,4 @@
-import { defineLayout } from '@/layouts/define';
+import { defineLayout } from '@directus/shared/utils';
 import CalendarLayout from './calendar.vue';
 import CalendarOptions from './options.vue';
 import CalendarSidebar from './sidebar.vue';
