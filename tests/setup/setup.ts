@@ -6,7 +6,7 @@ import { awaitDatabaseConnection, awaitDirectusConnection } from './utils/await-
 import Listr, { ListrTask } from 'listr';
 import { getDBsToTest } from '../get-dbs-to-test';
 import config, { CONTAINER_PERSISTENCE_FILE } from '../config';
-import globby from 'globby';
+import { globby } from 'globby';
 import path from 'path';
 import { GlobalConfigTsJest } from 'ts-jest/dist/types';
 import { writeFileSync } from 'fs';
