@@ -836,7 +836,7 @@ continue_label: Nadaljuj
 continue_as: >-
   {name} je trenutno prijavljen. Če prepoznate ta račun, pritisnite nadaljuj.
 editing_role: 'Vloga {role}'
-creating_webhook: Reiranje sprožilca
+creating_webhook: Ustvarjanje sprožilca
 default_label: Privzeto
 delete_label: Izbriši
 delete_are_you_sure: >-
@@ -1099,9 +1099,6 @@ interfaces:
     value_path: Vrednosti
     trigger: Sprožilec
     rate: Oceni
-  group-raw:
-    name: Dejanske vrednosti
-    description: Pokaži polja kot običajna.
 displays:
   boolean:
     boolean: Boolean

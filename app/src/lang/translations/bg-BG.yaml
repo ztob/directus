@@ -1099,9 +1099,6 @@ interfaces:
     value_path: Път до стойността
     trigger: Задействане
     rate: Оценка
-  group-raw:
-    name: Обикновени полета
-    description: Нормално показване на полетата.
 displays:
   boolean:
     boolean: Булев

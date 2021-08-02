@@ -1099,9 +1099,6 @@ interfaces:
     value_path: Percorso del valore
     trigger: Attivazione
     rate: Intervallo
-  group-raw:
-    name: Campi grezzi
-    description: Mostra i valori grezzi dei campi.
 displays:
   boolean:
     boolean: Boolean
