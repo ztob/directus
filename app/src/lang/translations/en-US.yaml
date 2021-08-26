@@ -1066,6 +1066,12 @@ interfaces:
     description: Render JSON in a table format
     edit_columns: Edit Columns
     auto_detect_columns: Auto detect columns
+  iframe:
+    iframe: iFrame
+    description: Render iFrame component
+    url_attribute: URL
+    width_attribute: Width
+    height_attribute: Height
   slider:
     slider: Slider
     description: Select a number using a slider
