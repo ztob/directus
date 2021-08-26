@@ -1,30 +1,21 @@
 <template>
-	<div class="repeater">
+	<div class="table">
 		<v-notice v-if="!value || value.length === 0">
 			{{ t('no_items') }}
 		</v-notice>
 
-		<v-list v-if="value && value.length > 0">
-			<draggable
-				:force-fallback="true"
-				:model-value="value"
-				item-key="id"
-				handle=".drag-handle"
-				@update:model-value="$emit('input', $event)"
-			>
-				<template #item="{ element, index }">
-					<v-list-item :dense="value.length > 4" block @click="active = index">
-						<v-icon name="drag_handle" class="drag-handle" left @click.stop="() => {}" />
-						<render-template :fields="fields" :item="element" :template="templateWithDefaults" />
-						<div class="spacer" />
-						<v-icon v-if="!disabled" name="close" @click.stop="removeItem(element)" />
-					</v-list-item>
-				</template>
-			</draggable>
-		</v-list>
 		<v-button v-if="showAddNew" class="add-new" @click="addNew">
 			{{ addLabel }}
 		</v-button>
+
+		<v-table
+			v-if="value && value.length > 0"
+			v-model:headers="headers"
+			:items="items"
+			show-resize
+			fixed-header
+			@click:row="rowClick"
+		/>
 
 		<v-drawer
 			:model-value="drawerOpen"
@@ -56,14 +47,12 @@
 import { useI18n } from 'vue-i18n';
 import { defineComponent, PropType, computed, ref, toRefs } from 'vue';
 import { Field } from '@directus/shared/types';
-import Draggable from 'vuedraggable';
 import { i18n } from '@/lang';
 import { renderStringTemplate } from '@/utils/render-string-template';
 import hideDragImage from '@/utils/hide-drag-image';
 import formatTitle from '@directus/format-title';
 
 export default defineComponent({
-	components: { Draggable },
 	props: {
 		value: {
 			type: Array as PropType<Record<string, any>[]>,
@@ -129,8 +118,24 @@ export default defineComponent({
 			})
 		);
 
+		const items = computed({
+			get() {
+				return (props.value || []).map((item, index) => ({ ...item, index }));
+			},
+		});
+		let columns = props.autoDetectColumns
+			? Object.keys(props.value[0] || {})
+			: props.fields.map((field) => field.field);
+
+		const headers = columns.map((text) => ({
+			text: formatTitle(text),
+			value: text,
+		}));
+
 		return {
 			t,
+			headers,
+			items,
 			updateValues,
 			removeItem,
 			addNew,
@@ -142,9 +147,14 @@ export default defineComponent({
 			activeItem,
 			closeDrawer,
 			onSort,
+			rowClick,
 			templateWithDefaults,
 			fieldsWithNames,
 		};
+
+		function rowClick(row) {
+			active.value = row.index;
+		}
 
 		function updateValues(index: number, updatedValues: any) {
 			emitValue(

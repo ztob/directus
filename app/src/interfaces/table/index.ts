@@ -4,9 +4,9 @@ import InterfaceTable from './table.vue';
 
 export default defineInterface({
 	id: 'table',
-	name: 'Table',
-	description: 'Render JSON in a table format',
-	icon: 'replay',
+	name: '$t:interfaces.table.table',
+	description: '$t:interfaces.table.description',
+	icon: 'table_chart',
 	component: InterfaceTable,
 	types: ['json'],
 	options: TableOptions,

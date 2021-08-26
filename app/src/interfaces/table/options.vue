@@ -1,17 +1,11 @@
 <template>
 	<div class="grid">
-		<div class="grid-element half">
-			<p class="type-label">{{ t('template') }}</p>
-			<v-input v-model="template" class="input" :placeholder="`{{ field }}`" />
-		</div>
-
-		<div class="grid-element half">
-			<p class="type-label">{{ t('interfaces.list.add_label') }}</p>
-			<v-input v-model="addLabel" class="input" :placeholder="t('create_new')" />
-		</div>
-
 		<div class="grid-element full">
-			<p class="type-label">{{ t('interfaces.list.edit_fields') }}</p>
+			<v-checkbox v-model="options.autoDetectColumns" :label="t('interfaces.table.auto_detect_columns')" />
+		</div>
+
+		<div v-if="!options.autoDetectColumns" class="grid-element full">
+			<p class="type-label">{{ t('interfaces.table.edit_columns') }}</p>
 			<repeater
 				:value="repeaterValue"
 				:template="`{{ field }} — {{ interface }}`"
@@ -24,8 +18,8 @@
 
 <script lang="ts">
 import { useI18n } from 'vue-i18n';
-import { defineComponent, PropType, computed } from 'vue';
-import Repeater from './list.vue';
+import { defineComponent, PropType, computed, ref } from 'vue';
+import Repeater from '@/interfaces/list/list.vue';
 import { Field, FieldMeta } from '@directus/shared/types';
 import { fieldTypes } from '@/modules/settings/routes/data-model/field-detail/components/schema.vue';
 import { DeepPartial } from '@directus/shared/types';
@@ -157,32 +151,20 @@ export default defineComponent({
 				},
 			},
 		];
-
-		const template = computed({
+		const options = computed({
 			get() {
-				return props.value?.template;
+				return (
+					props.value || {
+						autoDetectColumns: false,
+					}
+				);
 			},
-			set(newTemplate: string) {
-				emit('input', {
-					...(props.value || {}),
-					template: newTemplate,
-				});
+			set(options: Record<string, unknown>) {
+				emit('input', options);
 			},
 		});
 
-		const addLabel = computed({
-			get() {
-				return props.value?.addLabel;
-			},
-			set(newAddLabel: string) {
-				emit('input', {
-					...(props.value || {}),
-					addLabel: newAddLabel,
-				});
-			},
-		});
-
-		return { t, repeaterValue, repeaterFields, template, addLabel };
+		return { t, options, repeaterValue, repeaterFields };
 	},
 });
 </script>

@@ -1061,6 +1061,11 @@ interfaces:
     add_label: '"Create New" Label'
     field_name_placeholder: Enter field name...
     field_note_placeholder: Enter field note...
+  table:
+    table: Table
+    description: Render JSON in a table format
+    edit_columns: Edit Columns
+    auto_detect_columns: Auto detect columns
   slider:
     slider: Slider
     description: Select a number using a slider
