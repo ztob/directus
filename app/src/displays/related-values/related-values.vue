@@ -1,56 +1,7 @@
-<template>
-	<value-null v-if="!relatedCollection" />
-	<v-menu
-		v-else-if="['o2m', 'm2m', 'm2a', 'translations', 'files'].includes(localType!.toLowerCase())"
-		show-arrow
-		:disabled="value?.length === 0"
-	>
-		<template #activator="{ toggle }">
-			<span class="toggle" :class="{ subdued: value?.length === 0 }" @click.stop="toggle">
-				<span class="label">
-					{{ value?.length }}
-					<template v-if="value?.length >= 100">+</template>
-					{{ unit }}
-				</span>
-			</span>
-		</template>
-
-		<v-list class="links">
-			<template v-if="show_copy">
-				<v-list-item clickable @click="copyValues">
-					<v-list-item-content>
-						<v-list-item-title>{{ t('copy') }}</v-list-item-title>
-					</v-list-item-content>
-					<v-list-item-icon>
-						<v-icon name="content_copy" small />
-					</v-list-item-icon>
-				</v-list-item>
-
-				<v-divider />
-			</template>
-			<v-list-item v-for="item in value" :key="item[primaryKeyFieldPath!]">
-				<v-list-item-content>
-					<render-template
-						:template="internalTemplate"
-						:item="item"
-						:collection="junctionCollection ?? relatedCollection"
-					/>
-				</v-list-item-content>
-				<v-list-item-icon>
-					<router-link :to="getLinkForItem(item)!"><v-icon name="launch" small /></router-link>
-				</v-list-item-icon>
-			</v-list-item>
-		</v-list>
-	</v-menu>
-	<render-template v-else :template="internalTemplate" :item="value" :collection="relatedCollection" />
-</template>
-
 <script setup lang="ts">
 import { getLocalTypeForField } from '@/utils/get-local-type';
 import { getRelatedCollection } from '@/utils/get-related-collection';
-import { copyToClipboard } from '@/utils/copy-to-clipboard';
-import { renderPlainStringTemplate } from '@/utils/render-string-template';
-import { notify } from '@/utils/notify';
+import { getItemRoute } from '@/utils/get-route';
 import { useCollection } from '@directus/composables';
 import { get } from 'lodash';
 import { computed } from 'vue';
@@ -118,7 +69,7 @@ function getLinkForItem(item: any) {
 	if (!relatedCollectionData.value || !primaryKeyFieldPath.value) return null;
 	const primaryKey = get(item, primaryKeyFieldPath.value);
 
-	return `/content/${relatedCollection.value}/${encodeURIComponent(primaryKey)}`;
+	return getItemRoute(relatedCollection.value, primaryKey);
 }
 
 async function copyValues() {
@@ -138,6 +89,41 @@ async function copyValues() {
 	}
 }
 </script>
+
+<template>
+	<value-null v-if="!relatedCollection" />
+	<v-menu
+		v-else-if="['o2m', 'm2m', 'm2a', 'translations', 'files'].includes(localType!.toLowerCase())"
+		show-arrow
+		:disabled="value?.length === 0"
+	>
+		<template #activator="{ toggle }">
+			<span class="toggle" :class="{ subdued: value?.length === 0 }" @click.stop="toggle">
+				<span class="label">
+					{{ value?.length }}
+					<template v-if="value?.length >= 100">+</template>
+					{{ unit }}
+				</span>
+			</span>
+		</template>
+
+		<v-list class="links">
+			<v-list-item v-for="item in value" :key="item[primaryKeyFieldPath!]">
+				<v-list-item-content>
+					<render-template
+						:template="internalTemplate"
+						:item="item"
+						:collection="junctionCollection ?? relatedCollection"
+					/>
+				</v-list-item-content>
+				<v-list-item-icon>
+					<router-link :to="getLinkForItem(item)!"><v-icon name="launch" small /></router-link>
+				</v-list-item-icon>
+			</v-list-item>
+		</v-list>
+	</v-menu>
+	<render-template v-else :template="internalTemplate" :item="value" :collection="relatedCollection" />
+</template>
 
 <style lang="scss" scoped>
 .toggle {

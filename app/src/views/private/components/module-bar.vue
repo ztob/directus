@@ -1,3 +1,51 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import ModuleBarLogo from './module-bar-logo.vue';
+import ModuleBarAvatar from './module-bar-avatar.vue';
+import { useSettingsStore } from '@/stores/settings';
+import { translate } from '@/utils/translate-object-values';
+import { MODULE_BAR_DEFAULT } from '@/constants';
+import { omit } from 'lodash';
+import { useExtensions } from '@/extensions';
+
+const settingsStore = useSettingsStore();
+const { modules: registeredModules } = useExtensions();
+
+const registeredModuleIDs = computed(() => registeredModules.value.map((module) => module.id));
+
+const modules = computed(() => {
+	if (!settingsStore.settings) return [];
+
+	return (settingsStore.settings.module_bar ?? MODULE_BAR_DEFAULT)
+		.filter((modulePart) => {
+			if (modulePart.type === 'link') return true;
+			console.log(modulePart)
+			return modulePart.enabled && registeredModuleIDs.value.includes(modulePart.id);
+		})
+		.map((modulePart) => {
+			if (modulePart.type === 'link') {
+				const link = omit<Record<string, any>>(modulePart, ['url']);
+
+				if (modulePart.url.startsWith('/')) {
+					link.to = modulePart.url;
+				} else {
+					link.href = modulePart.url;
+				}
+
+				return translate(link);
+			}
+
+			const module = registeredModules.value.find((module) => module.id === modulePart.id)!;
+
+			return {
+				...modulePart,
+				...registeredModules.value.find((module) => module.id === modulePart.id),
+				to: `/${module.id}`,
+			};
+		});
+});
+</script>
+
 <template>
 	<div class="module-bar">
 		<module-bar-logo />
@@ -27,53 +75,6 @@
 		<module-bar-avatar />
 	</div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import ModuleBarLogo from './module-bar-logo.vue';
-import ModuleBarAvatar from './module-bar-avatar.vue';
-import { useSettingsStore } from '@/stores/settings';
-import { translate } from '@/utils/translate-object-values';
-import { MODULE_BAR_DEFAULT } from '@/constants';
-import { omit } from 'lodash';
-import { useExtensions } from '@/extensions';
-
-const settingsStore = useSettingsStore();
-const { modules: registeredModules } = useExtensions();
-
-const registeredModuleIDs = computed(() => registeredModules.value.map((module) => module.id));
-
-const modules = computed(() => {
-	if (!settingsStore.settings) return [];
-
-	return (settingsStore.settings.module_bar ?? MODULE_BAR_DEFAULT)
-		.filter((modulePart) => {
-			if (modulePart.type === 'link') return true;
-			return modulePart.enabled && registeredModuleIDs.value.includes(modulePart.id);
-		})
-		.map((modulePart) => {
-			if (modulePart.type === 'link') {
-				const link = omit<Record<string, any>>(modulePart, ['url']);
-
-				if (modulePart.url.startsWith('/')) {
-					link.to = modulePart.url;
-				} else {
-					link.href = modulePart.url;
-				}
-
-				return translate(link);
-			}
-
-			const module = registeredModules.value.find((module) => module.id === modulePart.id)!;
-
-			return {
-				...modulePart,
-				...registeredModules.value.find((module) => module.id === modulePart.id),
-				to: `/${module.id}`,
-			};
-		});
-});
-</script>
 
 <style lang="scss" scoped>
 .module-bar {
