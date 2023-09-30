@@ -567,7 +567,11 @@ function useBookmarks() {
 function clearFilters() {
 	filter.value = null;
 	search.value = null;
-	layoutOptions.value = null
+	layoutOptions.value = {
+		...layoutOptions.value,
+		all_filters: [],
+		disabled_filters: []
+	}
 }
 
 function usePermissions() {

@@ -175,7 +175,11 @@ function emitValue() {
 function clearAllFilters() {
 	emit('update:modelValue', null);
 	emit('update:filter', null);
-	emit('update:layout_options', null);
+	emit('update:layout_options', {
+				...props.layout_options,
+				all_filters: [],
+				disabled_filters: []
+			});
 }
 </script>
 
