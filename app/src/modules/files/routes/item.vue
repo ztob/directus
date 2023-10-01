@@ -19,6 +19,7 @@ import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import FileInfoSidebarDetail from '../components/file-info-sidebar-detail.vue';
+import EmailSidebarDetail from '../components/email-sidebar-detail.vue';
 import FilesNotFound from './not-found.vue';
 
 const props = defineProps<{
@@ -362,6 +363,10 @@ function useMovetoFolder() {
 				:primary-key="primaryKey"
 			/>
 			<comments-sidebar-detail v-if="isNew === false" collection="directus_files" :primary-key="primaryKey" />
+			<email-sidebar-detail
+				collection="directus_files"
+				:primary-key="primaryKey"
+			/>
 		</template>
 	</private-view>
 </template>

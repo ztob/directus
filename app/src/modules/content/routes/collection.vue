@@ -597,7 +597,7 @@ function usePermissions() {
 				<refresh-sidebar-detail v-model="refreshInterval" @refresh="refresh" />
 				<export-sidebar-detail
 					:collection="collection"
-					:filter="mergeFilters(filter, archiveFilter)"
+					:filter="exportFiltersMerged"
 					:search="search"
 					:layout-query="layoutQuery"
 					@download="download"
