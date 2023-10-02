@@ -1,46 +1,3 @@
-<template>
-	<div class="table">
-		<v-notice v-if="!value || value.length === 0">
-			{{ t('no_items') }}
-		</v-notice>
-
-		<div class="sections_tabs">
-			<v-tabs class="tabs" :v-model="activeTab">
-				<v-tab @click="onTabClick('primary')">Primary</v-tab>
-				<v-tab @click="onTabClick('resale')">Resale</v-tab>
-				<v-divider vertical />
-			</v-tabs>
-			<v-checkbox v-model="showSoldOut" class="sold_out" label="Sold Out" />
-			<div class="search_wrapper">
-				<v-input v-model="searchTerm" class="search_input" placeholder="Search section..." />
-			</div>
-		</div>
-		<v-divider />
-
-		<v-table
-			v-if="value && value.length > 0"
-			v-model:headers="headers"
-			:items="tableItems"
-			show-resize
-			fixed-header
-			:row-height="tableRowHeight"
-			:disabled="disabled || updateAllowed === false"
-			@click:row="rowClick"
-		/>
-
-		<drawer-item
-			v-if="!disabled"
-			:active="currentlyEditing !== null"
-			:collection="relatedCollection.collection"
-			:primary-key="currentlyEditing || '+'"
-			:edits="editsAtStart"
-			:circular-field="relation.field"
-			@input="stageEdits"
-			@update:active="cancelEdit"
-		/>
-	</div>
-</template>
-
 <script lang="ts">
 import { useI18n } from 'vue-i18n';
 import { defineComponent, PropType, watch, computed, ref } from 'vue';
@@ -139,7 +96,7 @@ export default defineComponent({
 
 		const fields = computed(() => getDefaultFields());
 
-		const { items, loading } = usePreview(props.primaryKey);
+		const { items, loading } = usePreview();
 		const { currentlyEditing, editItem, editsAtStart, stageEdits, cancelEdit } = useEdits();
 		const { selectModalActive, selectedPrimaryKeys } = useSelection();
 		const { sortedItems } = useSort();
@@ -226,6 +183,7 @@ export default defineComponent({
 					if (i === index) {
 						return updatedValues;
 					}
+
 					return item;
 				})
 			);
@@ -235,6 +193,7 @@ export default defineComponent({
 			if (value === null || value.length === 0) {
 				return emit('input', null);
 			}
+
 			return emit('input', value);
 		}
 
@@ -242,6 +201,7 @@ export default defineComponent({
 			if (sortedItems === null || sortedItems.length === 0) {
 				return emit('input', null);
 			}
+
 			return emit('input', sortedItems);
 		}
 
@@ -324,7 +284,7 @@ export default defineComponent({
 			return { relation, relatedCollection, relatedPrimaryKeyField };
 		}
 
-		function usePreview(eventId) {
+		function usePreview() {
 			const loading = ref(false);
 			const items = ref<Record<string, any>[]>([]);
 
@@ -332,6 +292,7 @@ export default defineComponent({
 				() => props.value,
 				async (newVal, oldVal) => {
 					if (isEqual(newVal, oldVal)) return;
+					if (props.primaryKey === '+') return;
 
 					loading.value = true;
 					const pkField = relatedPrimaryKeyField.value?.field;
@@ -342,20 +303,17 @@ export default defineComponent({
 
 					try {
 						const endpoint = `/items/${relatedCollection.value.collection}?limit=3000`;
-						const primaryKeys = getPrimaryKeys();
 
 						let existingItems: any[] = [];
 
-						if (primaryKeys && primaryKeys.length > 0) {
-							const response = await api.get(endpoint, {
-								params: {
-									fields: fieldsToFetch,
-									[`filter[event_id][_eq]`]: eventId,
-								},
-							});
+						const response = await api.get(endpoint, {
+							params: {
+								fields: fieldsToFetch,
+								[`filter[event_id][_eq]`]: props.primaryKey,
+							},
+						});
 
-							existingItems = response.data.data;
-						}
+						existingItems = response.data.data;
 
 						const updatedItems = getUpdatedItems();
 						const newItems = getNewItems();
@@ -494,6 +452,49 @@ export default defineComponent({
 	},
 });
 </script>
+
+<template>
+	<div class="table">
+		<v-notice v-if="!value || value.length === 0">
+			{{ t('no_items') }}
+		</v-notice>
+
+		<div class="sections_tabs">
+			<v-tabs class="tabs" :v-model="activeTab">
+				<v-tab @click="onTabClick('primary')">Primary</v-tab>
+				<v-tab @click="onTabClick('resale')">Resale</v-tab>
+				<v-divider vertical />
+			</v-tabs>
+			<v-checkbox v-model="showSoldOut" class="sold_out" label="Sold Out" />
+			<div class="search_wrapper">
+				<v-input v-model="searchTerm" class="search_input" small placeholder="Search section..." />
+			</div>
+		</div>
+		<v-divider />
+
+		<v-table
+			v-if="value && value.length > 0"
+			v-model:headers="headers"
+			:items="tableItems"
+			show-resize
+			fixed-header
+			:row-height="tableRowHeight"
+			:disabled="disabled || updateAllowed === false"
+			@click:row="rowClick"
+		/>
+
+		<drawer-item
+			v-if="!disabled"
+			:active="currentlyEditing !== null"
+			:collection="relatedCollection.collection"
+			:primary-key="currentlyEditing || '+'"
+			:edits="editsAtStart"
+			:circular-field="relation.field"
+			@input="stageEdits"
+			@update:active="cancelEdit"
+		/>
+	</div>
+</template>
 
 <style>
 .tabs {
