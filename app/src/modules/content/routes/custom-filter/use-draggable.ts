@@ -13,6 +13,8 @@ export function useDraggable(filterSync: Ref<Filter[]>) {
 	}
 
 	function onDragEnd() {
+		if(movingIndex.value === null || futureIndex.value === null) return
+
 		const futureItem = filterSync.value[futureIndex.value];
 		const movingItem = filterSync.value[movingIndex.value];
 		const items = [...filterSync.value];
@@ -20,10 +22,13 @@ export function useDraggable(filterSync: Ref<Filter[]>) {
 		items[movingIndex.value] = futureItem;
 
 		filterSync.value = items;
+
+		movingIndex.value = null;
+		futureIndex.value = null;
 	}
 
 	return {
 		onDragMove,
-		onDragEnd,
+		onDragEnd
 	};
 }
