@@ -292,7 +292,11 @@ function useBookmarks() {
 function clearFilters() {
 	filter.value = null;
 	search.value = null;
-	layoutOptions.value = null
+	layoutOptions.value = {
+		...layoutOptions.value,
+		all_filters: [],
+		disabled_filters: []
+	}
 }
 
 function usePermissions() {
@@ -437,6 +441,7 @@ function usePermissions() {
 			</template>
 
 			<template #actions>
+				<!-- <search-input v-model="search" v-model:filter="filter" :collection="collection" /> -->
 				<custom-search-input v-model="search" v-model:filter="filter" v-model:layout_options="layoutOptions" :collection="collection" />
 
 				<v-dialog v-if="selection.length > 0" v-model="confirmDelete" @esc="confirmDelete = false">

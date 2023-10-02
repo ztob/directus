@@ -157,9 +157,17 @@ const innerValueCopy = computed<FilterLayoutOptions>({
 	},
 	set(lo) {
 		if (lo.all_filters.length === 0) {
-			emit('inputLO', null);
+			emit('inputLO', {
+				...props.layout_opts,
+				all_filters: [],
+				disabled_filters: []
+			});
 		} else {
-			emit('inputLO', { all_filters: lo.all_filters, disabled_filters: lo.disabled_filters });
+			emit('inputLO', {
+				...props.layout_opts,
+				all_filters: lo.all_filters,
+				disabled_filters: lo.disabled_filters
+			});
 		}
 	},
 })
