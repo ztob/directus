@@ -1,7 +1,7 @@
 <template>
 	<draggable :disabled="isDragDisabled" tag="ul" draggable=".row" handle=".drag-handle" class="group" :list="filterSync"
 		:group="{ name: 'g1' }" :item-key="getIndex" :swap-threshold="0.3" :force-fallback="true" :move="onDragMove"
-		@end="onDragEnd">
+		@end="onDragEnd" >
 		<template #item="{ element, index }">
 			<li class="row" @mousemove="onFieldHover(index)">
 				<div v-if="filterInfo[index].isField" block class="node field">

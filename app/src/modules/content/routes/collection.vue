@@ -23,7 +23,7 @@ import { useRouter } from 'vue-router';
 import ContentNavigation from '../components/navigation.vue';
 import ContentNotFound from './not-found.vue';
 
-import CustomSearchInput from './custom-search-input.vue'
+import CustomSearchInput from '../components/custom-search-input.vue'
 
 type Item = {
 	[field: string]: any;
