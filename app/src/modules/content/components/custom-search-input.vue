@@ -40,7 +40,7 @@ import { Filter } from '@directus/types';
 import { isObject } from 'lodash';
 import { Ref, computed, inject, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { FilterLayoutOptions } from './types';
+import { FilterLayoutOptions } from '../routes/types';
 import CustomFilter from './custom-filter/custom-filter.vue'
 
 const props = defineProps<{
@@ -351,3 +351,4 @@ function clearAllFilters() {
 	width: 92px;
 }
 </style>
+./custom-filter/custom-filter.vue
