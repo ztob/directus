@@ -119,7 +119,7 @@ function useDeleteBookmark() {
 	>
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
 		<v-list-item-content>
-			<v-text-overflow :text="name" />
+			<v-text-overflow :text="`${name} ${'(1000)'}`" />
 		</v-list-item-content>
 
 		<v-menu placement="bottom-start" show-arrow>
