@@ -47,6 +47,10 @@ const layoutRef = ref();
 const { collection } = toRefs(props);
 const bookmarkID = computed(() => (props.bookmark ? +props.bookmark : null));
 
+watch(() => props.bookmark, () => {
+	console.log(props.bookmark)
+}, { deep: true, immediate: true })
+
 const { selection } = useSelection();
 const { info: currentCollection } = useCollection(collection);
 const { addNewLink, currentCollectionLink } = useLinks();
@@ -70,11 +74,7 @@ const {
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
 
-// watch(layoutOptions, () => {
-// 	console.log(layoutOptions.value)
-// }, { deep: true, immediate: true })
-
-// Use a custom filter for the export sidebar detail
+// // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
 const exportFiltersMerged = computed<Filter>(() => {
 	// Merge filters in order of specificity

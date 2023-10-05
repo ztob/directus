@@ -229,6 +229,8 @@ function useSave() {
 			await presetsStore.hydrate();
 
 			edits.value = {};
+			console.log('edits', edits.value);
+
 		} catch (err: any) {
 			unexpectedError(err);
 		} finally {
