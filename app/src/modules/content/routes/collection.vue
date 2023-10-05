@@ -70,9 +70,9 @@ const {
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
 
-watch(layoutOptions, () => {
-	console.log(layoutOptions.value)
-}, { deep: true, immediate: true })
+// watch(layoutOptions, () => {
+// 	console.log(layoutOptions.value)
+// }, { deep: true, immediate: true })
 
 // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
@@ -354,6 +354,7 @@ function usePermissions() {
 
 	return { batchEditAllowed, batchArchiveAllowed, batchDeleteAllowed, createAllowed };
 }
+
 </script>
 
 <template>

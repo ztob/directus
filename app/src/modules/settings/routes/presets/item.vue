@@ -186,6 +186,10 @@ function useSave() {
 		if ('name' in edits.value) editsParsed.bookmark = edits.value.name;
 
 		// if ('show_items_number' in edits.value) {
+
+			console.log(edits.value);
+			console.log(layoutOptions.value);
+
 			edits.value = {
 				...edits.value,
 				layout_options: {
@@ -233,10 +237,6 @@ function useSave() {
 		}
 	}
 }
-
-// watch(layoutOptions, () => {
-// 	console.log(layoutOptions.value);
-// }, { deep: true, immediate: true })
 
 function useDelete() {
 	const deleting = ref(false);
