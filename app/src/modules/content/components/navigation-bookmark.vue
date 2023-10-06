@@ -5,9 +5,11 @@ import { getCollectionRoute } from '@/utils/get-route';
 import { translate } from '@/utils/translate-literal';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Preset } from '@directus/types';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import api from '@/api';
+
 
 interface Props {
 	bookmark: Preset;
@@ -107,6 +109,53 @@ function useDeleteBookmark() {
 		}
 	}
 }
+
+// Changed
+const itemsCount = ref('');
+const isCountLoading = ref(false)
+
+watch(() => props.bookmark, () => {
+	const isShowNumber = props.bookmark?.layout_options?.show_items_number
+
+	if (!isShowNumber) return itemsCount.value
+
+	async function fetchPresetItems() {
+		try {
+			isCountLoading.value = true
+
+			const params = {
+				filter: null,
+				search: null,
+				aggregate: {
+					count: '*',
+				},
+			};
+
+			if (props.bookmark?.filter?._and) {
+				params.filter = {
+					_and: [...props.bookmark.filter._and]
+				}
+			}
+
+			if (props.bookmark?.search) {
+				params.search = props.bookmark.search
+			}
+
+			const { data } = await api.get(`items/${props.bookmark.collection}`, {
+				params
+			})
+
+			itemsCount.value = `(${data.data[0].count})`
+		} catch (err) {
+			console.log(err);
+		} finally {
+			isCountLoading.value = false
+		}
+	}
+
+	fetchPresetItems()
+}, { deep: true, immediate: true })
+
 </script>
 
 <template>
@@ -119,8 +168,8 @@ function useDeleteBookmark() {
 	>
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
 		<v-list-item-content>
-			<v-text-overflow :text="name" />
-		</v-list-item-content>
+				<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : itemsCount}`" />
+			</v-list-item-content>
 
 		<v-menu placement="bottom-start" show-arrow>
 			<template #activator="{ toggle }">
