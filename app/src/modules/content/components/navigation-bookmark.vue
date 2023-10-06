@@ -112,6 +112,7 @@ function useDeleteBookmark() {
 
 // Changed
 const itemsCount = ref('');
+const isCountLoading = ref(false)
 
 watch(() => props.bookmark, () => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
@@ -120,6 +121,8 @@ watch(() => props.bookmark, () => {
 
 	async function fetchPresetItems() {
 		try {
+			isCountLoading.value = true
+
 			const params = {
 				filter: null,
 				search: null,
@@ -145,6 +148,8 @@ watch(() => props.bookmark, () => {
 			itemsCount.value = `(${data.data[0].count})`
 		} catch (err) {
 			console.log(err);
+		} finally {
+			isCountLoading.value = false
 		}
 	}
 
@@ -163,7 +168,7 @@ watch(() => props.bookmark, () => {
 	>
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
 		<v-list-item-content>
-				<v-text-overflow :text="`${name} ${itemsCount}`" />
+				<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : itemsCount}`" />
 			</v-list-item-content>
 
 		<v-menu placement="bottom-start" show-arrow>
