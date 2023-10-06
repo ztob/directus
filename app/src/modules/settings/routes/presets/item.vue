@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import api from '@/api';
@@ -30,6 +30,7 @@ type FormattedPreset = {
 	color?: string | null;
 	layout_options: Record<string, any> | null;
 	filter: Filter | null;
+	show_items_number: boolean
 };
 
 interface Props {
@@ -179,9 +180,44 @@ function useSave() {
 			'layout_options',
 			'filter',
 			'search',
+			'show_items_number'
 		] as (keyof Preset)[];
 
 		if ('name' in edits.value) editsParsed.bookmark = edits.value.name;
+
+		// layoutOptions for show_items_number boolean
+		edits.value = {
+				...edits.value,
+				layout_options: {
+					...(layoutOptions.value ? { [values.value.layout || 'tabular']: layoutOptions.value } : {}),
+					show_items_number: values.value.show_items_number
+				},
+			};
+
+			// layoutOptions for all_filters and disabled_filters
+			console.log('layoutOptions', layoutOptions.value)
+
+			if('filter' in edits.value) {
+				edits.value = {
+					...edits.value,
+					layout_options: {
+						...edits.value.layout_options,
+						...(layoutOptions.value ? { [values.value.layout || 'tabular']: {
+							...layoutOptions.value,
+							all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
+							disabled_filters: []
+						} } : {
+							[values.value.layout || 'tabular']: {
+								all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
+								disabled_filters: []
+							}
+						})
+					}
+				}
+			}
+
+			console.log('edits', edits.value);
+
 
 		for (const key of keys) {
 			if (key in edits.value) editsParsed[key] = edits.value[key];
@@ -210,6 +246,7 @@ function useSave() {
 			await presetsStore.hydrate();
 
 			edits.value = {};
+
 		} catch (err: any) {
 			unexpectedError(err);
 		} finally {
@@ -254,6 +291,7 @@ function useValues() {
 			layout_query: null,
 			layout_options: null,
 			filter: null,
+			show_items_number: false
 		};
 
 		if (isNew.value === true) return defaultValues;
@@ -279,6 +317,7 @@ function useValues() {
 			layout_query: preset.value.layout_query,
 			layout_options: preset.value.layout_options,
 			filter: preset.value.filter,
+			show_items_number: preset.value.layout_options?.show_items_number || false
 		};
 
 		return value;
@@ -380,7 +419,6 @@ function usePreset() {
 
 		try {
 			const response = await api.get(`/presets/${props.id}`);
-
 			preset.value = response.data.data;
 		} catch (err: any) {
 			unexpectedError(err);
@@ -495,6 +533,15 @@ function useForm() {
 					collectionField: 'collection',
 					rawFieldNames: true,
 				},
+			},
+		},
+		{
+			field: 'show_items_number',
+			name: t('Show Total Number Of Items Of This Preset'),
+			type: 'boolean',
+			meta: {
+				interface: 'boolean',
+				width: 'half',
 			},
 		},
 		{
