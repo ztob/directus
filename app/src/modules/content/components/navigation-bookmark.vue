@@ -113,7 +113,7 @@ function useDeleteBookmark() {
 // Changed
 const itemsCount = ref('');
 
-watch(props.bookmark, () => {
+watch(() => props.bookmark, () => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
 
 	if (!isShowNumber) return itemsCount.value

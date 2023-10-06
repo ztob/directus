@@ -185,26 +185,43 @@ function useSave() {
 
 		if ('name' in edits.value) editsParsed.bookmark = edits.value.name;
 
-		// if ('show_items_number' in edits.value) {
-
-			console.log(edits.value);
-			console.log(layoutOptions.value);
-
-			edits.value = {
+		// layoutOptions for show_items_number boolean
+		edits.value = {
 				...edits.value,
 				layout_options: {
 					...(layoutOptions.value ? { [values.value.layout || 'tabular']: layoutOptions.value } : {}),
 					show_items_number: values.value.show_items_number
 				},
 			};
-		// }
+
+			// layoutOptions for all_filters and disabled_filters
+			console.log('layoutOptions', layoutOptions.value)
+
+			if('filter' in edits.value) {
+				edits.value = {
+					...edits.value,
+					layout_options: {
+						...edits.value.layout_options,
+						...(layoutOptions.value ? { [values.value.layout || 'tabular']: {
+							...layoutOptions.value,
+							all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
+							disabled_filters: []
+						} } : {
+							[values.value.layout || 'tabular']: {
+								all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
+								disabled_filters: []
+							}
+						})
+					}
+				}
+			}
+
+			console.log('edits', edits.value);
 
 
 		for (const key of keys) {
 			if (key in edits.value) editsParsed[key] = edits.value[key];
 		}
-
-		console.log('editsParsed', editsParsed);
 
 		if (edits.value.scope) {
 			if (edits.value.scope.startsWith('role_')) {
@@ -229,7 +246,6 @@ function useSave() {
 			await presetsStore.hydrate();
 
 			edits.value = {};
-			console.log('edits', edits.value);
 
 		} catch (err: any) {
 			unexpectedError(err);
@@ -554,6 +570,10 @@ function discardAndLeave() {
 	confirmLeave.value = false;
 	router.push(leaveTo.value);
 }
+
+// watch(() => layoutOptions.value, () => {
+// 	console.log(layoutOptions.value)
+// })
 </script>
 
 <template>
