@@ -419,8 +419,6 @@ function usePreset() {
 
 		try {
 			const response = await api.get(`/presets/${props.id}`);
-			console.log(response.data.data);
-
 			preset.value = response.data.data;
 		} catch (err: any) {
 			unexpectedError(err);
@@ -570,10 +568,6 @@ function discardAndLeave() {
 	confirmLeave.value = false;
 	router.push(leaveTo.value);
 }
-
-// watch(() => layoutOptions.value, () => {
-// 	console.log(layoutOptions.value)
-// })
 </script>
 
 <template>
