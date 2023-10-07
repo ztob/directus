@@ -54,7 +54,7 @@ const isNew = computed(() => props.id === '+');
 const { loading, preset } = usePreset();
 const { fields } = useForm();
 const { edits, hasEdits, initialValues, values, layoutQuery, layoutOptions, updateFilters, search } = useValues();
-const { save, saving } = useSave();
+const { isSaving, save } = useFormSave();
 
 const { deleting, deleteAndQuit, confirmDelete } = useDelete();
 
@@ -90,84 +90,13 @@ const { confirmLeave, leaveTo } = useEditsGuard(hasEdits);
 // CUSTOM ADDITIONAL SETTINGS
 const disabledOptions = ['save-and-stay', 'save-and-add-new', 'discard-and-stay'];
 
-const { isCopySaving, saveAsCopyAndNavigate } = useSaveAsCopy();
+function useFormSave() {
+	const isSaving = ref(false);
 
-function useSaveAsCopy() {
-	const isCopySaving = ref(false);
+	return { isSaving, save };
 
-	return { isCopySaving, saveAsCopyAndNavigate };
-
-	async function saveAsCopyAndNavigate() {
-		isCopySaving.value = true;
-
-		const editsParsed: Partial<Preset> = {};
-
-		const keys = [
-			'icon',
-			'color',
-			'collection',
-			'layout',
-			'layout_query',
-			'layout_options',
-			'filter',
-			'search',
-		] as (keyof Preset)[];
-
-		// initial values + the edits fields that overrode the initial values
-		const newEdits = {
-			...initialValues.value,
-			...edits.value,
-		} as FormattedPreset;
-
-		if ('name' in newEdits) editsParsed.bookmark = newEdits.name;
-
-		for (const key of keys) {
-			if (key in newEdits) editsParsed[key] = newEdits[key];
-		}
-
-		if (newEdits.scope as any) {
-			if (newEdits.scope.startsWith('role_')) {
-				editsParsed.role = newEdits.scope.substring(5);
-				editsParsed.user = null;
-			} else if (newEdits.scope.startsWith('user_')) {
-				editsParsed.user = newEdits.scope.substring(5);
-				editsParsed.role = null;
-			} else {
-				editsParsed.role = null;
-				editsParsed.user = null;
-			}
-		}
-
-		try {
-			const { data: { data: { id: newPresetId } } } = await api.post(`/presets`, editsParsed);
-			// await api.post(`/presets`, editsParsed);
-			edits.value = {};
-			await presetsStore.hydrate();
-
-			router.push(`/settings/presets`);
-
-			let timeout = null;
-
-			timeout = setTimeout(() => {
-				if (newPresetId) router.push(`/settings/presets/${newPresetId}`);
-				clearTimeout(timeout)
-			}, 200);
-		} catch (err: any) {
-			unexpectedError(err);
-		} finally {
-			isCopySaving.value = false;
-		}
-	}
-}
-// -------------------------------------------------------------
-
-function useSave() {
-	const saving = ref(false);
-
-	return { saving, save };
-
-	async function save() {
-		saving.value = true;
+	async function save(isCopy = false) {
+		isSaving.value = true;
 
 		const editsParsed: Partial<Preset> = {};
 
@@ -183,52 +112,53 @@ function useSave() {
 			'show_items_number'
 		] as (keyof Preset)[];
 
-		if ('name' in edits.value) editsParsed.bookmark = edits.value.name;
-
-		// layoutOptions for show_items_number boolean
 		edits.value = {
+			...edits.value,
+			layout_options: {
+				...(layoutOptions.value ? { [values.value.layout || 'tabular']: layoutOptions.value } : {}),
+				show_items_number: values.value.show_items_number
+			},
+		};
+
+		if ('filter' in edits.value) {
+			edits.value = {
 				...edits.value,
 				layout_options: {
-					...(layoutOptions.value ? { [values.value.layout || 'tabular']: layoutOptions.value } : {}),
-					show_items_number: values.value.show_items_number
-				},
-			};
-
-			// layoutOptions for all_filters and disabled_filters
-			console.log('layoutOptions', layoutOptions.value)
-
-			if('filter' in edits.value) {
-				edits.value = {
-					...edits.value,
-					layout_options: {
-						...edits.value.layout_options,
-						...(layoutOptions.value ? { [values.value.layout || 'tabular']: {
+					...edits.value.layout_options,
+					...(layoutOptions.value ? {
+						[values.value.layout || 'tabular']: {
 							...layoutOptions.value,
 							all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
 							disabled_filters: []
-						} } : {
-							[values.value.layout || 'tabular']: {
-								all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
-								disabled_filters: []
-							}
-						})
-					}
+						}
+					} : {
+						[values.value.layout || 'tabular']: {
+							all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
+							disabled_filters: []
+						}
+					})
 				}
 			}
-
-			console.log('edits', edits.value);
-
-
-		for (const key of keys) {
-			if (key in edits.value) editsParsed[key] = edits.value[key];
 		}
 
-		if (edits.value.scope) {
-			if (edits.value.scope.startsWith('role_')) {
-				editsParsed.role = edits.value.scope.substring(5);
+		// FOR COPY. Initial values + the edits fields that overrode the initial values
+		const newPresetVals = {
+			...(isCopy ? initialValues.value : {}),
+			...edits.value,
+		} as FormattedPreset;
+
+		if ('name' in newPresetVals) editsParsed.bookmark = newPresetVals.name;
+
+		for (const key of keys) {
+			if (key in newPresetVals) editsParsed[key] = newPresetVals[key];
+		}
+
+		if (newPresetVals.scope as any) {
+			if (newPresetVals.scope.startsWith('role_')) {
+				editsParsed.role = newPresetVals.scope.substring(5);
 				editsParsed.user = null;
-			} else if (edits.value.scope.startsWith('user_')) {
-				editsParsed.user = edits.value.scope.substring(5);
+			} else if (newPresetVals.scope.startsWith('user_')) {
+				editsParsed.user = newPresetVals.scope.substring(5);
 				editsParsed.role = null;
 			} else {
 				editsParsed.role = null;
@@ -237,21 +167,39 @@ function useSave() {
 		}
 
 		try {
-			if (isNew.value === true) {
-				await api.post(`/presets`, editsParsed);
+			// when just save
+			if (!isCopy) {
+
+				if (isNew.value === true) {
+					await api.post(`/presets`, editsParsed);
+				} else {
+					await api.patch(`/presets/${props.id}`, editsParsed);
+				}
+
+				edits.value = {};
+				router.push(`/settings/presets`);
 			} else {
-				await api.patch(`/presets/${props.id}`, editsParsed);
+
+				const { data: { data: { id: newPresetId } } } = await api.post(`/presets`, editsParsed);
+
+				edits.value = {};
+
+				router.push(`/settings/presets`);
+
+				let timeout = null;
+
+				timeout = setTimeout(() => {
+					if (newPresetId) router.push(`/settings/presets/${newPresetId}`);
+					clearTimeout(timeout)
+				}, 200);
+
 			}
 
 			await presetsStore.hydrate();
-
-			edits.value = {};
-
-		} catch (err: any) {
+		} catch (err) {
 			unexpectedError(err);
 		} finally {
-			saving.value = false;
-			router.push(`/settings/presets`);
+			isSaving.value = false;
 		}
 	}
 }
@@ -537,7 +485,7 @@ function useForm() {
 		},
 		{
 			field: 'show_items_number',
-			name: t('Show Total Number Of Items Of This Preset'),
+			name: t('Show Total Count'),
 			type: 'boolean',
 			meta: {
 				interface: 'boolean',
@@ -571,22 +519,11 @@ function discardAndLeave() {
 </script>
 
 <template>
-	<component
-		:is="layoutWrapper"
-		v-slot="{ layoutState }"
-		v-model:layout-options="layoutOptions"
-		v-model:layout-query="layoutQuery"
-		:layout-props="layoutProps"
-		:filter="layoutFilter"
-		:search="search"
-		:collection="values.collection"
-		readonly
-	>
-		<private-view
-			:title="t('editing_preset')"
-			:small-header="currentLayout?.smallHeader"
-			:header-shadow="currentLayout?.headerShadow"
-		>
+	<component :is="layoutWrapper" v-slot="{ layoutState }" v-model:layout-options="layoutOptions"
+		v-model:layout-query="layoutQuery" :layout-props="layoutProps" :filter="layoutFilter" :search="search"
+		:collection="values.collection" readonly>
+		<private-view :title="t('editing_preset')" :small-header="currentLayout?.smallHeader"
+			:header-shadow="currentLayout?.headerShadow">
 			<template #headline>
 				<v-breadcrumb :items="[{ name: t('settings_presets'), to: '/settings/presets' }]" />
 			</template>
@@ -603,15 +540,8 @@ function discardAndLeave() {
 			<template #actions>
 				<v-dialog v-model="confirmDelete" @esc="confirmDelete = false">
 					<template #activator="{ on }">
-						<v-button
-							v-tooltip.bottom="t('delete_label')"
-							rounded
-							icon
-							class="action-delete"
-							secondary
-							:disabled="preset === null || id === '+'"
-							@click="on"
-						>
+						<v-button v-tooltip.bottom="t('delete_label')" rounded icon class="action-delete" secondary
+							:disabled="preset === null || id === '+'" @click="on">
 							<v-icon name="delete" />
 						</v-button>
 					</template>
@@ -630,18 +560,11 @@ function discardAndLeave() {
 					</v-card>
 				</v-dialog>
 
-				<v-button
-					v-tooltip.bottom="t('save')"
-					icon
-					rounded
-					:disabled="hasEdits === false"
-					:loading="saving || isCopySaving"
-					@click="save"
-				>
+				<v-button v-tooltip.bottom="t('save')" icon rounded :disabled="hasEdits === false" :loading="isSaving"
+					@click="save(false)">
 					<v-icon name="check" />
 					<template #append-outer>
-						<save-options v-if="hasEdits === true" :disabled-options="disabledOptions"
-							@save-as-copy="saveAsCopyAndNavigate" />
+						<save-options v-if="hasEdits === true" :disabled-options="disabledOptions" @save-as-copy="save(true)" />
 					</template>
 				</v-button>
 			</template>
@@ -676,19 +599,13 @@ function discardAndLeave() {
 				</sidebar-detail>
 
 				<div class="layout-sidebar">
-					<component
-						:is="`layout-sidebar-${values.layout}`"
-						v-if="values.layout && values.collection"
-						v-bind="layoutState"
-					/>
+					<component :is="`layout-sidebar-${values.layout}`" v-if="values.layout && values.collection"
+						v-bind="layoutState" />
 
 					<sidebar-detail icon="layers" :title="t('layout_options')">
 						<div class="layout-options">
-							<component
-								:is="`layout-options-${values.layout}`"
-								v-if="values.layout && values.collection"
-								v-bind="layoutState"
-							/>
+							<component :is="`layout-options-${values.layout}`" v-if="values.layout && values.collection"
+								v-bind="layoutState" />
 						</div>
 					</sidebar-detail>
 				</div>

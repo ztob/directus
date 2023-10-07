@@ -19,19 +19,19 @@ init();
 async function init() {
 	const version = __DIRECTUS_VERSION__;
 
-	console.log(DIRECTUS_LOGO);
+	// console.log(DIRECTUS_LOGO);
 
-	console.info(
-		`Hey! Interested in helping build this open-source data management platform?\nIf so, join our growing team of contributors at: https://directus.chat`
-	);
+	// console.info(
+	// 	`Hey! Interested in helping build this open-source data management platform?\nIf so, join our growing team of contributors at: https://directus.chat`
+	// );
 
-	if (import.meta.env.DEV) {
-		console.info(`%c🐰 Starting Directus v${version}...`, 'color:Green');
-	} else {
-		console.info(`%c🐰 Starting Directus...`, 'color:Green');
-	}
+	// if (import.meta.env.DEV) {
+	// 	console.info(`%c🐰 Starting Directus v${version}...`, 'color:Green');
+	// } else {
+	// 	console.info(`%c🐰 Starting Directus...`, 'color:Green');
+	// }
 
-	console.time('🕓 Application Loaded');
+	// console.time('🕓 Application Loaded');
 
 	const app = createApp(App);
 
@@ -58,15 +58,15 @@ async function init() {
 
 	app.mount('#app');
 
-	console.timeEnd('🕓 Application Loaded');
+	// console.timeEnd('🕓 Application Loaded');
 
-	console.group(`%c✨ Project Information`, 'color:DodgerBlue'); // groupCollapsed
+	// console.group(`%c✨ Project Information`, 'color:DodgerBlue'); // groupCollapsed
 
-	if (import.meta.env.DEV) {
-		console.info(`%cVersion: v${version}`, 'color:DodgerBlue');
-	}
+	// if (import.meta.env.DEV) {
+	// 	console.info(`%cVersion: v${version}`, 'color:DodgerBlue');
+	// }
 
-	console.info(`%cEnvironment: ${import.meta.env.MODE}`, 'color:DodgerBlue');
+	// console.info(`%cEnvironment: ${import.meta.env.MODE}`, 'color:DodgerBlue');
 	console.groupEnd();
 
 	// Prevent the browser from opening files that are dragged on the window

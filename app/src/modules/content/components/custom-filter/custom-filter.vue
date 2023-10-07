@@ -106,16 +106,6 @@ const innerValueCopy = computed<FilterLayoutOptions>({
 	},
 })
 
-// onMounted(() => {
-
-// })
-
-watch([innerValue, innerValueCopy, props.layout_opts], () => {
-	console.log('innerValue', innerValue.value)
-	console.log('innerValueCopy', innerValueCopy.value)
-	console.log('props.layout_opts', props.layout_opts)
-}, { deep: true, immediate: true })
-
 watch(() => innerValueCopy.value, () => {
 	updateInnerValue()
 }, { deep: true })

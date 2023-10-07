@@ -18,6 +18,7 @@ const bookmarkValue = reactive({
 	name: null,
 	icon: 'bookmark',
 	color: null,
+	is_show_count: false
 });
 
 function setIcon(icon: any) {
@@ -28,10 +29,15 @@ function setColor(color: any) {
 	bookmarkValue.color = color;
 }
 
+function setShowCount(bool: boolean) {
+	bookmarkValue.is_show_count = bool
+}
+
 function cancel() {
 	bookmarkValue.name = null;
 	bookmarkValue.icon = 'bookmark';
 	bookmarkValue.color = null;
+	bookmarkValue.is_show_count = false;
 	emit('update:modelValue', false);
 }
 </script>
@@ -58,6 +64,7 @@ function cancel() {
 					/>
 					<interface-select-icon width="half" :value="bookmarkValue.icon" @input="setIcon" />
 					<interface-select-color width="half" :value="bookmarkValue.color" @input="setColor" />
+					<interface-boolean width="half" label="Show Total Count" :value="bookmarkValue.is_show_count" @input="setShowCount"/>
 				</div>
 			</v-card-text>
 

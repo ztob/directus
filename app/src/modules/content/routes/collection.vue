@@ -47,10 +47,6 @@ const layoutRef = ref();
 const { collection } = toRefs(props);
 const bookmarkID = computed(() => (props.bookmark ? +props.bookmark : null));
 
-watch(() => props.bookmark, () => {
-	console.log(props.bookmark)
-}, { deep: true, immediate: true })
-
 const { selection } = useSelection();
 const { info: currentCollection } = useCollection(collection);
 const { addNewLink, currentCollectionLink } = useLinks();
@@ -280,6 +276,12 @@ function useBookmarks() {
 				bookmark: bookmark.name,
 				icon: bookmark.icon,
 				color: bookmark.color,
+				layout_options: {
+					[layout.value || 'tabular']: {
+						...(layoutOptions.value ? layoutOptions.value : {})
+					},
+					show_items_number: bookmark.is_show_count
+				}
 			});
 
 			router.push(`${getCollectionRoute(newBookmark.collection)}?bookmark=${newBookmark.id}`);

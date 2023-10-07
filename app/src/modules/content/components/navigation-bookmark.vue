@@ -145,7 +145,7 @@ watch(() => props.bookmark, () => {
 				params
 			})
 
-			itemsCount.value = `(${data.data[0].count})`
+			itemsCount.value = `(${formatNumberWithCommas(Number(data.data[0].count))})`
 		} catch (err) {
 			console.log(err);
 		} finally {
@@ -154,6 +154,11 @@ watch(() => props.bookmark, () => {
 	}
 
 	fetchPresetItems()
+
+	function formatNumberWithCommas(number: number) {
+		if(number >= 10000) return number.toLocaleString("en-US");
+		return number.toString();
+	}
 }, { deep: true, immediate: true })
 
 </script>
