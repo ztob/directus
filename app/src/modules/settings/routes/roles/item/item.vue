@@ -13,6 +13,7 @@ import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
 import PermissionsOverview from './components/permissions-overview.vue';
 import RoleInfoSidebarDetail from './components/role-info-sidebar-detail.vue';
+import ModulePermissions from './components/module-permissions.vue';
 
 const props = defineProps<{
 	primaryKey: string;
@@ -196,6 +197,9 @@ function discardAndLeave() {
 				:loading="loading"
 				:initial-values="item"
 			/>
+
+			<!-- Control which modules are accessible for this role -->
+			<module-permissions :role-id="primaryKey" />
 		</div>
 
 		<template #sidebar>
