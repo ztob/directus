@@ -70,6 +70,14 @@ const {
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
 
+// watch([layout,
+// 	layoutOptions,
+// 	layoutQuery], () => {
+// 		console.log(layout.value,
+// 			layoutOptions.value,
+// 			layoutQuery.value)
+// 	}, { deep: true, immediate: true })
+
 // // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
 const exportFiltersMerged = computed<Filter>(() => {
@@ -541,7 +549,7 @@ function usePermissions() {
 			</template>
 
 			<template #navigation>
-				<content-navigation :current-collection="collection" />
+				<content-navigation :current-collection="collection" :refreshInterval="refreshInterval"/>
 			</template>
 
 			<v-info

@@ -5,7 +5,7 @@ import { getCollectionRoute } from '@/utils/get-route';
 import { translate } from '@/utils/translate-literal';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Preset } from '@directus/types';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/api';
@@ -13,6 +13,7 @@ import api from '@/api';
 
 interface Props {
 	bookmark: Preset;
+	refreshInterval: number | null
 }
 
 const props = defineProps<Props>();
@@ -114,12 +115,31 @@ function useDeleteBookmark() {
 const itemsCount = ref('');
 const isCountLoading = ref(false)
 
-watch(() => props.bookmark, () => {
+onMounted(() => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
 
 	if (!isShowNumber) return itemsCount.value
 
-	async function fetchPresetItems() {
+	fetchPresetItems()
+
+})
+
+let refreshIntervalId = null;
+
+watch(() => props.bookmark.refresh_interval, () => {
+	if (refreshIntervalId) {
+		clearInterval(refreshIntervalId);
+	}
+
+	if (props.bookmark.refresh_interval) {
+		refreshIntervalId = setInterval(() => {
+			fetchPresetItems()
+		}, props.bookmark.refresh_interval * 1000)
+	}
+
+}, { deep: true, immediate: true })
+
+async function fetchPresetItems() {
 		try {
 			isCountLoading.value = true
 
@@ -146,6 +166,8 @@ watch(() => props.bookmark, () => {
 			})
 
 			itemsCount.value = `(${formatNumberWithCommas(Number(data.data[0].count))})`
+			console.log(itemsCount.value);
+
 		} catch (err) {
 			console.log(err);
 		} finally {
@@ -153,13 +175,10 @@ watch(() => props.bookmark, () => {
 		}
 	}
 
-	fetchPresetItems()
-
 	function formatNumberWithCommas(number: number) {
-		if(number >= 10000) return number.toLocaleString("en-US");
+		if (number >= 10000) return number.toLocaleString("en-US");
 		return number.toString();
 	}
-}, { deep: true, immediate: true })
 
 </script>
 
