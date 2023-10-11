@@ -568,6 +568,15 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 					/>
 				</div>
 
+				<!-- Use formatted display values instead -->
+				<div class="field half-left">
+					<p class="type-label">Use Display Values</p>
+					<interface-boolean
+						v-model="exportSettings.use_display_values"
+					/>
+				</div>
+
+
 				<div class="field full">
 					<p class="type-label">{{ t('full_text_search') }}</p>
 					<v-input v-model="exportSettings.search" :placeholder="t('search')" />
