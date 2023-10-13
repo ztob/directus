@@ -23,7 +23,7 @@ import { useRouter } from 'vue-router';
 import ContentNavigation from '../components/navigation.vue';
 import ContentNotFound from './not-found.vue';
 
-import CustomSearchInput from './custom-search-input.vue';
+import CustomSearchInput from '../components/custom-search-input.vue'
 
 type Item = {
 	[field: string]: any;
@@ -46,6 +46,10 @@ const layoutRef = ref();
 
 const { collection } = toRefs(props);
 const bookmarkID = computed(() => (props.bookmark ? +props.bookmark : null));
+
+watch(() => props.bookmark, () => {
+	console.log(props.bookmark)
+}, { deep: true, immediate: true })
 
 const { selection } = useSelection();
 const { info: currentCollection } = useCollection(collection);
@@ -70,7 +74,7 @@ const {
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
 
-// Use a custom filter for the export sidebar detail
+// // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
 const exportFiltersMerged = computed<Filter>(() => {
 	// Merge filters in order of specificity
@@ -289,7 +293,11 @@ function useBookmarks() {
 function clearFilters() {
 	filter.value = null;
 	search.value = null;
-	layoutOptions.value = null;
+	layoutOptions.value = {
+		...layoutOptions.value,
+		all_filters: [],
+		disabled_filters: []
+	}
 }
 
 function usePermissions() {
@@ -343,6 +351,7 @@ function usePermissions() {
 
 	return { batchEditAllowed, batchArchiveAllowed, batchDeleteAllowed, createAllowed };
 }
+
 </script>
 
 <template>
@@ -434,12 +443,8 @@ function usePermissions() {
 			</template>
 
 			<template #actions>
-				<custom-search-input
-					v-model="search"
-					v-model:filter="filter"
-					v-model:layout_options="layoutOptions"
-					:collection="collection"
-				/>
+				<!-- <search-input v-model="search" v-model:filter="filter" :collection="collection" /> -->
+				<custom-search-input v-model="search" v-model:filter="filter" v-model:layout_options="layoutOptions" :collection="collection" />
 
 				<v-dialog v-if="selection.length > 0" v-model="confirmDelete" @esc="confirmDelete = false">
 					<template #activator="{ on }">
