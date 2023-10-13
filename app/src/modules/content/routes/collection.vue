@@ -23,7 +23,7 @@ import { useRouter } from 'vue-router';
 import ContentNavigation from '../components/navigation.vue';
 import ContentNotFound from './not-found.vue';
 
-import CustomSearchInput from './custom-search-input.vue'
+import CustomSearchInput from './custom-search-input.vue';
 
 type Item = {
 	[field: string]: any;
@@ -74,10 +74,7 @@ const {
 const exportFilter = ref(null);
 const exportFiltersMerged = computed<Filter>(() => {
 	// Merge filters in order of specificity
-	return mergeFilters(
-		filter.value,
-		mergeFilters(exportFilter.value, archiveFilter.value)
-	);
+	return mergeFilters(filter.value, mergeFilters(exportFilter.value, archiveFilter.value));
 });
 
 const { layoutWrapper } = useLayout(layout);
@@ -292,7 +289,7 @@ function useBookmarks() {
 function clearFilters() {
 	filter.value = null;
 	search.value = null;
-	layoutOptions.value = null
+	layoutOptions.value = null;
 }
 
 function usePermissions() {
@@ -437,7 +434,12 @@ function usePermissions() {
 			</template>
 
 			<template #actions>
-				<custom-search-input v-model="search" v-model:filter="filter" v-model:layout_options="layoutOptions" :collection="collection" />
+				<custom-search-input
+					v-model="search"
+					v-model:filter="filter"
+					v-model:layout_options="layoutOptions"
+					:collection="collection"
+				/>
 
 				<v-dialog v-if="selection.length > 0" v-model="confirmDelete" @esc="confirmDelete = false">
 					<template #activator="{ on }">
@@ -504,6 +506,10 @@ function usePermissions() {
 						</v-card-actions>
 					</v-card>
 				</v-dialog>
+
+				<v-button v-tooltip.bottom="t('refresh')" rounded icon @click="refresh">
+					<v-icon name="refresh" />
+				</v-button>
 
 				<v-button
 					v-if="selection.length > 0"
