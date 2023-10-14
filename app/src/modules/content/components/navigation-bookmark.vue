@@ -165,7 +165,6 @@ async function fetchPresetItems() {
 			params
 		})
 
-		console.log(data.data[0].count)
 		itemsCount.value = `(${formatNumberWithCommas(Number(data.data[0].count))})`
 	} catch (err) {
 		console.log(err);
