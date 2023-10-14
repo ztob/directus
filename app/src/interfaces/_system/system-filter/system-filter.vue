@@ -67,12 +67,12 @@ const innerValue = computed<Filter[]>({
 	get() {
 		const filterValue = typeof props.value === 'string' ? parseJSON(props.value) : props.value;
 
-		if (!filterValue || isEmpty(filterValue)) return [];
+		if (!filterValue || isEmpty(filterValue)) return []
 
 		const name = getNodeName(filterValue);
 
 		if (name === '_and') {
-			return cloneDeep(filterValue['_and']);
+			return cloneDeep(filterValue.$_filter_state_$);
 		} else {
 			return cloneDeep([filterValue]);
 		}
@@ -81,22 +81,45 @@ const innerValue = computed<Filter[]>({
 		if (newVal.length === 0) {
 			emit('input', null);
 		} else {
-			emit('input', { _and: newVal });
+			const filtered_and = filterDisabledObjects(newVal);
+			emit('input', { _and: filtered_and, $_filter_state_$: newVal });
 		}
-	},
+	}
 });
+
+function filterDisabledObjects(arr: any) {
+	return arr.reduce((result: Filter[], obj: any) => {
+		if (!obj?.disabled) {
+			const newObj = { ...obj };
+
+			if (obj._and) {
+				newObj._and = filterDisabledObjects(obj._and);
+			}
+
+			if (obj._or) {
+				newObj._or = filterDisabledObjects(obj._or);
+			}
+
+			result.push(newObj);
+		}
+
+		return result;
+	}, []);
+}
 
 function emitValue() {
 	if (innerValue.value.length === 0) {
 		emit('input', null);
 	} else {
-		emit('input', { _and: innerValue.value });
+		const filtered_and = filterDisabledObjects(innerValue.value);
+		emit('input', { _and: filtered_and, $_filter_state_$: innerValue.value });
 	}
 }
 
 function addNode(key: string) {
 	if (key === '$group') {
-		innerValue.value = innerValue.value.concat({ _and: [] });
+
+		innerValue.value = innerValue.value.concat({ _and: [] })
 	} else {
 		let type: Type;
 		const field = fieldsStore.getField(collection.value, key);
@@ -121,7 +144,8 @@ function addNode(key: string) {
 		const filterOperators = getFilterOperatorsForType(type, { includeValidation: props.includeValidation });
 		const operator = field?.meta?.options?.choices && filterOperators.includes('eq') ? 'eq' : filterOperators[0];
 		const node = set({}, key, { ['_' + operator]: null });
-		innerValue.value = innerValue.value.concat(node);
+
+		innerValue.value = innerValue.value.concat(node)
 	}
 }
 
@@ -129,7 +153,8 @@ function removeNode(ids: string[]) {
 	const id = ids.pop();
 
 	if (ids.length === 0) {
-		innerValue.value = innerValue.value.filter((node, index) => index !== Number(id));
+		innerValue.value = innerValue.value.filter((node, index) => index !== Number(id))
+
 		return;
 	}
 
@@ -137,7 +162,50 @@ function removeNode(ids: string[]) {
 
 	list = list.filter((_node, index) => index !== Number(id));
 
-	innerValue.value = set(innerValue.value, ids.join('.'), list);
+	innerValue.value = set(innerValue.value, ids.join('.'), list)
+
+}
+
+function onEnableDisable(ids: string[]) {
+	const id = ids.pop();
+
+	if (ids.length === 0) {
+		innerValue.value = innerValue.value.map((node, index) => updateNode(node, index, Number(id)))
+
+		return;
+	}
+
+	let list = get(innerValue.value, ids.join('.')) as Filter[];
+
+	list = list.map((_node, index) => updateNode(_node, index, Number(id)));
+
+	innerValue.value = set(innerValue.value, ids.join('.'), list)
+
+	function updateNode(node: Filter, index: number, id: number) {
+		if(index === id) {
+				// enable
+				if(node?.disabled) {
+					const { disabled, ...rest } = node
+					return rest
+				} else {
+					// disable
+					return {
+						...node,
+						disabled: true
+					}
+				}
+			}
+
+			return node
+	}
+}
+
+window.addFilterFromDisplay = (newFilter: any) => {
+	const isFilterExists = innerValue.value.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
+
+	if (!isFilterExists) {
+		innerValue.value = innerValue.value.concat(newFilter)
+	}
 }
 
 // For adding any new fields (eg. flow Validate operation rule)
@@ -149,6 +217,8 @@ function addKeyAsNode() {
 	addNode(newKey.value);
 	newKey.value = null;
 }
+
+
 </script>
 
 <template>
@@ -166,7 +236,7 @@ function addKeyAsNode() {
 			</div>
 
 			<nodes
-				v-else
+			v-else
 				v-model:filter="innerValue"
 				:collection="collection"
 				:field="fieldName"
@@ -177,6 +247,7 @@ function addKeyAsNode() {
 				:raw-field-names="rawFieldNames"
 				@remove-node="removeNode($event)"
 				@change="emitValue"
+				@disable_enable="onEnableDisable($event)"
 			/>
 		</v-list>
 

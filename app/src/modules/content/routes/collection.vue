@@ -22,8 +22,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import ContentNavigation from '../components/navigation.vue';
 import ContentNotFound from './not-found.vue';
-
-import CustomSearchInput from '../components/custom-search-input.vue'
+import SearchInput from '@/views/private/components/search-input.vue';
 
 type Item = {
 	[field: string]: any;
@@ -69,6 +68,11 @@ const {
 	busy: bookmarkSaving,
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
+
+watch([filter, layoutOptions], () => {
+	console.log(filter.value);
+	console.log(layoutOptions.value);
+}, { deep: true, immediate: true })
 
 // // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
@@ -274,9 +278,7 @@ function useBookmarks() {
 				icon: bookmark.icon,
 				color: bookmark.color,
 				layout_options: {
-					[layout.value || 'tabular']: {
-						...(layoutOptions.value ? layoutOptions.value : {})
-					},
+					...(layoutOptions.value ? { [layout.value || 'tabular']: layoutOptions.value } : {}),
 					show_items_number: bookmark.is_show_count
 				}
 			});
@@ -295,11 +297,6 @@ function useBookmarks() {
 function clearFilters() {
 	filter.value = null;
 	search.value = null;
-	layoutOptions.value = {
-		...layoutOptions.value,
-		all_filters: [],
-		disabled_filters: []
-	}
 }
 
 function usePermissions() {
@@ -445,8 +442,7 @@ function usePermissions() {
 			</template>
 
 			<template #actions>
-				<!-- <search-input v-model="search" v-model:filter="filter" :collection="collection" /> -->
-				<custom-search-input v-model="search" v-model:filter="filter" v-model:layout_options="layoutOptions" :collection="collection" />
+				<search-input v-model="search" v-model:filter="filter" :collection="collection" />
 
 				<v-dialog v-if="selection.length > 0" v-model="confirmDelete" @esc="confirmDelete = false">
 					<template #activator="{ on }">

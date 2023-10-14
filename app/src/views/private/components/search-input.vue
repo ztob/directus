@@ -65,11 +65,11 @@ watch(active, (newActive: boolean) => {
 });
 
 const activeFilterCount = computed(() => {
-	if (!props.filter) return 0;
+	if (!props.filter?.$_filter_state_$) return 0;
 
 	const filterOperators: string[] = [];
 
-	parseLevel(props.filter);
+	parseLevel(props.filter?.$_filter_state_$);
 
 	return filterOperators.length;
 
@@ -105,6 +105,11 @@ function emitValue() {
 	const value = input.value?.value;
 	emit('update:modelValue', value);
 }
+
+function clearAllFilters() {
+	emit('update:modelValue', null);
+	emit('update:filter', null);
+}
 </script>
 
 <template>
@@ -118,7 +123,10 @@ function emitValue() {
 			:class="{ active, 'filter-active': filterActive, 'has-content': !!modelValue, 'filter-border': filterBorder }"
 			@click="active = true"
 		>
-			<v-icon v-tooltip.bottom="active ? null : t('search')" name="search" class="icon-search" :clickable="!active" />
+			<span class="icon-group">
+				<v-icon v-tooltip.bottom="active ? null : t('search')" name="search" class="icon-search" :clickable="!active" />
+				<v-icon v-if="activeFilterCount" @click.stop="clearAllFilters" v-tooltip.bottom="t('Clear all filters')" name="close" class="icon-clear-filters" clickable />
+			</span>
 			<input ref="input" :value="modelValue" :placeholder="t('search_items')" @input="emitValue" @paste="emitValue" />
 			<v-icon
 				v-if="modelValue"
@@ -161,14 +169,14 @@ function emitValue() {
 .search-input {
 	display: flex;
 	align-items: center;
-	width: 72px;
+	width: 95px;
 	max-width: 100%;
 	height: 44px;
 	overflow: hidden;
 	border: 2px solid var(--border-normal);
 	border-radius: calc(44px / 2);
 	transition: width var(--slow) var(--transition), border-bottom-left-radius var(--fast) var(--transition),
-		border-bottom-right-radius var(--fast) var(--transition);
+	border-bottom-right-radius var(--fast) var(--transition);
 
 	.icon-empty {
 		--v-icon-color: var(--foreground-subdued);
@@ -237,7 +245,8 @@ function emitValue() {
 		}
 
 		@media (min-width: 1260px) {
-			width: 420px; /* blaze it */
+			width: 420px;
+			/* blaze it */
 		}
 	}
 
@@ -302,5 +311,19 @@ function emitValue() {
 .filter-input {
 	/* Use margin instead of padding to make sure transition expand takes it into account */
 	margin: 10px 8px;
+}
+
+// ADITIONAL CUSTOM STYLES
+
+.icon-group {
+	display: flex;
+}
+
+.icon-clear-filters {
+	--v-icon-color-hover: var(--danger);
+}
+
+.has-filters {
+	width: 92px;
 }
 </style>

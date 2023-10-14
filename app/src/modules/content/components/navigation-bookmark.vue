@@ -5,7 +5,7 @@ import { getCollectionRoute } from '@/utils/get-route';
 import { translate } from '@/utils/translate-literal';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Preset } from '@directus/types';
-import { computed, reactive, ref, watch, onMounted } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/api';
@@ -115,19 +115,13 @@ function useDeleteBookmark() {
 const itemsCount = ref('');
 const isCountLoading = ref(false)
 
-onMounted(() => {
-	const isShowNumber = props.bookmark?.layout_options?.show_items_number
-console.log(props.bookmark);
-
-	if (!isShowNumber) return itemsCount.value
-
-	fetchPresetItems()
-
-})
-
 let refreshIntervalId = null;
 
-watch(() => props.bookmark.refresh_interval, () => {
+watch(() => props.bookmark, () => {
+	const isShowNumber = props.bookmark?.layout_options?.show_items_number
+
+	if (!isShowNumber) return itemsCount.value = ''
+
 	if (refreshIntervalId) {
 		clearInterval(refreshIntervalId);
 	}
@@ -137,6 +131,8 @@ watch(() => props.bookmark.refresh_interval, () => {
 			fetchPresetItems()
 		}, props.bookmark.refresh_interval * 1000)
 	}
+
+	fetchPresetItems()
 
 }, { deep: true, immediate: true })
 
