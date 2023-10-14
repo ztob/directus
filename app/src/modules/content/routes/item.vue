@@ -67,50 +67,34 @@ const {
 	validationErrors,
 } = useItem(collection, primaryKey);
 
-const { filter, layoutOptions } = usePreset(collection);
+const { filter } = usePreset(collection);
 
-watch(() => layoutOptions.value, () => {
+watch(filter, () => {
 	setTimeout(() => {
 		router.push(`/content/${collection.value}`)
 	}, 500)
 }, { deep: true })
 
-// layoutOptions === null then filter === null
-// layoutOptions !== null then filter === null or filter === []
-// layoutOptions[{filter}] => filter[{filter}] === true then filter[{filter}] === false
-
 // UPDATE FILTER VALUE
 window.addFilterFromInterface = (newFilter: any) => {
-	const is_layoutOptions = Boolean(layoutOptions.value?.all_filters)
-	const is_newFilter_in_layoutOptions = layoutOptions.value?.all_filters.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
-
-	if(is_layoutOptions) {
-
-		if(is_newFilter_in_layoutOptions) {
-			return router.push(`/content/${collection.value}`)
+	if (!filter.value) {
+		filter.value = {
+			_and: [newFilter],
+			$_filter_state_$: [newFilter]
 		}
-
-		if(!is_newFilter_in_layoutOptions) {
-			layoutOptions.value = {
-				...layoutOptions.value,
-				all_filters: [...layoutOptions.value.all_filters, newFilter],
-			}
-
-			if(filter.value && (filter.value?._and || filter.value?._or)) {
-				const operator = filter.value._and ? '_and' : '_or'
-
-				filter.value[operator].push(newFilter)
-			} else {
-				filter.value = { _and: [newFilter] };
-			}
-		}
-
 	} else {
-		filter.value = { _and: [newFilter] };
-		layoutOptions.value = {
-			all_filters: [newFilter],
-			disabled_filters: []
+		const isFilterExists = filter.value.$_filter_state_$.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
+
+		if (isFilterExists) {
+			router.push(`/content/${collection.value}`)
+			return
 		}
+
+		filter.value = {
+			_and: filter.value._and.concat(newFilter),
+			$_filter_state_$: filter.value.$_filter_state_$.concat(newFilter)
+		}
+
 	}
 }
 
