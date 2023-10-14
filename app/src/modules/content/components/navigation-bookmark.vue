@@ -117,6 +117,7 @@ const isCountLoading = ref(false)
 
 onMounted(() => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
+console.log(props.bookmark);
 
 	if (!isShowNumber) return itemsCount.value
 
@@ -150,6 +151,8 @@ async function fetchPresetItems() {
 				count: '*',
 			},
 		};
+
+// YET TO BE CHANGED
 
 		if (props.bookmark?.filter?._and) {
 			params.filter = {
