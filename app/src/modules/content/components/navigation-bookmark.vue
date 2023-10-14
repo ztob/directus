@@ -13,6 +13,7 @@ import api from '@/api';
 
 interface Props {
 	bookmark: Preset;
+	refreshInterval: number | null
 }
 
 const props = defineProps<Props>();
@@ -114,80 +115,87 @@ function useDeleteBookmark() {
 const itemsCount = ref('');
 const isCountLoading = ref(false)
 
+let refreshIntervalId = null;
+
 watch(() => props.bookmark, () => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
 
-	if (!isShowNumber) return itemsCount.value
+	if (!isShowNumber) return itemsCount.value = ''
 
-	async function fetchPresetItems() {
-		try {
-			isCountLoading.value = true
+	if (refreshIntervalId) {
+		clearInterval(refreshIntervalId);
+	}
 
-			const params = {
-				filter: null,
-				search: null,
-				aggregate: {
-					count: '*',
-				},
-			};
-
-			if (props.bookmark?.filter?._and) {
-				params.filter = {
-					_and: [...props.bookmark.filter._and]
-				}
-			}
-
-			if (props.bookmark?.search) {
-				params.search = props.bookmark.search
-			}
-
-			const { data } = await api.get(`items/${props.bookmark.collection}`, {
-				params
-			})
-
-			itemsCount.value = `(${data.data[0].count})`
-		} catch (err) {
-			console.log(err);
-		} finally {
-			isCountLoading.value = false
-		}
+	if (props.bookmark.refresh_interval) {
+		refreshIntervalId = setInterval(() => {
+			fetchPresetItems()
+		}, props.bookmark.refresh_interval * 1000)
 	}
 
 	fetchPresetItems()
+
 }, { deep: true, immediate: true })
+
+async function fetchPresetItems() {
+	try {
+		isCountLoading.value = true
+
+		const params = {
+			filter: null,
+			search: null,
+			aggregate: {
+				count: '*',
+			},
+		};
+
+// YET TO BE CHANGED
+
+		if (props.bookmark?.filter?._and) {
+			params.filter = {
+				_and: [...props.bookmark.filter._and]
+			}
+		}
+
+		if (props.bookmark?.search) {
+			params.search = props.bookmark.search
+		}
+
+		const { data } = await api.get(`items/${props.bookmark.collection}`, {
+			params
+		})
+
+		itemsCount.value = `(${formatNumberWithCommas(Number(data.data[0].count))})`
+	} catch (err) {
+		console.log(err);
+	} finally {
+		isCountLoading.value = false
+	}
+}
+
+function formatNumberWithCommas(number: number) {
+	if (number >= 10000) return number.toLocaleString("en-US");
+	return number.toString();
+}
 
 </script>
 
 <template>
-	<v-list-item
-		:to="`${getCollectionRoute(bookmark.collection)}?bookmark=${bookmark.id}`"
-		query
-		class="bookmark"
-		clickable
-		@contextmenu.stop=""
-	>
+	<v-list-item :to="`${getCollectionRoute(bookmark.collection)}?bookmark=${bookmark.id}`" query class="bookmark" clickable
+		@contextmenu.stop="">
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
 		<v-list-item-content>
-				<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : itemsCount}`" />
-			</v-list-item-content>
+			<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : itemsCount}`" />
+		</v-list-item-content>
 
 		<v-menu placement="bottom-start" show-arrow>
 			<template #activator="{ toggle }">
-				<v-icon
-					v-tooltip.bottom="!hasPermission && t(`cannot_edit_${scope}_bookmarks`)"
-					:name="hasPermission ? 'more_vert' : 'lock'"
-					:clickable="hasPermission"
-					small
-					class="ctx-toggle"
-					@click.prevent="hasPermission ? toggle() : null"
-				/>
+				<v-icon v-tooltip.bottom="!hasPermission && t(`cannot_edit_${scope}_bookmarks`)"
+					:name="hasPermission ? 'more_vert' : 'lock'" :clickable="hasPermission" small class="ctx-toggle"
+					@click.prevent="hasPermission ? toggle() : null" />
 			</template>
 			<v-list>
-				<v-list-item
-					clickable
-					:to="scope !== 'personal' ? `/settings/presets/${bookmark.id}` : undefined"
-					@click="scope === 'personal' ? (editActive = true) : undefined"
-				>
+				<v-list-item clickable :to="scope !== 'personal' ? `/settings/presets/${bookmark.id}` : undefined"
+					@click="scope === 'personal' ? (editActive = true) : undefined">
 					<v-list-item-icon>
 						<v-icon name="edit" outline />
 					</v-list-item-icon>
@@ -211,13 +219,8 @@ watch(() => props.bookmark, () => {
 				<v-card-title>{{ t('edit_personal_bookmark') }}</v-card-title>
 				<v-card-text>
 					<div class="fields">
-						<interface-system-input-translated-string
-							:value="editValue.name"
-							class="full"
-							autofocus
-							@input="editValue.name = $event"
-							@keyup.enter="editSave"
-						/>
+						<interface-system-input-translated-string :value="editValue.name" class="full" autofocus
+							@input="editValue.name = $event" @keyup.enter="editSave" />
 						<interface-select-icon width="half" :value="editValue.icon" @input="editValue.icon = $event" />
 						<interface-select-color width="half" :value="editValue.color" @input="editValue.color = $event" />
 					</div>

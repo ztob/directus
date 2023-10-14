@@ -69,8 +69,9 @@ const {
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
 
-watch(() => filter.value, () => {
+watch([filter, layoutOptions], () => {
 	console.log(filter.value);
+	console.log(layoutOptions.value);
 }, { deep: true, immediate: true })
 
 // // Use a custom filter for the export sidebar detail
@@ -276,6 +277,10 @@ function useBookmarks() {
 				bookmark: bookmark.name,
 				icon: bookmark.icon,
 				color: bookmark.color,
+				layout_options: {
+					...(layoutOptions.value ? { [layout.value || 'tabular']: layoutOptions.value } : {}),
+					show_items_number: bookmark.is_show_count
+				}
 			});
 
 			router.push(`${getCollectionRoute(newBookmark.collection)}?bookmark=${newBookmark.id}`);
@@ -533,7 +538,7 @@ function usePermissions() {
 			</template>
 
 			<template #navigation>
-				<content-navigation :current-collection="collection" />
+				<content-navigation :current-collection="collection" :refreshInterval="refreshInterval"/>
 			</template>
 
 			<v-info

@@ -8,6 +8,7 @@ import NavigationItem from './navigation-item.vue';
 
 const props = defineProps<{
 	currentCollection?: string;
+	refreshInterval: number | null;
 }>();
 
 const { t } = useI18n();
@@ -58,6 +59,7 @@ const hasHiddenCollections = computed(
 				:show-hidden="showHidden"
 				:collection="collection"
 				:search="search"
+				:refreshInterval="refreshInterval"
 			/>
 
 			<v-menu v-if="hasHiddenCollections" ref="contextMenu" show-arrow placement="bottom-start">
