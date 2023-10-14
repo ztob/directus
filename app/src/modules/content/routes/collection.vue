@@ -74,10 +74,7 @@ const {
 const exportFilter = ref(null);
 const exportFiltersMerged = computed<Filter>(() => {
 	// Merge filters in order of specificity
-	return mergeFilters(
-		filter.value,
-		mergeFilters(exportFilter.value, archiveFilter.value)
-	);
+	return mergeFilters(filter.value, mergeFilters(exportFilter.value, archiveFilter.value));
 });
 
 const { layoutWrapper } = useLayout(layout);
@@ -516,6 +513,10 @@ function usePermissions() {
 						</v-card-actions>
 					</v-card>
 				</v-dialog>
+
+				<v-button v-tooltip.bottom="t('refresh')" rounded icon @click="refresh">
+					<v-icon name="refresh" />
+				</v-button>
 
 				<v-button
 					v-if="selection.length > 0"

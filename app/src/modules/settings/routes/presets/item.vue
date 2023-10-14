@@ -120,27 +120,6 @@ function useFormSave() {
 			},
 		};
 
-		if ('filter' in edits.value) {
-			edits.value = {
-				...edits.value,
-				layout_options: {
-					...edits.value.layout_options,
-					...(layoutOptions.value ? {
-						[values.value.layout || 'tabular']: {
-							...layoutOptions.value,
-							all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
-							disabled_filters: []
-						}
-					} : {
-						[values.value.layout || 'tabular']: {
-							all_filters: edits.value.filter !== null ? edits.value.filter._and : [],
-							disabled_filters: []
-						}
-					})
-				}
-			}
-		}
-
 		// FOR COPY. Initial values + the edits fields that overrode the initial values
 		const newPresetVals = {
 			...(isCopy ? initialValues.value : {}),
