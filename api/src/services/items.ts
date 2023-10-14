@@ -397,7 +397,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 	 */
 	async readByQuery(query: Query, opts?: QueryOptions): Promise<Item[]> {
 
-		function removeFilterState(obj) {
+		function removeFilterState(obj: any) {
 			if (typeof obj === 'object' && obj !== null) {
 				if (Array.isArray(obj)) {
 					// If it's an array, iterate over its elements
@@ -428,11 +428,12 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 					}
 				}
 			}
+			
 			return obj;
 		}
 
 		removeFilterState(query.filter);
-		
+
 		const updatedQuery =
 			opts?.emitEvents !== false
 				? await emitter.emitFilter(
