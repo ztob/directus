@@ -71,7 +71,7 @@ const innerValue = computed<Filter[]>({
 
 		const name = getNodeName(filterValue);
 
-		if (name === '_and') {
+		if (name === '_and' && filterValue.$_filter_state_$) {
 			return cloneDeep(filterValue.$_filter_state_$);
 		} else {
 			return cloneDeep([filterValue]);
@@ -229,7 +229,7 @@ function addKeyAsNode() {
 		{{ t('select_a_collection') }}
 	</v-notice>
 
-	<div v-else class="system-filter" :class="{ inline, empty: innerValue.length === 0, field: fieldName !== undefined }">
+	<div v-else class="system-filter" :class="{ inline, empty: innerValue?.length === 0, field: fieldName !== undefined }">
 		<v-list :mandatory="true">
 			<div v-if="innerValue.length === 0" class="no-rules">
 				{{ t('interfaces.filter.no_rules') }}
