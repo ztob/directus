@@ -1,4 +1,5 @@
 import api from '@/api';
+import { useFieldsStore } from '@/stores/fields';
 import { Permission, Collection } from '@directus/types';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { inject, ref, Ref } from 'vue';
@@ -9,8 +10,10 @@ type Action = typeof ACTIONS[number];
 type UsableUpdatePermissions = {
 	getPermission: (action: string) => Permission | undefined;
 	setFullAccess: (action: Action) => Promise<void>;
+	setUserAccess: (action: Action) => Promise<void>;
 	setNoAccess: (action: Action) => Promise<void>;
 	setFullAccessAll: () => Promise<void>;
+	setUserAccessAll: () => Promise<void>;
 	setNoAccessAll: () => Promise<void>;
 };
 
@@ -22,7 +25,7 @@ export default function useUpdatePermissions(
 	const saving = ref(false);
 	const refresh = inject<() => Promise<void>>('refresh-permissions');
 
-	return { getPermission, setFullAccess, setNoAccess, setFullAccessAll, setNoAccessAll };
+	return { getPermission, setFullAccess, setUserAccess, setNoAccess, setFullAccessAll, setUserAccessAll, setNoAccessAll };
 
 	function getPermission(action: string) {
 		return permissions.value.find((permission) => permission.action === action);
@@ -64,6 +67,63 @@ export default function useUpdatePermissions(
 					action: action,
 					fields: '*',
 					permissions: {},
+					validation: {},
+				});
+			} catch (err: any) {
+				unexpectedError(err);
+			} finally {
+				await refresh?.();
+				saving.value = false;
+			}
+		}
+	}
+
+	async function setUserAccess(action: Action) {
+		if (saving.value === true) return;
+
+		saving.value = true;
+
+		// If this collection isn't "managed" yet, make sure to add it to directus_collections first
+		// before trying to associate any permissions with it
+		if (collection.value.meta === null) {
+			await api.patch(`/collections/${collection.value.collection}`, {
+				meta: {},
+			});
+		}
+
+		// Find the user_created field or its equivalent
+		const fieldsStore = useFieldsStore();
+		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
+		const userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+		if (!userCreatedField) {
+			saving.value = false;
+			return;
+		}
+
+		const permission = getPermission(action);
+		const permissionsValue = ['create', 'share'].includes(action) ? {} : { _and: [{ [userCreatedField]: { _eq: '$CURRENT_USER' } }] };
+
+		if (permission) {
+			try {
+				await api.patch(`/permissions/${permission.id}`, {
+					fields: '*',
+					permissions: permissionsValue,
+					validation: {},
+				});
+			} catch (err: any) {
+				unexpectedError(err);
+			} finally {
+				await refresh?.();
+				saving.value = false;
+			}
+		} else {
+			try {
+				await api.post('/permissions/', {
+					role: role.value,
+					collection: collection.value.collection,
+					action: action,
+					fields: '*',
+					permissions: permissionsValue,
 					validation: {},
 				});
 			} catch (err: any) {
@@ -129,6 +189,64 @@ export default function useUpdatePermissions(
 							action: action,
 							fields: '*',
 							permissions: {},
+							validation: {},
+						});
+					} catch (err: any) {
+						unexpectedError(err);
+					}
+				}
+			})
+		);
+
+		await refresh?.();
+		saving.value = false;
+	}
+
+	async function setUserAccessAll() {
+		if (saving.value === true) return;
+
+		saving.value = true;
+
+		// If this collection isn't "managed" yet, make sure to add it to directus_collections first
+		// before trying to associate any permissions with it
+		if (collection.value.meta === null) {
+			await api.patch(`/collections/${collection.value.collection}`, {
+				meta: {},
+			});
+		}
+
+		// Find the user_created field or its equivalent
+		const fieldsStore = useFieldsStore();
+		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
+		const userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+		if (!userCreatedField) {
+			saving.value = false;
+			return;
+		}
+
+		await Promise.all(
+			ACTIONS.map(async (action) => {
+				const permission = getPermission(action);
+				const permissionsValue = ['create', 'share'].includes(action) ? {} : { _and: [{ [userCreatedField]: { _eq: '$CURRENT_USER' } }] };
+
+				if (permission) {
+					try {
+						await api.patch(`/permissions/${permission.id}`, {
+							fields: '*',
+							permissions: permissionsValue,
+							validation: {},
+						});
+					} catch (err: any) {
+						unexpectedError(err);
+					}
+				} else {
+					try {
+						await api.post('/permissions/', {
+							role: role.value,
+							collection: collection.value.collection,
+							action: action,
+							fields: '*',
+							permissions: permissionsValue,
 							validation: {},
 						});
 					} catch (err: any) {

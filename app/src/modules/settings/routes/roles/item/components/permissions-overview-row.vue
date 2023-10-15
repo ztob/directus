@@ -17,12 +17,12 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const { collection, role, permissions } = toRefs(props);
-const { setFullAccessAll, setNoAccessAll, getPermission } = useUpdatePermissions(collection, permissions, role);
+const { setFullAccessAll, setUserAccessAll, setNoAccessAll, getPermission } = useUpdatePermissions(collection, permissions, role);
 
 function isLoading(action: string) {
 	const permission = getPermission(action);
 	if (!permission) return false;
-	return props.refreshing.includes(permission.id);
+	return props.refreshing.includes(permission.id!);
 }
 </script>
 
@@ -32,6 +32,8 @@ function isLoading(action: string) {
 			<span v-tooltip.left="collection.name">{{ collection.collection }}</span>
 			<span class="actions">
 				<span class="all" @click="setFullAccessAll">{{ t('all') }}</span>
+				<span class="divider">/</span>
+				<span class="all" @click="setUserAccessAll">{{ t('users') }}</span>
 				<span class="divider">/</span>
 				<span class="none" @click="setNoAccessAll">{{ t('none') }}</span>
 			</span>
