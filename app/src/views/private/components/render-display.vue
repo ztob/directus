@@ -19,7 +19,7 @@ const displayInfo = useExtension('display', display);
 </script>
 
 <template>
-	<value-null v-if="value === null || value === undefined" />
+	<value-null v-if="(value === null || value === undefined) && !options?.always_show" />
 	<v-text-overflow v-else-if="displayInfo === null" class="display" :text="value" />
 	<v-error-boundary v-else :name="`display-${display}`">
 		<component
