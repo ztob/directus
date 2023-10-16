@@ -65,11 +65,11 @@ watch(active, (newActive: boolean) => {
 });
 
 const activeFilterCount = computed(() => {
-	if (!props.filter?.$_filter_state_$) return 0;
+	if (!props.filter) return 0;
 
 	const filterOperators: string[] = [];
 
-	parseLevel(props.filter?.$_filter_state_$);
+	parseLevel(props.filter);
 
 	return filterOperators.length;
 

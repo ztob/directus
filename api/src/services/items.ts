@@ -397,42 +397,71 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 	 */
 	async readByQuery(query: Query, opts?: QueryOptions): Promise<Item[]> {
 
-		function removeFilterState(obj: any) {
-			if (typeof obj === 'object' && obj !== null) {
+		function removeDisabledAnd(obj: any) {
+			if (typeof obj === 'object') {
 				if (Array.isArray(obj)) {
-					// If it's an array, iterate over its elements
 					for (let i = obj.length - 1; i >= 0; i--) {
-						if (obj[i]['$_filter_state_$']) {
-							// Remove the array element if it contains '$_filter_state_$'
+						const element = obj[i];
+						removeDisabledAnd(element);
+						if (JSON.stringify(element) === '{}') {
+							// Check if the element is an empty object
 							obj.splice(i, 1);
-						} else {
-							// Recursively remove '$_filter_state_$' from array elements
-							removeFilterState(obj[i]);
 						}
 					}
 				} else {
-					// If it's an object, iterate over its properties
 					for (const key in obj) {
-						if (obj[key] && obj[key]['$_filter_state_$']) {
-							// Remove the object property if it contains '$_filter_state_$'
-							delete obj[key];
-						} else {
-							// Recursively remove '$_filter_state_$' from object properties
-							removeFilterState(obj[key]);
+						if (obj.hasOwnProperty(key)) {
+							const value = obj[key];
+							removeDisabledAnd(value);
+							if (key === '_and' && value.some(subObj => subObj.disabled)) {
+								// Delete the entire object
+								delete obj[key];
+							}
 						}
-					}
-
-					// Remove the top-level '$_filter_state_$' property
-					if (obj['$_filter_state_$']) {
-						delete obj['$_filter_state_$'];
 					}
 				}
 			}
-			
-			return obj;
 		}
 
-		removeFilterState(query.filter);
+		removeDisabledAnd(query.filter)
+
+
+		// function removeFilterState(obj: any) {
+		// 	if (typeof obj === 'object' && obj !== null) {
+		// 		if (Array.isArray(obj)) {
+		// 			// If it's an array, iterate over its elements
+		// 			for (let i = obj.length - 1; i >= 0; i--) {
+		// 				if (obj[i]['$_filter_state_$']) {
+		// 					// Remove the array element if it contains '$_filter_state_$'
+		// 					obj.splice(i, 1);
+		// 				} else {
+		// 					// Recursively remove '$_filter_state_$' from array elements
+		// 					removeFilterState(obj[i]);
+		// 				}
+		// 			}
+		// 		} else {
+		// 			// If it's an object, iterate over its properties
+		// 			for (const key in obj) {
+		// 				if (obj[key] && obj[key]['$_filter_state_$']) {
+		// 					// Remove the object property if it contains '$_filter_state_$'
+		// 					delete obj[key];
+		// 				} else {
+		// 					// Recursively remove '$_filter_state_$' from object properties
+		// 					removeFilterState(obj[key]);
+		// 				}
+		// 			}
+
+		// 			// Remove the top-level '$_filter_state_$' property
+		// 			if (obj['$_filter_state_$']) {
+		// 				delete obj['$_filter_state_$'];
+		// 			}
+		// 		}
+		// 	}
+
+		// 	return obj;
+		// }
+
+		// removeFilterState(query.filter);
 
 		const updatedQuery =
 			opts?.emitEvents !== false
