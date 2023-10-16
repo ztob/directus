@@ -71,8 +71,8 @@ const innerValue = computed<Filter[]>({
 
 		const name = getNodeName(filterValue);
 
-		if (name === '_and' && filterValue.$_filter_state_$) {
-			return cloneDeep(filterValue.$_filter_state_$);
+		if (name === '_and') {
+			return cloneDeep(filterValue['_and']);
 		} else {
 			return cloneDeep([filterValue]);
 		}
@@ -81,38 +81,38 @@ const innerValue = computed<Filter[]>({
 		if (newVal.length === 0) {
 			emit('input', null);
 		} else {
-			const filtered_and = filterDisabledObjects(newVal);
-			emit('input', { _and: filtered_and, $_filter_state_$: newVal });
+			// const filtered_and = filterDisabledObjects(newVal);
+			emit('input', { _and: newVal });
 		}
 	}
 });
 
-function filterDisabledObjects(arr: any) {
-	return arr.reduce((result: Filter[], obj: any) => {
-		if (!obj?.disabled) {
-			const newObj = { ...obj };
+// function filterDisabledObjects(arr: any) {
+// 	return arr.reduce((result: Filter[], obj: any) => {
+// 		if (!obj?.disabled) {
+// 			const newObj = { ...obj };
 
-			if (obj._and) {
-				newObj._and = filterDisabledObjects(obj._and);
-			}
+// 			if (obj._and) {
+// 				newObj._and = filterDisabledObjects(obj._and);
+// 			}
 
-			if (obj._or) {
-				newObj._or = filterDisabledObjects(obj._or);
-			}
+// 			if (obj._or) {
+// 				newObj._or = filterDisabledObjects(obj._or);
+// 			}
 
-			result.push(newObj);
-		}
+// 			result.push(newObj);
+// 		}
 
-		return result;
-	}, []);
-}
+// 		return result;
+// 	}, []);
+// }
 
 function emitValue() {
 	if (innerValue.value.length === 0) {
 		emit('input', null);
 	} else {
-		const filtered_and = filterDisabledObjects(innerValue.value);
-		emit('input', { _and: filtered_and, $_filter_state_$: innerValue.value });
+		// const filtered_and = filterDisabledObjects(innerValue.value);
+		emit('input', { _and: innerValue.value });
 	}
 }
 
@@ -229,7 +229,7 @@ function addKeyAsNode() {
 		{{ t('select_a_collection') }}
 	</v-notice>
 
-	<div v-else class="system-filter" :class="{ inline, empty: innerValue?.length === 0, field: fieldName !== undefined }">
+	<div v-else class="system-filter" :class="{ inline, empty: innerValue.length === 0, field: fieldName !== undefined }">
 		<v-list :mandatory="true">
 			<div v-if="innerValue.length === 0" class="no-rules">
 				{{ t('interfaces.filter.no_rules') }}
