@@ -411,9 +411,9 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 				} else {
 					for (const key in obj) {
 						if (obj.hasOwnProperty(key)) {
-							const value = obj[key];
+							const value: any = obj[key];
 							removeDisabledAnd(value);
-							if (key === '_and' && value.some(subObj => subObj.disabled)) {
+							if (key === '_and' && value.some((subObj: any) => subObj.disabled)) {
 								// Delete the entire object
 								delete obj[key];
 							}
