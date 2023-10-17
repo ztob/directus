@@ -37,6 +37,7 @@ const props = withDefaults(
 		splitView?: boolean;
 		splitViewMinWidth?: number;
 		sidebarShadow?: boolean;
+		is_roles_permissions?: boolean;
 	}>(),
 	{
 		title: null,
@@ -232,7 +233,11 @@ const theme = computed(() => {
 provide('main-element', contentEl);
 
 router.afterEach(() => {
-	contentEl.value?.scrollTo({ top: 0 });
+	// disable scroll to the top if it is Roles&Permissions administartor page
+	if(!props.is_roles_permissions) {
+		contentEl.value?.scrollTo({ top: 0 });
+	}
+
 	fullScreen.value = false;
 });
 
