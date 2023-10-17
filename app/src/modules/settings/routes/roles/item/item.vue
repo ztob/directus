@@ -7,7 +7,7 @@ import { useServerStore } from '@/stores/server';
 import { useUserStore } from '@/stores/user';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
 import UsersInvite from '@/views/private/components/users-invite.vue';
-import { computed, ref, toRefs, onMounted, onUnmounted, watch, watchEffect } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
@@ -79,45 +79,6 @@ const canInviteUsers = computed(() => {
 
 	return !!usersCreatePermission && !!rolesReadPermission;
 });
-
-
-// CHANGED
-// const scrollPosition = ref<number | null>(null)
-
-// function handlePageScroll(e: Event) {
-// 	e.preventDefault();
-// 	console.log(e.target.scrollTop);
-// 	if(e.target.scrollTop === 0) return false
-
-// 	const el = e.target as HTMLInputElement
-// 	scrollPosition.value = el.scrollTop
-// }
-
-// onMounted(() => {
-// 	window.addEventListener('scroll', handlePageScroll, true)
-// 	window.scrollTo(0, 200);
-// })
-
-// onUnmounted(() => {
-// 	window.removeEventListener('scroll', handlePageScroll, true)
-// })
-
-// watch(() => [props.primaryKey, props.permissionKey, appAccess], () => {
-// 	console.log(scrollTop.value);
-// 	console.log(window.scrollY);
-
-// 	window.scrollTo(0, scrollTop.value as number);
-// }, { deep: true })
-// watchEffect(() => {
-//       if (scrollPosition.value !== null) {
-//         // console.log("Restoring scroll position:", scrollPosition.value);
-//         window.scrollTo(0, scrollPosition.value);
-//       }
-//     });
-
-// ---------------------
-
-
 
 /**
  * @NOTE
