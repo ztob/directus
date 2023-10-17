@@ -148,17 +148,9 @@ async function fetchPresetItems() {
 			},
 		};
 
-// YET TO BE CHANGED
+		params.filter = props.bookmark.filter
 
-		if (props.bookmark?.filter?._and) {
-			params.filter = {
-				_and: [...props.bookmark.filter._and]
-			}
-		}
-
-		if (props.bookmark?.search) {
-			params.search = props.bookmark.search
-		}
+		params.search = props.bookmark.search
 
 		const { data } = await api.get(`items/${props.bookmark.collection}`, {
 			params
