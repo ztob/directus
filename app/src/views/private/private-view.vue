@@ -232,7 +232,7 @@ const theme = computed(() => {
 provide('main-element', contentEl);
 
 router.afterEach(() => {
-	// contentEl.value?.scrollTo({ top: 0 });
+	contentEl.value?.scrollTo({ top: 0 });
 	fullScreen.value = false;
 });
 
