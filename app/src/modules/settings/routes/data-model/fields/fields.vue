@@ -70,7 +70,7 @@ function discardAndLeave() {
 </script>
 
 <template>
-	<private-view :title="collectionInfo && formatTitle(collectionInfo.collection)">
+	<private-view :title="collectionInfo && formatTitle(collectionInfo.collection)" :is_prevent_main_content_scroll="true">
 		<template #headline>
 			<v-breadcrumb :items="[{ name: t('settings_data_model'), to: '/settings/data-model' }]" />
 		</template>

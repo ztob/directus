@@ -7,7 +7,7 @@ import { useServerStore } from '@/stores/server';
 import { useUserStore } from '@/stores/user';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
 import UsersInvite from '@/views/private/components/users-invite.vue';
-import { computed, ref, toRefs, onMounted, onUnmounted, watch, watchEffect } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
@@ -80,35 +80,6 @@ const canInviteUsers = computed(() => {
 	return !!usersCreatePermission && !!rolesReadPermission;
 });
 
-
-// CHANGED
-const scrollPosition = ref(0)
-
-watch(() => [props.primaryKey, props.permissionKey, appAccess], () => {
-	const contentDiv = document.querySelector('#main-content');
-
-	if (contentDiv) {
-		contentDiv.scrollTo(0, scrollPosition.value);
-	}
-}, { deep: true })
-
-onMounted(() => {
-	window.addEventListener('scroll', handlePageScroll, true)
-	window.scrollTo(0, 200);
-})
-
-onUnmounted(() => {
-	window.removeEventListener('scroll', handlePageScroll, true)
-})
-
-function handlePageScroll(e: Event) {
-	const el = e.target as HTMLInputElement
-	scrollPosition.value = el.scrollTop
-}
-
-// ---------------------
-
-
 /**
  * @NOTE
  * The userStore contains the information about the role of the current user. We want to
@@ -143,7 +114,10 @@ function discardAndLeave() {
 </script>
 
 <template>
-	<private-view :title="loading ? t('loading') : t('editing_role', { role: item && item.name })">
+	<private-view
+		:title="loading ? t('loading') : t('editing_role', { role: item && item.name })"
+		:is_prevent_main_content_scroll="true"
+	>
 		<template #headline>
 			<v-breadcrumb :items="[{ name: t('settings_permissions'), to: '/settings/roles' }]" />
 		</template>
