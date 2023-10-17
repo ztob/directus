@@ -436,8 +436,6 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 
 		removeDisabledAnd(query.filter as FilterField | null | undefined)
 
-		console.log(JSON.stringify(query.filter, null, 2))
-
 		const updatedQuery =
 			opts?.emitEvents !== false
 				? await emitter.emitFilter(
