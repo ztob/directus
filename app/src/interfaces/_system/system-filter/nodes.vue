@@ -269,8 +269,8 @@ function isExistingField(node: Record<string, any>): boolean {
 }
 
 // CHANGED
-function isFieldDisabled(element: Filter[]) {
-	return element?.disabled
+function isFieldDisabled(element: Filter) {
+	return element?.$_disabled_$
 }
 </script>
 

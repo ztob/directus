@@ -184,14 +184,14 @@ function onEnableDisable(ids: string[]) {
 	function updateNode(node: Filter, index: number, id: number) {
 		if(index === id) {
 				// enable
-				if(node?.disabled) {
-					const { disabled, ...rest } = node
+				if(node?.$_disabled_$) {
+					const { $_disabled_$, ...rest } = node
 					return rest
 				} else {
 					// disable
 					return {
 						...node,
-						disabled: true
+						$_disabled_$: true
 					}
 				}
 			}
