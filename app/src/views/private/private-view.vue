@@ -37,7 +37,7 @@ const props = withDefaults(
 		splitView?: boolean;
 		splitViewMinWidth?: number;
 		sidebarShadow?: boolean;
-		is_roles_permissions?: boolean;
+		is_prevent_main_content_scroll?: boolean;
 	}>(),
 	{
 		title: null,
@@ -234,7 +234,7 @@ provide('main-element', contentEl);
 
 router.afterEach(() => {
 	// disable scroll to the top if it is Roles&Permissions administartor page
-	if(!props.is_roles_permissions) {
+	if(!props.is_prevent_main_content_scroll) {
 		contentEl.value?.scrollTo({ top: 0 });
 	}
 
