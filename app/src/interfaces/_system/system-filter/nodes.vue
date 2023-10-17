@@ -346,6 +346,7 @@ function isFieldDisabled(element: Filter) {
 								name="close"
 								small
 								clickable
+								class="delete_icon"
 								@click="$emit('remove-node', [index])"
 							/>
 						</p>
@@ -427,7 +428,6 @@ function isFieldDisabled(element: Filter) {
 	&_field_disabled {
 		pointer-events: none;
 	}
-
 
 	.logic-type {
 		color: var(--foreground-subdued);
@@ -541,13 +541,18 @@ function isFieldDisabled(element: Filter) {
 		left: 100%;
 		padding-left: 4px;
 		transform: translateY(-50%);
-		// opacity: 0;
 		transition: opacity var(--fast) var(--transition);
 
 		.disable-icon {
 			--v-icon-color: var(--foreground-subdued);
 			--v-icon-color-hover: var(--foreground-subdued);
 		}
+
+		.delete_icon {
+			opacity: 0;
+			transition: opacity var(--fast) var(--transition);
+		}
+
 
 		.field_disabled {
 			--v-icon-color: var(--primary);
@@ -563,6 +568,12 @@ function isFieldDisabled(element: Filter) {
 		// changed
 		filter_field_icons,
 		&:hover {
+			opacity: 1;
+		}
+	}
+
+	&:hover {
+		.delete_icon {
 			opacity: 1;
 		}
 	}
