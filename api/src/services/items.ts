@@ -32,6 +32,13 @@ export type QueryOptions = {
 	emitEvents?: boolean;
 };
 
+interface FilterField {
+	[key: string]: any;
+	$_disabled_$?: {
+		_eq: boolean;
+	};
+}
+
 export type MutationTracker = {
 	trackMutations: (count: number) => void;
 	getCount: () => number;
@@ -395,15 +402,18 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 	/**
 	 * Get items by query
 	 */
+
 	async readByQuery(query: Query, opts?: QueryOptions): Promise<Item[]> {
 
-		function removeDisabledAnd(obj: any) {
+		function removeDisabledAnd(obj: FilterField | null | undefined) {
 			if (typeof obj === 'object') {
 				if (Array.isArray(obj)) {
 					for (let i = obj.length - 1; i >= 0; i--) {
 						const element = obj[i];
 						removeDisabledAnd(element);
-						if (JSON.stringify(element) === '{}') {
+
+						// if (JSON.stringify(element) === '{}') {
+							if(!Object.keys(element).length) {
 							// Check if the element is an empty object
 							obj.splice(i, 1);
 						}
@@ -413,7 +423,8 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 						if (obj.hasOwnProperty(key)) {
 							const value: any = obj[key];
 							removeDisabledAnd(value);
-							if (key === '_and' && value.some((subObj: any) => subObj.disabled)) {
+
+							if (key === '_and' && value.some((subObj: FilterField) => subObj.$_disabled_$)) {
 								// Delete the entire object
 								delete obj[key];
 							}
@@ -423,45 +434,9 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 			}
 		}
 
-		removeDisabledAnd(query.filter)
+		removeDisabledAnd(query.filter as FilterField | null | undefined)
 
-
-		// function removeFilterState(obj: any) {
-		// 	if (typeof obj === 'object' && obj !== null) {
-		// 		if (Array.isArray(obj)) {
-		// 			// If it's an array, iterate over its elements
-		// 			for (let i = obj.length - 1; i >= 0; i--) {
-		// 				if (obj[i]['$_filter_state_$']) {
-		// 					// Remove the array element if it contains '$_filter_state_$'
-		// 					obj.splice(i, 1);
-		// 				} else {
-		// 					// Recursively remove '$_filter_state_$' from array elements
-		// 					removeFilterState(obj[i]);
-		// 				}
-		// 			}
-		// 		} else {
-		// 			// If it's an object, iterate over its properties
-		// 			for (const key in obj) {
-		// 				if (obj[key] && obj[key]['$_filter_state_$']) {
-		// 					// Remove the object property if it contains '$_filter_state_$'
-		// 					delete obj[key];
-		// 				} else {
-		// 					// Recursively remove '$_filter_state_$' from object properties
-		// 					removeFilterState(obj[key]);
-		// 				}
-		// 			}
-
-		// 			// Remove the top-level '$_filter_state_$' property
-		// 			if (obj['$_filter_state_$']) {
-		// 				delete obj['$_filter_state_$'];
-		// 			}
-		// 		}
-		// 	}
-
-		// 	return obj;
-		// }
-
-		// removeFilterState(query.filter);
+		console.log(JSON.stringify(query.filter, null, 2))
 
 		const updatedQuery =
 			opts?.emitEvents !== false

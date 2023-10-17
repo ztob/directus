@@ -120,7 +120,7 @@ function clearAllFilters() {
 				middleware: onClickOutside,
 			}"
 			class="search-input"
-			:class="{ active, 'filter-active': filterActive, 'has-content': !!modelValue, 'filter-border': filterBorder }"
+			:class="{ active, 'filter-active': filterActive, 'has-content': !!modelValue, 'filter-border': filterBorder, 'search-input-filled': activeFilterCount }"
 			@click="active = true"
 		>
 			<span class="icon-group">
@@ -169,7 +169,7 @@ function clearAllFilters() {
 .search-input {
 	display: flex;
 	align-items: center;
-	width: 95px;
+	width: 72px;
 	max-width: 100%;
 	height: 44px;
 	overflow: hidden;
@@ -177,6 +177,9 @@ function clearAllFilters() {
 	border-radius: calc(44px / 2);
 	transition: width var(--slow) var(--transition), border-bottom-left-radius var(--fast) var(--transition),
 	border-bottom-right-radius var(--fast) var(--transition);
+	&-filled {
+		width: 95px;
+	}
 
 	.icon-empty {
 		--v-icon-color: var(--foreground-subdued);
