@@ -114,7 +114,10 @@ function discardAndLeave() {
 </script>
 
 <template>
-	<private-view :title="loading ? t('loading') : t('editing_role', { role: item && item.name })">
+	<private-view
+		:title="loading ? t('loading') : t('editing_role', { role: item && item.name })"
+		:is_prevent_main_content_scroll="true"
+	>
 		<template #headline>
 			<v-breadcrumb :items="[{ name: t('settings_permissions'), to: '/settings/roles' }]" />
 		</template>
