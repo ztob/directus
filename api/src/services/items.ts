@@ -412,8 +412,8 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 						const element = obj[i];
 						removeDisabledAnd(element);
 
-						// if (JSON.stringify(element) === '{}') {
-							if(!Object.keys(element).length) {
+						if (JSON.stringify(element) === '{}') {
+							// if(!Object.keys(element).length) {
 							// Check if the element is an empty object
 							obj.splice(i, 1);
 						}
