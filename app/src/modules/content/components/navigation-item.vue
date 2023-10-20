@@ -15,7 +15,6 @@ const props = defineProps<{
 	collection: Collection;
 	showHidden?: boolean;
 	search?: string;
-	refreshInterval: number | null;
 }>();
 
 const { t } = useI18n();
@@ -104,7 +103,7 @@ function getChildBookmarks(collection: Collection) {
 			:collection="childCollection"
 			:search="search"
 		/>
-		<navigation-bookmark v-for="bookmark in childBookmarks" :key="bookmark.id" :bookmark="bookmark" :refreshInterval="refreshInterval"/>
+		<navigation-bookmark v-for="bookmark in childBookmarks" :key="bookmark.id" :bookmark="bookmark"/>
 	</v-list-group>
 
 	<v-list-item

@@ -533,7 +533,7 @@ function usePermissions() {
 			</template>
 
 			<template #navigation>
-				<content-navigation :current-collection="collection" :refreshInterval="refreshInterval"/>
+				<content-navigation :current-collection="collection"/>
 			</template>
 
 			<v-info

@@ -13,7 +13,6 @@ import api from '@/api';
 
 interface Props {
 	bookmark: Preset;
-	refreshInterval: number | null
 }
 
 const props = defineProps<Props>();
