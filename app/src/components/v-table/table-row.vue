@@ -14,6 +14,10 @@ interface Props {
 	hasClickListener?: boolean;
 	height?: number;
 }
+console.log(props.headers,
+props.item,
+);
+
 
 const props = withDefaults(defineProps<Props>(), {
 	showSelect: 'none',
@@ -33,6 +37,12 @@ const cssHeight = computed(() => {
 		renderTemplateImage: props.height - 16 + 'px',
 	};
 });
+
+const onAddFilter = (key, value, header) => {
+	// console.log(key, value);
+	console.log(header);
+
+}
 </script>
 
 <template>
@@ -51,6 +61,7 @@ const cssHeight = computed(() => {
 		</td>
 
 		<td v-for="header in headers" :key="header.value" class="cell" :class="`align-${header.align}`">
+			<v-icon v-if="header.field.interfaceOptions?._is_add_filter" name="add" @click.stop="onAddFilter(header.value, item[header.value], header)"/>
 			<slot :name="`item.${header.value}`" :item="item">
 				<v-text-overflow
 					v-if="

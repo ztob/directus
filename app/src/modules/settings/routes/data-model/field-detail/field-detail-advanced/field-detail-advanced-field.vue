@@ -9,6 +9,9 @@ const fieldDetailStore = useFieldDetailStore();
 const readonly = syncFieldDetailStoreProperty('field.meta.readonly', false);
 const hidden = syncFieldDetailStoreProperty('field.meta.hidden', false);
 const required = syncFieldDetailStoreProperty('field.meta.required', false);
+
+const _add_filter = syncFieldDetailStoreProperty('field.meta.options._is_add_filter', false);
+
 const note = syncFieldDetailStoreProperty('field.meta.note');
 const translations = syncFieldDetailStoreProperty('field.meta.translations');
 const { loading, field } = storeToRefs(fieldDetailStore);
@@ -31,6 +34,11 @@ const isGenerated = computed(() => field.value.schema?.is_generated);
 		<div class="field half-left">
 			<div class="label type-label">{{ t('hidden') }}</div>
 			<v-checkbox v-model="hidden" :label="t('hidden_on_detail')" block />
+		</div>
+
+		<div class="field half-right">
+			<div class="label type-label">Show "+"</div>
+			<v-checkbox v-model="_add_filter" label="Abillity to add to filter by clicking on '+'" block />
 		</div>
 
 		<div v-if="type !== 'group'" class="field full">
