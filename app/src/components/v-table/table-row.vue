@@ -14,10 +14,6 @@ interface Props {
 	hasClickListener?: boolean;
 	height?: number;
 }
-console.log(props.headers,
-props.item,
-);
-
 
 const props = withDefaults(defineProps<Props>(), {
 	showSelect: 'none',
@@ -29,7 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
 	height: 48,
 });
 
-defineEmits(['click', 'item-selected']);
+defineEmits(['click', 'item-selected', 'add-filter']);
 
 const cssHeight = computed(() => {
 	return {
@@ -38,10 +34,10 @@ const cssHeight = computed(() => {
 	};
 });
 
-const onAddFilter = (key, value, header) => {
-	// console.log(key, value);
-	console.log(header);
-
+// CHANGED
+function isAddFilterIcon(header: Header) {
+	if(header.field?.display === 'add-filter-ext-from-displays') return false
+	return Boolean(header.field?.interfaceOptions?._is_add_filter)
 }
 </script>
 
@@ -61,7 +57,7 @@ const onAddFilter = (key, value, header) => {
 		</td>
 
 		<td v-for="header in headers" :key="header.value" class="cell" :class="`align-${header.align}`">
-			<v-icon v-if="header.field.interfaceOptions?._is_add_filter" name="add" @click.stop="onAddFilter(header.value, item[header.value], header)"/>
+			<v-icon v-if="isAddFilterIcon(header)" name="add" @click.stop="$emit('add-filter', header.value, item[header.value])"/>
 			<slot :name="`item.${header.value}`" :item="item">
 				<v-text-overflow
 					v-if="

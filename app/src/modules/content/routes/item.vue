@@ -77,13 +77,20 @@ watch(filter, () => {
 
 // UPDATE FILTER VALUE
 window.addFilterFromInterface = (newFilter: any) => {
+	console.log(filter.value)
+
 	if (!filter.value) {
 		filter.value = {
-			_and: [newFilter],
-			$_filter_state_$: [newFilter]
+			_and: [newFilter]
 		}
 	} else {
-		const isFilterExists = filter.value.$_filter_state_$.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
+		const isFilterExists = filter.value._and.find(filter => {
+		for(const key in filter) {
+			if(key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true
+		}
+
+		return false
+	})
 
 		if (isFilterExists) {
 			router.push(`/content/${collection.value}`)
@@ -91,8 +98,7 @@ window.addFilterFromInterface = (newFilter: any) => {
 		}
 
 		filter.value = {
-			_and: filter.value._and.concat(newFilter),
-			$_filter_state_$: filter.value.$_filter_state_$.concat(newFilter)
+			_and: filter.value._and.concat(newFilter)
 		}
 
 	}

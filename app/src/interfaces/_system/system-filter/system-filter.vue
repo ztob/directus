@@ -201,7 +201,13 @@ function onEnableDisable(ids: string[]) {
 }
 
 window.addFilterFromDisplay = (newFilter: any) => {
-	const isFilterExists = innerValue.value.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
+	const isFilterExists = innerValue.value.find(filter => {
+		for(const key in filter) {
+			if(key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true
+		}
+
+		return false
+	})
 
 	if (!isFilterExists) {
 		innerValue.value = innerValue.value.concat(newFilter)

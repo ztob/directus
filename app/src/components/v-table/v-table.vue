@@ -249,6 +249,19 @@ function onSortChange(event: EndEvent) {
 function updateSort(newSort: Sort) {
 	emit('update:sort', newSort?.by ? newSort : null);
 }
+
+// CHANGED
+function onAddFilter(filterBy: string, value: string | number) {
+	// console.log(key, value);
+	const newFilter = {
+		[filterBy]: {
+			_eq: value,
+		}
+	};
+
+	window.addFilterFromDisplay(newFilter);
+}
+
 </script>
 
 <template>
@@ -327,6 +340,7 @@ function updateSort(newSort: Sort) {
 								value: !getSelectedState(element),
 							})
 						"
+						@add-filter="onAddFilter"
 					>
 						<template v-for="header in internalHeaders" #[`item.${header.value}`]>
 							<slot :item="element" :name="`item.${header.value}`" />

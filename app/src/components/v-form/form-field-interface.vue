@@ -31,6 +31,8 @@ const inter = useExtension(
 const interfaceExists = computed(() => !!inter.value);
 
 const componentName = computed(() => {
+	console.log(props.field?.meta?.interface);
+
 	return props.field?.meta?.interface
 		? `interface-${props.field.meta.interface}`
 		: `interface-${getDefaultInterfaceForType(props.field.type!)}`;
@@ -39,6 +41,7 @@ const componentName = computed(() => {
 const value = computed(() =>
 	props.modelValue === undefined ? props.field.schema?.default_value ?? null : props.modelValue
 );
+
 </script>
 
 <template>
@@ -52,25 +55,26 @@ const value = computed(() =>
 
 		<v-error-boundary v-if="interfaceExists && !rawEditorActive" :name="componentName">
 			<component
-				:is="componentName"
-				v-bind="(field.meta && field.meta.options) || {}"
-				:autofocus="disabled !== true && autofocus"
-				:disabled="disabled"
-				:loading="loading"
-				:value="value"
-				:batch-mode="batchMode"
-				:batch-active="batchActive"
-				:width="(field.meta && field.meta.width) || 'full'"
-				:type="field.type"
-				:collection="field.collection"
-				:field="field.field"
-				:field-data="field"
-				:primary-key="primaryKey"
-				:length="field.schema && field.schema.max_length"
-				:direction="direction"
-				@input="$emit('update:modelValue', $event)"
-				@set-field-value="$emit('setFieldValue', $event)"
-			/>
+			:is="componentName"
+			v-bind="(field.meta && field.meta.options) || {}"
+			:autofocus="disabled !== true && autofocus"
+			:disabled="disabled"
+			:loading="loading"
+			:value="value"
+			:batch-mode="batchMode"
+			:batch-active="batchActive"
+			:width="(field.meta && field.meta.width) || 'full'"
+			:type="field.type"
+			:collection="field.collection"
+			:field="field.field"
+			:field-data="field"
+			:primary-key="primaryKey"
+			:length="field.schema && field.schema.max_length"
+			:direction="direction"
+			@input="$emit('update:modelValue', $event)"
+			@set-field-value="$emit('setFieldValue', $event)"
+			>
+		</component>
 
 			<template #fallback>
 				<v-notice type="warning">{{ t('unexpected_error') }}</v-notice>
