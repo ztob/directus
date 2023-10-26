@@ -37,7 +37,7 @@ const isGenerated = computed(() => field.value.schema?.is_generated);
 		</div>
 
 		<div class="field half-right">
-			<div class="label type-label">Show "+"</div>
+			<div class="label type-label">Add To Filter</div>
 			<v-checkbox v-model="_add_filter" label="Add To Filter" block />
 		</div>
 
