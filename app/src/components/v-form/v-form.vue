@@ -36,6 +36,7 @@ interface Props {
 	direction?: string;
 	showDivider?: boolean;
 	inline?: boolean;
+	isFilterLoading: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -415,6 +416,7 @@ function useRawEditor() {
 					@unset="unsetValue(fieldsMap[fieldName]!)"
 					@toggle-batch="toggleBatchField(fieldsMap[fieldName]!)"
 					@toggle-raw="toggleRawField(fieldsMap[fieldName]!)"
+					:isFilterLoading="isFilterLoading"
 					@add-filter="$emit('add-filter', $event)"
 				/>
 			</template>

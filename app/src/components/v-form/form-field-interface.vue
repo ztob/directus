@@ -17,6 +17,7 @@ const props = defineProps<{
 	rawEditorEnabled?: boolean;
 	rawEditorActive?: boolean;
 	direction?: string;
+	isFilterLoading: string
 }>();
 
 defineEmits(['update:modelValue', 'setFieldValue', 'add-filter']);
@@ -81,13 +82,15 @@ function isAddFilterIcon(field: FormField) {
 				@input="$emit('update:modelValue', $event)"
 				@set-field-value="$emit('setFieldValue', $event)"
 				/>
-				<v-icon
-					v-if="isAddFilterIcon(field)"
-					v-tooltip="t('Add to filters')"
-					name="add"
-					class="add-icon"
-					@click="$emit('add-filter', { field: field.field, value })"
-				/>
+				<span class="add-icon">
+					<v-progress-circular v-if="isFilterLoading === field.field" small indeterminate/>
+					<v-icon
+						v-if="isFilterLoading !== field.field && isAddFilterIcon(field)"
+						v-tooltip="t('Add to filters')"
+						name="add"
+						@click="$emit('add-filter', { field: field.field, value })"
+					/>
+				</span>
 			</div>
 
 			<template #fallback>
