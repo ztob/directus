@@ -19,7 +19,7 @@ const props = defineProps<{
 	direction?: string;
 }>();
 
-defineEmits(['update:modelValue', 'setFieldValue']);
+defineEmits(['update:modelValue', 'setFieldValue', 'add-filter']);
 
 const { t } = useI18n();
 
@@ -39,6 +39,14 @@ const componentName = computed(() => {
 const value = computed(() =>
 	props.modelValue === undefined ? props.field.schema?.default_value ?? null : props.modelValue
 );
+
+// CHANGED
+function isAddFilterIcon(field: FormField, val: typeof value.value) {
+	if (field.meta?.interface === "add-filter-ext-from-interfaces") return false
+	return Boolean(field.meta?.options?._is_add_filter &&
+		val !== undefined && val !== null && val !== '')
+}
+
 </script>
 
 <template>
@@ -51,7 +59,10 @@ const value = computed(() =>
 		<v-skeleton-loader v-if="loading && field.hideLoader !== true" />
 
 		<v-error-boundary v-if="interfaceExists && !rawEditorActive" :name="componentName">
-			<component
+			<div
+				class="field-component"
+			>
+				<component
 				:is="componentName"
 				v-bind="(field.meta && field.meta.options) || {}"
 				:autofocus="disabled !== true && autofocus"
@@ -70,7 +81,15 @@ const value = computed(() =>
 				:direction="direction"
 				@input="$emit('update:modelValue', $event)"
 				@set-field-value="$emit('setFieldValue', $event)"
-			/>
+				/>
+				<v-icon
+					v-if="isAddFilterIcon(field, value)"
+					v-tooltip="t('Add to filters')"
+					name="add"
+					class="add-icon"
+					@click="$emit('add-filter', { field: field.field, value })"
+				/>
+			</div>
 
 			<template #fallback>
 				<v-notice type="warning">{{ t('unexpected_error') }}</v-notice>
@@ -105,6 +124,24 @@ const value = computed(() =>
 
 	&.subdued {
 		opacity: 0.5;
+	}
+}
+
+// CHANGED
+.field-component {
+	// display: flex;
+	// align-items: center;
+	position: relative;
+	.add-icon {
+		cursor: pointer;
+		--v-icon-color: var(--foreground-subdued);
+		position: absolute;
+		right: -30px;
+		top: 50%;
+		transform: translateY(-50%);
+		&:hover {
+			color: #8866FF;
+		}
 	}
 }
 </style>

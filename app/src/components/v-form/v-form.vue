@@ -61,7 +61,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'add-filter']);
 
 const values = computed(() => {
 	return Object.assign({}, props.initialValues, props.modelValue);
@@ -415,6 +415,7 @@ function useRawEditor() {
 					@unset="unsetValue(fieldsMap[fieldName]!)"
 					@toggle-batch="toggleBatchField(fieldsMap[fieldName]!)"
 					@toggle-raw="toggleRawField(fieldsMap[fieldName]!)"
+					@add-filter="$emit('add-filter', $event)"
 				/>
 			</template>
 		</template>

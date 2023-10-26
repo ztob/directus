@@ -69,35 +69,6 @@ const {
 
 const { filter } = usePreset(collection);
 
-watch(filter, () => {
-	setTimeout(() => {
-		router.push(`/content/${collection.value}`)
-	}, 500)
-}, { deep: true })
-
-// UPDATE FILTER VALUE
-window.addFilterFromInterface = (newFilter: any) => {
-	if (!filter.value) {
-		filter.value = {
-			_and: [newFilter],
-			$_filter_state_$: [newFilter]
-		}
-	} else {
-		const isFilterExists = filter.value.$_filter_state_$.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
-
-		if (isFilterExists) {
-			router.push(`/content/${collection.value}`)
-			return
-		}
-
-		filter.value = {
-			_and: filter.value._and.concat(newFilter),
-			$_filter_state_$: filter.value.$_filter_state_$.concat(newFilter)
-		}
-
-	}
-}
-
 const { templateData } = useTemplateData(collectionInfo, primaryKey);
 
 const isSavable = computed(() => {
@@ -386,6 +357,58 @@ function revert(values: Record<string, any>) {
 		...values,
 	};
 }
+
+// CHANGED
+watch(filter, () => {
+	setTimeout(() => {
+		router.push(`/content/${collection.value}`)
+	}, 500)
+}, { deep: true })
+
+// UPDATE FILTER VALUE
+window.addFilterFromInterface = (newFilter: any) => {
+	if (!filter.value) {
+		filter.value = {
+			_and: [newFilter]
+		}
+	} else {
+		const isFilterExists = filter.value._and.find(filter => {
+		for(const key in filter) {
+			if(key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true
+		}
+
+		return false
+	})
+
+		if (isFilterExists) {
+			router.push(`/content/${collection.value}`)
+			return
+		}
+
+		filter.value = {
+			_and: filter.value._and.concat(newFilter)
+		}
+
+	}
+}
+
+interface AddFilterFieldVal {
+	field: string;
+	value: string | number | boolean
+}
+
+function onAddFilterHandle(filter_field: AddFilterFieldVal) {
+	const { field, value } = filter_field
+
+	const newFilter = {
+		[field]: {
+			_eq: value,
+		}
+	};
+
+	window.addFilterFromInterface(newFilter);
+}
+
 </script>
 
 <template>
@@ -570,6 +593,7 @@ function revert(values: Record<string, any>) {
 			:fields="fields"
 			:primary-key="internalPrimaryKey"
 			:validation-errors="validationErrors"
+			@add-filter="onAddFilterHandle"
 		/>
 
 		<v-dialog v-model="confirmLeave" @esc="confirmLeave = false">

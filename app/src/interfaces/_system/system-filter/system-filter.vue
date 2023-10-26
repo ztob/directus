@@ -9,10 +9,11 @@ import {
 	parseJSON,
 } from '@directus/utils';
 import { cloneDeep, get, isEmpty, set } from 'lodash';
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Nodes from './nodes.vue';
 import { getNodeName } from './utils';
+import { useRouter } from 'vue-router';
 
 interface Props {
 	value?: Record<string, any> | string;
@@ -50,6 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['input']);
 
 const { t } = useI18n();
+const router = useRouter();
 
 const menuEl = ref();
 
@@ -81,31 +83,10 @@ const innerValue = computed<Filter[]>({
 		if (newVal.length === 0) {
 			emit('input', null);
 		} else {
-			// const filtered_and = filterDisabledObjects(newVal);
 			emit('input', { _and: newVal });
 		}
 	}
 });
-
-// function filterDisabledObjects(arr: any) {
-// 	return arr.reduce((result: Filter[], obj: any) => {
-// 		if (!obj?.disabled) {
-// 			const newObj = { ...obj };
-
-// 			if (obj._and) {
-// 				newObj._and = filterDisabledObjects(obj._and);
-// 			}
-
-// 			if (obj._or) {
-// 				newObj._or = filterDisabledObjects(obj._or);
-// 			}
-
-// 			result.push(newObj);
-// 		}
-
-// 		return result;
-// 	}, []);
-// }
 
 function emitValue() {
 	if (innerValue.value.length === 0) {
@@ -200,8 +181,50 @@ function onEnableDisable(ids: string[]) {
 	}
 }
 
+let deletedFilters: Filter[] = []
+
+watch(() => router.currentRoute, () => {
+	deletedFilters = []
+}, { deep: true })
+
+function deleteRestoreFiltersHandle(e: KeyboardEvent) {
+	const isDeletion = Boolean((e.ctrlKey || e.metaKey) && e.keyCode === 90 && e.code === 'KeyZ')
+	const isRestoration = Boolean((e.ctrlKey || e.metaKey) && e.keyCode === 89 && e.code === 'KeyY')
+
+	if (isDeletion) {
+		const isDeletionAllowed = innerValue.value.length
+		if (!isDeletionAllowed) return
+
+		const lastFilter = innerValue.value[innerValue.value.length - 1]
+		innerValue.value = innerValue.value.slice(0, -1)
+		deletedFilters.push(lastFilter!)
+		return
+	}
+
+	if (isRestoration) {
+		const isRestorationAllowed = deletedFilters.length
+		if (!isRestorationAllowed) return
+
+		const lastFilter = deletedFilters[deletedFilters.length - 1]
+		deletedFilters = deletedFilters.slice(0, -1)
+		innerValue.value = innerValue.value.concat(lastFilter!)
+	}
+}
+
+document.addEventListener('keydown', deleteRestoreFiltersHandle);
+
+onBeforeUnmount(() => {
+	document.removeEventListener('keydown', deleteRestoreFiltersHandle);
+});
+
 window.addFilterFromDisplay = (newFilter: any) => {
-	const isFilterExists = innerValue.value.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
+	const isFilterExists = innerValue.value.find(filter => {
+		for(const key in filter) {
+			if(key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true
+		}
+
+		return false
+	})
 
 	if (!isFilterExists) {
 		innerValue.value = innerValue.value.concat(newFilter)
