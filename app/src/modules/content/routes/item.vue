@@ -359,10 +359,13 @@ function revert(values: Record<string, any>) {
 }
 
 // CHANGED
-watch(filter, () => {
+const isFilterLoading = ref('')
+
+watch(() => filter.value, () => {
 	setTimeout(() => {
+		isFilterLoading.value = ''
 		router.push(`/content/${collection.value}`)
-	}, 500)
+	}, 900)
 }, { deep: true })
 
 // UPDATE FILTER VALUE
@@ -382,11 +385,12 @@ window.addFilterFromInterface = (newFilter: any) => {
 
 		if (isFilterExists) {
 			router.push(`/content/${collection.value}`)
+			isFilterLoading.value = ''
 			return
 		}
 
 		filter.value = {
-			_and: filter.value._and.concat(newFilter)
+			_and: [ ...filter.value._and, newFilter ]
 		}
 
 	}
@@ -399,11 +403,10 @@ interface AddFilterFieldVal {
 
 function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 	const { field, value } = filter_field
+	isFilterLoading.value = field
 
 	const newFilter = {
-		[field]: {
-			_eq: value,
-		}
+		[field]: value !== null ? { '_eq': value } : { '_null': '' }
 	};
 
 	window.addFilterFromInterface(newFilter);
@@ -593,6 +596,7 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 			:fields="fields"
 			:primary-key="internalPrimaryKey"
 			:validation-errors="validationErrors"
+			:isFilterLoading="isFilterLoading"
 			@add-filter="onAddFilterHandle"
 		/>
 

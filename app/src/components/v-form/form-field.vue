@@ -27,6 +27,7 @@ interface Props {
 	rawEditorEnabled?: boolean;
 	rawEditorActive?: boolean;
 	direction?: string;
+	isFilterLoading: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -200,6 +201,7 @@ function useComputedValues() {
 			@update:model-value="emitValue($event)"
 			@set-field-value="$emit('setFieldValue', $event)"
 			@add-filter="$emit('add-filter', $event)"
+			:isFilterLoading="isFilterLoading"
 			/>
 
 		<form-field-raw-editor
