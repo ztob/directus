@@ -41,10 +41,9 @@ const value = computed(() =>
 );
 
 // CHANGED
-function isAddFilterIcon(field: FormField, val: typeof value.value) {
+function isAddFilterIcon(field: FormField) {
 	if (field.meta?.interface === "add-filter-ext-from-interfaces") return false
-	return Boolean(field.meta?.options?._is_add_filter &&
-		val !== undefined && val !== null && val !== '')
+	return Boolean(field.meta?.options?._is_add_filter)
 }
 
 </script>
@@ -83,7 +82,7 @@ function isAddFilterIcon(field: FormField, val: typeof value.value) {
 				@set-field-value="$emit('setFieldValue', $event)"
 				/>
 				<v-icon
-					v-if="isAddFilterIcon(field, value)"
+					v-if="isAddFilterIcon(field)"
 					v-tooltip="t('Add to filters')"
 					name="add"
 					class="add-icon"

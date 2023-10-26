@@ -401,9 +401,7 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 	const { field, value } = filter_field
 
 	const newFilter = {
-		[field]: {
-			_eq: value,
-		}
+		[field]: value !== null ? { '_eq': value } : { '_null': '' }
 	};
 
 	window.addFilterFromInterface(newFilter);

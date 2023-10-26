@@ -38,7 +38,7 @@ const isGenerated = computed(() => field.value.schema?.is_generated);
 
 		<div class="field half-right">
 			<div class="label type-label">Show "+"</div>
-			<v-checkbox v-model="_add_filter" label="Abillity to add to filter by clicking on '+'" block />
+			<v-checkbox v-model="_add_filter" label="Add To Filter" block />
 		</div>
 
 		<div v-if="type !== 'group'" class="field full">

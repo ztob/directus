@@ -253,9 +253,7 @@ function updateSort(newSort: Sort) {
 // CHANGED
 function onAddFilter(filterBy: string, value: string | number | boolean) {
 	const newFilter = {
-		[filterBy]: {
-			_eq: value,
-		}
+		[filterBy]: value !== null ? { '_eq': value } : { '_null': '' }
 	};
 
 	window.addFilterFromDisplay(newFilter);
