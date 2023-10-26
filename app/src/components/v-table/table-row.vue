@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { ShowSelect } from '@directus/types';
 import { Header, Item } from './types';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
 	headers: Header[];
@@ -39,6 +40,10 @@ function isAddFilterIcon(header: Header) {
 	if(header.field?.display === 'add-filter-ext-from-displays') return false
 	return Boolean(header.field?.interfaceOptions?._is_add_filter)
 }
+
+const displayHovered = ref('')
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -56,9 +61,27 @@ function isAddFilterIcon(header: Header) {
 			/>
 		</td>
 
-		<td v-for="header in headers" :key="header.value" class="cell" :class="`align-${header.align}`">
-			<v-icon v-if="isAddFilterIcon(header)" name="add" @click.stop="$emit('add-filter', header.value, item[header.value])"/>
-			<slot :name="`item.${header.value}`" :item="item">
+		<td
+		v-for="header in headers"
+		:key="header.value"
+		class="cell"
+		:class="`align-${header.align}`"
+		@mouseover="displayHovered = header.value"
+		@mouseleave="displayHovered = ''"
+		>
+
+			<v-icon
+			v-if="isAddFilterIcon(header)"
+			name="add"
+			@click.stop="$emit('add-filter', header.value, item[header.value])"
+			:class="{ 'add-icon': true, 'add-icon-visible': displayHovered === header.value }"
+			v-tooltip="t('Add to filters')"
+			/>
+
+			<slot
+			:name="`item.${header.value}`"
+			:item="item"
+			>
 				<v-text-overflow
 					v-if="
 						header.value.split('.').reduce((acc, val) => {
@@ -140,5 +163,17 @@ function isAddFilterIcon(header: Header) {
 			height: v-bind('cssHeight.renderTemplateImage');
 		}
 	}
+}
+
+// CHANGED
+.add-icon {
+	opacity: 0;
+	--v-icon-color: var(--foreground-subdued);
+}
+.add-icon:hover {
+	--v-icon-color: var(--foreground-normal);
+}
+.add-icon-visible {
+	opacity: 1;
 }
 </style>

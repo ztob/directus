@@ -19,7 +19,7 @@ const props = defineProps<{
 	direction?: string;
 }>();
 
-defineEmits(['update:modelValue', 'setFieldValue']);
+defineEmits(['update:modelValue', 'setFieldValue', 'add-filter']);
 
 const { t } = useI18n();
 
@@ -31,8 +31,6 @@ const inter = useExtension(
 const interfaceExists = computed(() => !!inter.value);
 
 const componentName = computed(() => {
-	console.log(props.field?.meta?.interface);
-
 	return props.field?.meta?.interface
 		? `interface-${props.field.meta.interface}`
 		: `interface-${getDefaultInterfaceForType(props.field.type!)}`;
@@ -41,6 +39,13 @@ const componentName = computed(() => {
 const value = computed(() =>
 	props.modelValue === undefined ? props.field.schema?.default_value ?? null : props.modelValue
 );
+
+// CHANGED
+function isAddFilterIcon(field: FormField, val: typeof value.value) {
+	if (field.meta?.interface === "add-filter-ext-from-interfaces") return false
+	return Boolean(field.meta?.options?._is_add_filter &&
+		val !== undefined && val !== null && val !== '')
+}
 
 </script>
 
@@ -54,27 +59,37 @@ const value = computed(() =>
 		<v-skeleton-loader v-if="loading && field.hideLoader !== true" />
 
 		<v-error-boundary v-if="interfaceExists && !rawEditorActive" :name="componentName">
-			<component
-			:is="componentName"
-			v-bind="(field.meta && field.meta.options) || {}"
-			:autofocus="disabled !== true && autofocus"
-			:disabled="disabled"
-			:loading="loading"
-			:value="value"
-			:batch-mode="batchMode"
-			:batch-active="batchActive"
-			:width="(field.meta && field.meta.width) || 'full'"
-			:type="field.type"
-			:collection="field.collection"
-			:field="field.field"
-			:field-data="field"
-			:primary-key="primaryKey"
-			:length="field.schema && field.schema.max_length"
-			:direction="direction"
-			@input="$emit('update:modelValue', $event)"
-			@set-field-value="$emit('setFieldValue', $event)"
+			<div
+				class="field-component"
 			>
-		</component>
+				<component
+				:is="componentName"
+				v-bind="(field.meta && field.meta.options) || {}"
+				:autofocus="disabled !== true && autofocus"
+				:disabled="disabled"
+				:loading="loading"
+				:value="value"
+				:batch-mode="batchMode"
+				:batch-active="batchActive"
+				:width="(field.meta && field.meta.width) || 'full'"
+				:type="field.type"
+				:collection="field.collection"
+				:field="field.field"
+				:field-data="field"
+				:primary-key="primaryKey"
+				:length="field.schema && field.schema.max_length"
+				:direction="direction"
+				@input="$emit('update:modelValue', $event)"
+				@set-field-value="$emit('setFieldValue', $event)"
+				/>
+				<v-icon
+					v-if="isAddFilterIcon(field, value)"
+					v-tooltip="t('Add to filters')"
+					name="add"
+					class="add-icon"
+					@click="$emit('add-filter', { field: field.field, value })"
+				/>
+			</div>
 
 			<template #fallback>
 				<v-notice type="warning">{{ t('unexpected_error') }}</v-notice>
@@ -109,6 +124,24 @@ const value = computed(() =>
 
 	&.subdued {
 		opacity: 0.5;
+	}
+}
+
+// CHANGED
+.field-component {
+	// display: flex;
+	// align-items: center;
+	position: relative;
+	.add-icon {
+		cursor: pointer;
+		--v-icon-color: var(--foreground-subdued);
+		position: absolute;
+		right: -30px;
+		top: 50%;
+		transform: translateY(-50%);
+		&:hover {
+			color: #8866FF;
+		}
 	}
 }
 </style>

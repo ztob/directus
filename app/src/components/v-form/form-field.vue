@@ -45,7 +45,7 @@ const props = withDefaults(defineProps<Props>(), {
 	direction: undefined,
 });
 
-const emit = defineEmits(['toggle-batch', 'toggle-raw', 'unset', 'update:modelValue', 'setFieldValue']);
+const emit = defineEmits(['toggle-batch', 'toggle-raw', 'unset', 'update:modelValue', 'setFieldValue', 'add-filter']);
 
 const { t } = useI18n();
 
@@ -199,7 +199,8 @@ function useComputedValues() {
 			:direction="direction"
 			@update:model-value="emitValue($event)"
 			@set-field-value="$emit('setFieldValue', $event)"
-		/>
+			@add-filter="$emit('add-filter', $event)"
+			/>
 
 		<form-field-raw-editor
 			:show-modal="showRaw"

@@ -251,8 +251,7 @@ function updateSort(newSort: Sort) {
 }
 
 // CHANGED
-function onAddFilter(filterBy: string, value: string | number) {
-	// console.log(key, value);
+function onAddFilter(filterBy: string, value: string | number | boolean) {
 	const newFilter = {
 		[filterBy]: {
 			_eq: value,
