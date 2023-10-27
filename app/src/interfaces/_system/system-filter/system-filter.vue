@@ -14,6 +14,7 @@ import { useI18n } from 'vue-i18n';
 import Nodes from './nodes.vue';
 import { getNodeName } from './utils';
 import { useRouter } from 'vue-router';
+import { useNotificationsStore } from '@/stores/notifications';
 
 interface Props {
 	value?: Record<string, any> | string;
@@ -52,6 +53,7 @@ const emit = defineEmits(['input']);
 
 const { t } = useI18n();
 const router = useRouter();
+const notificationsStore = useNotificationsStore();
 
 const menuEl = ref();
 
@@ -198,6 +200,15 @@ function deleteRestoreFiltersHandle(e: KeyboardEvent) {
 		const lastFilter = innerValue.value[innerValue.value.length - 1]
 		innerValue.value = innerValue.value.slice(0, -1)
 		deletedFilters.push(lastFilter!)
+
+		notificationsStore.add({
+			title: 'Undo Filter',
+			icon: 'filter_list_off',
+			type: 'info',
+			persist: false,
+			closeable: true,
+		});
+
 		return
 	}
 
@@ -208,6 +219,15 @@ function deleteRestoreFiltersHandle(e: KeyboardEvent) {
 		const lastFilter = deletedFilters[deletedFilters.length - 1]
 		deletedFilters = deletedFilters.slice(0, -1)
 		innerValue.value = innerValue.value.concat(lastFilter!)
+
+		notificationsStore.add({
+			title: 'Redo Filter',
+			icon: 'filter_list',
+			type: 'info',
+			persist: false,
+			closeable: true,
+		});
+
 	}
 }
 
