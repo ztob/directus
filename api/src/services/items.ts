@@ -405,6 +405,36 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 
 	async readByQuery(query: Query, opts?: QueryOptions): Promise<Item[]> {
 
+		// function transformObjectInPlace(inputObject) {
+		// 	function deepTransform(obj) {
+		// 		for (const key in obj) {
+		// 			if (typeof obj[key] === 'object') {
+		// 				if (key.includes('][')) {
+		// 					const [mainKey, operator] = key.split('][').map(part => part.replace(/[\[\]]/g, ''));
+		// 					const value = obj[key];
+		// 					delete obj[key];
+		// 					if (!obj[mainKey]) {
+		// 						obj[mainKey] = {};
+		// 					}
+		// 					obj[mainKey][operator] = value;
+		// 				}
+		// 				deepTransform(obj[key]); // Recursively search for the structure in nested objects.
+		// 			}
+		// 		}
+		// 	}
+
+		// 	deepTransform(inputObject);
+		// }
+
+		// transformObjectInPlace(query.filter)
+
+		// console.log('-----------------------')
+		// console.log('AFTER the handleUglyObjects FUNC')
+		// console.log(query)
+		// console.log(JSON.stringify(query.filter, null, 4))
+		// console.log('-----------------------')
+
+
 		function removeDisabledAnd(obj: FilterField | null | undefined) {
 			if (typeof obj === 'object') {
 				if (Array.isArray(obj)) {
