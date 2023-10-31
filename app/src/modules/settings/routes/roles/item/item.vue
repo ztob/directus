@@ -14,6 +14,12 @@ import SettingsNavigation from '../../../components/navigation.vue';
 import PermissionsOverview from './components/permissions-overview.vue';
 import RoleInfoSidebarDetail from './components/role-info-sidebar-detail.vue';
 import ModulePermissions from './components/module-permissions.vue';
+import SaveOptions from '@/views/private/components/save-options.vue';
+import api from '@/api';
+import { unexpectedError } from '@/utils/unexpected-error';
+import { Permission } from '@directus/types';
+import { useSettingsStore } from '@/stores/settings';
+import { ModuleBarItem, PreviewExtra } from './types';
 
 const props = defineProps<{
 	primaryKey: string;
@@ -25,6 +31,7 @@ const { t } = useI18n();
 
 const router = useRouter();
 
+const settingsStore = useSettingsStore();
 const userStore = useUserStore();
 const permissionsStore = usePermissionsStore();
 const serverStore = useServerStore();
@@ -111,13 +118,91 @@ function discardAndLeave() {
 	confirmLeave.value = false;
 	router.push(leaveTo.value);
 }
+
+// CHANGED
+const disabledOptions = ['save-and-stay', 'save-and-add-new', 'discard-and-stay'];
+
+interface ModuleSettings extends ModuleBarItem, PreviewExtra {
+	allowed: boolean
+	icon: string // override the type for icon prop
+}
+
+interface Item {
+	id: string,
+	[key: string]: any
+}
+
+const permissions = ref<Permission[]>([])
+const moduleSettings = ref<ModuleSettings[]>([])
+
+async function saveAsCopy() {
+	const { name } = {
+		...item.value,
+		...edits.value,
+	} as Record<string, any>;
+
+	const { id, ..._item } = item.value as Item
+	const _edits = edits.value
+
+	if (_edits.users) {
+		delete _edits.users
+	}
+
+	try {
+		saving.value = true;
+
+		const roleResponse = await api.post('/roles', {
+			name,
+			admin_access: adminEnabled.value,
+			app_access: appAccess.value,
+			..._item,
+			..._edits,
+		});
+
+		const newRoledId = roleResponse.data.data.id
+
+		if (appAccess.value === true && adminEnabled.value === false) {
+			await api.post(
+				'/permissions',
+				permissions.value.map(({ id, ...permission }) => ({
+					...permission,
+					role: newRoledId,
+				}))
+			);
+		}
+
+		settingsStore.updateSettings({
+			module_bar: moduleSettings.value.map((module) => {
+
+				let disallowed_roles = module.disallowed_roles ?? [];
+
+				if (!module.allowed) {
+					disallowed_roles = disallowed_roles.concat(newRoledId);
+
+					return {
+						...module,
+						disallowed_roles,
+					};
+				}
+
+				return module;
+			}),
+		});
+
+		edits.value = {};
+		router.push(`/settings/roles/${newRoledId}`);
+	} catch (err: any) {
+		unexpectedError(err);
+	} finally {
+		saving.value = false;
+	}
+}
+
 </script>
 
 <template>
-	<private-view
-		:title="loading ? t('loading') : t('editing_role', { role: item && item.name })"
-		:is_prevent_main_content_scroll="true"
-	>
+	<private-view :title="loading ? t('loading') : t('editing_role', { role: item && item.name })"
+		:is_prevent_main_content_scroll="true">
 		<template #headline>
 			<v-breadcrumb :items="[{ name: t('settings_permissions'), to: '/settings/roles' }]" />
 		</template>
@@ -129,16 +214,8 @@ function discardAndLeave() {
 		<template #actions>
 			<v-dialog v-if="[1, 2].includes(+primaryKey) === false" v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
-					<v-button
-						v-if="primaryKey !== lastAdminRoleId"
-						v-tooltip.bottom="t('delete_label')"
-						rounded
-						icon
-						class="action-delete"
-						secondary
-						:disabled="item === null"
-						@click="on"
-					>
+					<v-button v-if="primaryKey !== lastAdminRoleId" v-tooltip.bottom="t('delete_label')" rounded icon
+						class="action-delete" secondary :disabled="item === null" @click="on">
 						<v-icon name="delete" />
 					</v-button>
 				</template>
@@ -157,27 +234,19 @@ function discardAndLeave() {
 				</v-card>
 			</v-dialog>
 
-			<v-button
-				v-if="canInviteUsers"
-				v-tooltip.bottom="t('invite_users')"
-				rounded
-				icon
-				secondary
-				@click="userInviteModalActive = true"
-			>
+			<v-button v-if="canInviteUsers" v-tooltip.bottom="t('invite_users')" rounded icon secondary
+				@click="userInviteModalActive = true">
 				<v-icon name="person_add" />
 			</v-button>
 
-			<v-button
-				v-tooltip.bottom="t('save')"
-				rounded
-				icon
-				:loading="saving"
-				:disabled="hasEdits === false"
-				@click="saveAndQuit"
-			>
+			<v-button v-tooltip.bottom="t('save')" rounded icon :loading="saving" :disabled="hasEdits === false"
+				@click="saveAndQuit">
 				<v-icon name="check" />
+				<template #append-outer>
+					<save-options v-if="hasEdits === true" :disabled-options="disabledOptions" @save-as-copy="saveAsCopy" />
+				</template>
 			</v-button>
+
 		</template>
 
 		<template #navigation>
@@ -191,18 +260,14 @@ function discardAndLeave() {
 				{{ t('admins_have_all_permissions') }}
 			</v-notice>
 
-			<permissions-overview v-else :role="primaryKey" :permission="permissionKey" :app-access="appAccess" />
+			<permissions-overview v-else :role="primaryKey" :permission="permissionKey" :app-access="appAccess"
+				@permission-change="permissions = $event" />
 
-			<v-form
-				v-model="edits"
-				collection="directus_roles"
-				:primary-key="primaryKey"
-				:loading="loading"
-				:initial-values="item"
-			/>
+			<v-form v-model="edits" collection="directus_roles" :primary-key="primaryKey" :loading="loading"
+				:initial-values="item" />
 
 			<!-- Control which modules are accessible for this role -->
-			<module-permissions :role-id="primaryKey" />
+			<module-permissions :role-id="primaryKey" @module-settings-change="moduleSettings = $event" />
 		</div>
 
 		<template #sidebar>

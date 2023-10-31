@@ -1,48 +1,16 @@
-<template>
-    <div class="module-permissions">
-        <interface-presentation-divider title="Allowed Modules" icon="menu_open" />
-
-        <v-list class="list">
-            <v-list-item v-for="mod in module_bar" block :class="{ enabled: mod.allowed }">
-                <v-icon class="icon" :name="mod.icon ?? 'extension'" />
-                <div class="info">
-                    <div class="name">{{ mod.name }}</div>
-                    <div class="to">{{ mod.to }}</div>
-                </div>
-                <div class="spacer" />
-                <v-icon :name="mod.allowed ? 'check_box' : 'check_box_outline_blank'" clickable @click.stop="toggleAllowed(mod.id)" />
-            </v-list-item>
-        </v-list>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { useSettingsStore } from '@/stores/settings';
 import { computed } from 'vue';
 import { translate } from '@/utils/translate-object-values';
 import { useExtensions } from '@/extensions';
-
-type ModuleBarItem = {
-    id: string;
-    name: string;
-    type: 'module' | 'link';
-    enabled: boolean;
-    url?: string;
-    icon?: string;
-    children?: ModuleBarItem[];
-    disallowed_roles?: string[];
-};
-
-type PreviewExtra = {
-    to: string;
-	name: string;
-	icon: string;
-};
+import { watch } from 'vue';
+import { ModuleBarItem, PreviewExtra } from '../types';
 
 const props = defineProps<{
     roleId: string;
 }>();
 
+const emit = defineEmits(['module-settings-change']);
 
 const settingsStore = useSettingsStore();
 const { modules: registeredModules } = useExtensions();
@@ -58,6 +26,14 @@ const module_bar = computed(() => {
     }) ?? [];
 });
 
+
+// CHANGED
+watch(module_bar, () => {
+	emit('module-settings-change', module_bar.value)
+}, { deep: true, immediate: true })
+//
+
+
 function moduleToPreview(mod: ModuleBarItem): PreviewExtra {
     if (mod.type === 'link') {
         return {
@@ -68,6 +44,7 @@ function moduleToPreview(mod: ModuleBarItem): PreviewExtra {
     }
 
     const registered = registeredModules.value.find((module) => module.id === mod.id);
+
     if (!registered) {
         return {
             to: `/${mod.id}`,
@@ -75,6 +52,7 @@ function moduleToPreview(mod: ModuleBarItem): PreviewExtra {
             icon: 'extension',
         };
     }
+
     return {
         to: `/${mod.id}`,
         name: registered.name,
@@ -94,14 +72,17 @@ function previewToModule(mod: ModuleBarItem & PreviewExtra): Partial<ModuleBarIt
 
         disallowed_roles: mod.disallowed_roles,
     };
+
     return res;
 }
 
 function toggleAllowed(moduleId: string) {
     const module = module_bar.value.find((mod) => mod.id === moduleId);
+
     if (!module) {
         return;
     }
+
     let disallowed_roles = module.disallowed_roles ?? [];
 
     if (module.allowed) {
@@ -113,17 +94,37 @@ function toggleAllowed(moduleId: string) {
     settingsStore.updateSettings({
         module_bar: module_bar.value.map((mod) => {
             const value = previewToModule(mod);
+
             if (value.id === moduleId) {
                 return {
                     ...value,
                     disallowed_roles,
                 };
             }
+
             return value;
         }),
     });
 }
 </script>
+
+<template>
+    <div class="module-permissions">
+        <interface-presentation-divider title="Allowed Modules" icon="menu_open" />
+
+        <v-list class="list">
+            <v-list-item v-for="mod in module_bar" block :class="{ enabled: mod.allowed }">
+                <v-icon class="icon" :name="mod.icon ?? 'extension'" />
+                <div class="info">
+                    <div class="name">{{ mod.name }}</div>
+                    <div class="to">{{ mod.to }}</div>
+                </div>
+                <div class="spacer" />
+                <v-icon :name="mod.allowed ? 'check_box' : 'check_box_outline_blank'" clickable @click.stop="toggleAllowed(mod.id)" />
+            </v-list-item>
+        </v-list>
+    </div>
+</template>
 
 <style scoped>
 .module-permissions {

@@ -127,7 +127,7 @@ export function useItem<T extends Record<string, any>>(
 					return to;
 				}
 			}
-		);
+			);
 
 		const errors = validateItem(payloadToValidate, fieldsWithPermissions.value, isNew.value);
 

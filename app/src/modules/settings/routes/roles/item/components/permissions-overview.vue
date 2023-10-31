@@ -17,6 +17,8 @@ const props = defineProps<{
 	appAccess?: boolean;
 }>();
 
+const emit = defineEmits(['permission-change']);
+
 const { t } = useI18n();
 
 const collectionsStore = useCollectionsStore();
@@ -61,6 +63,8 @@ function usePermissions() {
 
 			const response = await api.get('/permissions', { params });
 			permissions.value = response.data.data;
+
+			emit('permission-change', response.data.data);
 		} catch (err: any) {
 			unexpectedError(err);
 		} finally {
