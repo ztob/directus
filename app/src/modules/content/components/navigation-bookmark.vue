@@ -9,6 +9,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/api';
+// import { useItems } from '@directus/composables';
 
 
 interface Props {
@@ -111,7 +112,7 @@ function useDeleteBookmark() {
 }
 
 // Changed
-const itemsCount = ref('');
+const itemsCount = ref(0);
 const isCountLoading = ref(false)
 
 let refreshIntervalId = null;
@@ -119,7 +120,7 @@ let refreshIntervalId = null;
 watch(() => props.bookmark, () => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
 
-	if (!isShowNumber) return itemsCount.value = ''
+	if (!isShowNumber) return itemsCount.value = 0
 
 	if (refreshIntervalId) {
 		clearInterval(refreshIntervalId);
@@ -155,7 +156,7 @@ async function fetchPresetItems() {
 			params
 		})
 
-		itemsCount.value = `(${formatNumberWithCommas(Number(data.data[0].count))})`
+		itemsCount.value = formatNumberWithCommas(Number(data.data[0].count))
 	} catch (err) {
 		console.log(err);
 	} finally {
@@ -168,15 +169,58 @@ function formatNumberWithCommas(number: number) {
 	return number.toString();
 }
 
+// show percentage on hover
+const isHovering = ref(false)
+
+function onMouseOver() {
+	isHovering.value = true
+	getPercentage()
+}
+
+function onMouseLeave() {
+	isHovering.value = false
+}
+
+function usePercentage() {
+	const percentage = ref(0)
+
+	return { percentage, getPercentage }
+
+	async function getPercentage() {
+		try {
+			const { data } = await api.get(`items/${props.bookmark.collection}`, {
+				params: {
+					aggregate: {
+						count: '*',
+					},
+				}
+			})
+
+			const totalItems = data.data[0].count
+			const percent = (itemsCount.value / +totalItems * 100).toFixed(1)
+			percentage.value = !isNaN(percent) ? percent : (0).toFixed(1)
+		} catch (error) {
+			console.log(error);
+		}
+	}
+}
+
+const { percentage, getPercentage } = usePercentage()
+
 </script>
 
 <template>
 	<v-list-item :to="`${getCollectionRoute(bookmark.collection)}?bookmark=${bookmark.id}`" query class="bookmark" clickable
 		@contextmenu.stop="">
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
-		<v-list-item-content>
-			<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : itemsCount}`" />
-		</v-list-item-content>
+			<v-list-item-content>
+				<v-text-overflow
+				:text="`${name} ${isCountLoading ? '(...)' : `(${itemsCount})`}`"
+				:title="`${percentage}%`"
+				@mouseover="onMouseOver"
+				@mouseleave="onMouseLeave"
+					/>
+				</v-list-item-content>
 
 		<v-menu placement="bottom-start" show-arrow>
 			<template #activator="{ toggle }">

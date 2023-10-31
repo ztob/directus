@@ -345,7 +345,6 @@ function usePermissions() {
 
 	return { batchEditAllowed, batchArchiveAllowed, batchDeleteAllowed, createAllowed };
 }
-
 </script>
 
 <template>
