@@ -168,42 +168,45 @@ function formatNumberWithCommas(number: number) {
 }
 
 // show percentage on hover
+
+interface CollectionsItems {
+	[key: string]: number
+}
+
 const isHovering = ref(false)
+const collectionsItems = ref<CollectionsItems>({})
+const percentage = ref()
 
-function onMouseOver() {
-	isHovering.value = true
-	getPercentage()
+async function getPercentage() {
+  isHovering.value = true;
+  const collection = props.bookmark.collection;
+
+  if (!Boolean(collection in collectionsItems.value)) {
+    try {
+      const { data } = await api.get(`items/${collection}`, {
+        params: {
+          aggregate: {
+            count: '*',
+          },
+        },
+      });
+
+      const totalItems = data.data[0].count;
+      collectionsItems.value[collection] = +totalItems;
+
+      // Calculate the percentage after setting collectionsItems
+      const percent = (itemsCount.value / +collectionsItems.value[collection]! * 100).toFixed(1);
+      percentage.value = !isNaN(percent) ? percent : (0).toFixed(1);
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    // If the collection already exists in collectionsItems, calculate the percentage immediately
+    const percent = (itemsCount.value / +collectionsItems.value[collection]! * 100).toFixed(1);
+    percentage.value = !isNaN(percent) ? percent : (0).toFixed(1);
+  }
 }
 
-function onMouseLeave() {
-	isHovering.value = false
-}
-
-function usePercentage() {
-	const percentage = ref(0)
-
-	return { percentage, getPercentage }
-
-	async function getPercentage() {
-		try {
-			const { data } = await api.get(`items/${props.bookmark.collection}`, {
-				params: {
-					aggregate: {
-						count: '*',
-					},
-				}
-			})
-
-			const totalItems = data.data[0].count
-			const percent = (itemsCount.value / +totalItems * 100).toFixed(1)
-			percentage.value = !isNaN(percent) ? percent : (0).toFixed(1)
-		} catch (error) {
-			console.log(error);
-		}
-	}
-}
-
-const { percentage, getPercentage } = usePercentage()
 
 </script>
 
@@ -211,14 +214,14 @@ const { percentage, getPercentage } = usePercentage()
 	<v-list-item :to="`${getCollectionRoute(bookmark.collection)}?bookmark=${bookmark.id}`" query class="bookmark" clickable
 		@contextmenu.stop="">
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
-			<v-list-item-content>
-				<v-text-overflow
-				:text="`${name} ${isCountLoading ? '(...)' : `(${itemsCount})`}`"
-				:title="`${percentage}%`"
-				@mouseover="onMouseOver"
-				@mouseleave="onMouseLeave"
-					/>
-				</v-list-item-content>
+				<v-list-item-content>
+					<v-text-overflow
+					:text="`${name} ${isCountLoading ? '(...)' : `(${itemsCount})`}`"
+					@mouseover="getPercentage"
+					@mouseleave="isHovering = false"
+						/>
+					</v-list-item-content>
+					<span :class="{ 'percentage-tooltip': true, 'active': isHovering }">{{ percentage }}%</span>
 
 		<v-menu placement="bottom-start" show-arrow>
 			<template #activator="{ toggle }">
@@ -311,6 +314,14 @@ const { percentage, getPercentage } = usePercentage()
 
 	.full {
 		grid-column: 1 / span 2;
+	}
+}
+
+// CHANGED
+.percentage-tooltip {
+	display: none;
+	&.active {
+		display: inline-block;
 	}
 }
 </style>
