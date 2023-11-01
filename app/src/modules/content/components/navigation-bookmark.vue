@@ -9,12 +9,16 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/api';
+import { CollectionsItems } from './types';
 
 interface Props {
 	bookmark: Preset;
+	collectionsItems: CollectionsItems;
 }
 
 const props = defineProps<Props>();
+
+const emit = defineEmits(['update-items-collection']);
 
 const { t } = useI18n();
 
@@ -110,7 +114,7 @@ function useDeleteBookmark() {
 }
 
 // Changed
-const itemsCount = ref(0);
+const itemsCount = ref('');
 const isCountLoading = ref(false)
 
 let refreshIntervalId = null;
@@ -118,7 +122,7 @@ let refreshIntervalId = null;
 watch(() => props.bookmark, () => {
 	const isShowNumber = props.bookmark?.layout_options?.show_items_number
 
-	if (!isShowNumber) return itemsCount.value = 0
+	if (!isShowNumber) return itemsCount.value = ''
 
 	if (refreshIntervalId) {
 		clearInterval(refreshIntervalId);
@@ -168,60 +172,82 @@ function formatNumberWithCommas(number: number) {
 }
 
 // show percentage on hover
-
-interface CollectionsItems {
-	[key: string]: number
-}
-
 const isHovering = ref(false)
-const collectionsItems = ref<CollectionsItems>({})
-const percentage = ref()
+const percentage = ref('')
 
 async function getPercentage() {
-  isHovering.value = true;
-  const collection = props.bookmark.collection;
+	const isShowPercentage = props.bookmark?.layout_options?.show_items_number
 
-  if (!Boolean(collection in collectionsItems.value)) {
-    try {
-      const { data } = await api.get(`items/${collection}`, {
-        params: {
-          aggregate: {
-            count: '*',
-          },
-        },
-      });
+	if (!isShowPercentage) {
+		percentage.value = '';
+		return;
+	}
 
-      const totalItems = data.data[0].count;
-      collectionsItems.value[collection] = +totalItems;
+	isHovering.value = true;
+	const collection = props.bookmark.collection;
 
-      // Calculate the percentage after setting collectionsItems
-      const percent = (itemsCount.value / +collectionsItems.value[collection]! * 100).toFixed(1);
-      percentage.value = !isNaN(percent) ? percent : (0).toFixed(1);
-    } catch (error) {
-      console.log(error);
-    }
-  } else {
-    // If the collection already exists in collectionsItems, calculate the percentage immediately
-    const percent = (itemsCount.value / +collectionsItems.value[collection]! * 100).toFixed(1);
-    percentage.value = !isNaN(percent) ? percent : (0).toFixed(1);
-  }
+	if (!(collection in props.collectionsItems)) {
+		const hoverDelay = 400
+		let timeout = null;
+
+		timeout = setTimeout(() => {
+			if (!isHovering.value) {
+				timeout = null;
+				return
+			}
+
+			fetchTotalItemsCount()
+				.then((itemsInCollection) => {
+					percentage.value = countPercentage(itemsCount.value, +itemsInCollection)
+					emit('update-items-collection', collection, +itemsInCollection)
+				})
+				.finally(() => timeout = null)
+		}, hoverDelay)
+
+	} else {
+		// If the collection already exists in props.collectionsItems, calculate the percentage immediately
+		percentage.value = countPercentage(itemsCount.value, props.collectionsItems[collection]!)
+	}
+
+	async function fetchTotalItemsCount() {
+		try {
+			const { data } = await api.get(`items/${collection}`, {
+				params: {
+					aggregate: {
+						count: '*',
+					},
+				},
+			});
+
+			return data?.data?.[0]?.count ?? 0;
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	function countPercentage(presetItems: string /* '1,234,567' */, totalItems: number) {
+		if (totalItems === 0) return (0).toFixed(1)
+
+		// '1,234,567' => '1234567'
+		const presetItemsCount = presetItems.split('').filter(char => char !== ',').join('')
+		return (+presetItemsCount / totalItems * 100).toFixed(1);
+	}
 }
-
-
 </script>
 
 <template>
 	<v-list-item :to="`${getCollectionRoute(bookmark.collection)}?bookmark=${bookmark.id}`" query class="bookmark" clickable
 		@contextmenu.stop="">
 		<v-list-item-icon><v-icon :name="bookmark.icon" :color="bookmark.color" /></v-list-item-icon>
-				<v-list-item-content>
-					<v-text-overflow
-					:text="`${name} ${isCountLoading ? '(...)' : `(${itemsCount})`}`"
-					@mouseover="getPercentage"
-					@mouseleave="isHovering = false"
-						/>
-					</v-list-item-content>
-					<span :class="{ 'percentage-tooltip': true, 'active': isHovering }">{{ percentage }}%</span>
+
+		<v-list-item-content>
+			<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : !itemsCount ? '' : `(${itemsCount})`}`"
+				@mouseover="getPercentage" @mouseleave="isHovering = false" />
+		</v-list-item-content>
+
+		<span :class="{ 'percentage-tooltip': true, 'active': isHovering }">{{
+			percentage ? `${percentage}%` : ''
+		}}</span>
 
 		<v-menu placement="bottom-start" show-arrow>
 			<template #activator="{ toggle }">
@@ -320,8 +346,15 @@ async function getPercentage() {
 // CHANGED
 .percentage-tooltip {
 	display: none;
+
 	&.active {
 		display: inline-block;
+		// position: absolute;
+		// right: 25px;
+		// background-color: #f5f5f5;
+		// color: black;
+		// border-radius: 5px;
+		// padding: 3px;
 	}
 }
 </style>

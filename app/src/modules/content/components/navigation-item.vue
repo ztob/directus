@@ -6,10 +6,11 @@ import { Collection } from '@/types/collections';
 import { getCollectionRoute } from '@/utils/get-route';
 import { Preset } from '@directus/types';
 import { orderBy } from 'lodash';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import NavigationBookmark from './navigation-bookmark.vue';
 import NavigationItemContent from './navigation-item-content.vue';
+import { CollectionsItems } from './types';
 
 const props = defineProps<{
 	collection: Collection;
@@ -75,6 +76,13 @@ function getChildCollections(collection: Collection) {
 function getChildBookmarks(collection: Collection) {
 	return presetsStore.bookmarks.filter((bookmark) => bookmark.collection === collection.collection);
 }
+
+// CHANGED
+const collectionsItems = ref<CollectionsItems>({})
+
+function updateItemsCollection(collection: string, itemsNum: number) {
+	collectionsItems.value[collection] = itemsNum;
+}
 </script>
 
 <template>
@@ -103,7 +111,13 @@ function getChildBookmarks(collection: Collection) {
 			:collection="childCollection"
 			:search="search"
 		/>
-		<navigation-bookmark v-for="bookmark in childBookmarks" :key="bookmark.id" :bookmark="bookmark"/>
+		<navigation-bookmark
+		v-for="bookmark in childBookmarks"
+		:key="bookmark.id"
+		:bookmark="bookmark"
+		:collections-items="collectionsItems"
+		@update-items-collection="updateItemsCollection"
+		/>
 	</v-list-group>
 
 	<v-list-item
