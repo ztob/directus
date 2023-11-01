@@ -22,7 +22,6 @@ const { templateData: previewData } = useTemplateData(collectionInfo, primaryKey
 
 const previewURL = computed(() => {
 	const { displayValue } = renderStringTemplate(previewTemplate.value, previewData);
-
 	return displayValue.value || null;
 });
 
