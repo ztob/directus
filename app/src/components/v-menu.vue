@@ -41,6 +41,10 @@ interface Props {
 	fullHeight?: boolean;
 	/** Removes any styling from the menu */
 	seamless?: boolean;
+
+	// CHANGED. Only available for tabular
+	openMenuId?: string
+	isTabular?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,7 +64,7 @@ const props = withDefaults(defineProps<Props>(), {
 	seamless: false,
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'update:open-menu-id']);
 
 const activator = ref<HTMLElement | null>(null);
 const reference = ref<HTMLElement | null>(null);
@@ -125,6 +129,19 @@ function useActiveState() {
 				return props.modelValue;
 			}
 
+			// CHANGED. ONLY FOR TABULAR
+			if(props.isTabular) {
+				// if there is openMenuId then there is one menu open and we show this menu only
+				if(props.openMenuId && localIsActive.value) {
+					return props.openMenuId === id.value
+
+					// if openMenuId === null then there is no menu open
+				} else if (props.openMenuId === null && localIsActive.value) {
+					return false
+				}
+			}
+			// -------------------------
+
 			return localIsActive.value;
 		},
 		async set(newActive) {
@@ -167,17 +184,38 @@ function useActiveState() {
 	}
 
 	function deactivate() {
+		// FOR TABULAR ONLY
+		// if openMenuId in deactivate() then the currently open menu is being closed and we update openMenuId = null
+			updateCurrentMenuToNull()
+		// -------------------------
+
 		isActive.value = false;
 	}
 
 	function toggle() {
 		if (props.disabled === true) return;
 		isActive.value = !isActive.value;
+
+		// FOR TABULAR ONLY
+		// if user closes the menu clicking on + icon then openMenuId = null
+		if(!isActive.value) {
+			updateCurrentMenuToNull()
+		}
+		// -------------------------
+
+	}
+
+	function updateCurrentMenuToNull() {
+		if(props.isTabular) {
+			if(id.value === props.openMenuId) {
+				emit('update:open-menu-id', null)
+			}
+		}
 	}
 }
 
 function onClickOutsideMiddleware(e: Event) {
-	return !activator.value?.contains(e.target as Node);
+	return !activator.value?.contains(e.target as Node)
 }
 
 function onContentClick(e: Event) {
@@ -236,6 +274,7 @@ function usePopper(
 	>
 ): Record<string, any> {
 	const popperInstance = ref<Instance | null>(null);
+
 	const styles = ref({});
 	const arrowStyles = ref({});
 
@@ -374,6 +413,7 @@ function usePopper(
 					active: isActive,
 					activate: activate,
 					deactivate: deactivate,
+					id: id,
 				}"
 			/>
 		</div>
@@ -409,6 +449,7 @@ function usePopper(
 								active: isActive,
 								activate: activate,
 								deactivate: deactivate,
+								id: id,
 							}"
 						/>
 					</div>

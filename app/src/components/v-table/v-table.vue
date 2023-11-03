@@ -39,6 +39,9 @@ interface Props {
 	inline?: boolean;
 	disabled?: boolean;
 	clickable?: boolean;
+
+	addAfterHeader: string
+	isMenuOpen?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -70,6 +73,7 @@ const emit = defineEmits([
 	'update:modelValue',
 	'manual-sort',
 	'update:headers',
+	'clicked-header'
 ]);
 
 const slots = useSlots();
@@ -278,9 +282,15 @@ function onAddFilter(filterBy: string, value: string | number | boolean) {
 				:has-item-append-slot="hasItemAppendSlot"
 				:manual-sort-key="manualSortKey"
 				:allow-header-reorder="allowHeaderReorder"
+
+				:add-after-header="addAfterHeader"
+				:is-menu-open="isMenuOpen"
+
 				@toggle-select-all="onToggleSelectAll"
 				@update:sort="updateSort"
-			>
+
+				@clicked-header="$emit('clicked-header', $event)"
+				>
 				<template v-for="header in internalHeaders" #[`header.${header.value}`]>
 					<slot :header="header" :name="`header.${header.value}`" />
 				</template>

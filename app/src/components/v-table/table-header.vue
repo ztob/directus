@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { computed, ref, useSlots } from 'vue';
+import { computed, ref, useSlots, watch } from 'vue';
 import { ShowSelect } from '@directus/types';
 import { useEventListener } from '@/composables/use-event-listener';
 import { Header, Sort } from './types';
@@ -23,6 +23,9 @@ interface Props {
 	mustSort?: boolean;
 	hasItemAppendSlot?: boolean;
 	manualSortKey?: string;
+
+	addAfterHeader: string
+	isMenuOpen?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,7 +40,7 @@ const props = withDefaults(defineProps<Props>(), {
 	manualSortKey: undefined,
 });
 
-const emit = defineEmits(['update:sort', 'toggle-select-all', 'update:headers', 'update:reordering']);
+const emit = defineEmits(['update:sort', 'toggle-select-all', 'update:headers', 'update:reordering', 'clicked-header']);
 const { t } = useI18n();
 
 const resizing = ref<boolean>(false);
@@ -169,6 +172,8 @@ function toggleManualSort() {
 		});
 	}
 }
+
+watch(() =>props.addAfterHeader, () => console.log(props.addAfterHeader))
 </script>
 
 <template>
@@ -209,46 +214,58 @@ function toggleManualSort() {
 				</th>
 			</template>
 
-			<template #item="{ element: header }">
-				<th :class="getClassesForHeader(header)" class="cell" scope="col" :style="{ width: header.width + 'px' }">
-					<v-menu v-if="hasHeaderContextMenuSlot" show-arrow placement="bottom-start">
-						<template #activator="{ toggle }">
-							<div class="content reorder-handle" @click="toggle">
-								<span class="name">
-									<span v-if="header.description" v-tooltip="header.description" class="description-dot"></span>
-									<slot :name="`header.${header.value}`" :header="header">
-										{{ header.text }}
-									</slot>
-								</span>
+				<template #item="{ element: header }">
+					<th :class="getClassesForHeader(header)" class="cell" scope="col" :style="{ width: header.width + 'px' }">
+						<v-menu v-if="hasHeaderContextMenuSlot" show-arrow placement="bottom-start">
+							<template #activator="{ toggle }">
+								<div class="content reorder-handle" @click="toggle">
+									<span class="name">
+										<span v-if="header.description" v-tooltip="header.description" class="description-dot"></span>
+										<slot :name="`header.${header.value}`" :header="header">
+											{{ header.text }}
+										</slot>
+									</span>
 
-								<v-icon
-									v-if="hasHeaderContextMenuSlot"
-									:name="sort.by === header.value ? 'sort' : 'arrow_drop_down'"
-									class="action-icon"
-									small
-								/>
-							</div>
-						</template>
+									<v-icon
+										v-if="hasHeaderContextMenuSlot"
+										:name="sort.by === header.value ? 'sort' : 'arrow_drop_down'"
+										class="action-icon"
+										small
+									/>
+								</div>
+							</template>
 
-						<slot name="header-context-menu" v-bind="{ header }" />
-					</v-menu>
+							<slot name="header-context-menu" v-bind="{ header }" />
 
-					<div v-else class="content reorder-handle" @click="changeSort(header)">
-						<span class="name">
-							<span v-if="header.description" v-tooltip="header.description" class="description-dot"></span>
-							<slot :name="`header.${header.value}`" :header="header">
-								{{ header.text }}
-							</slot>
+						</v-menu>
+
+						<div v-else class="content reorder-handle" @click="changeSort(header)">
+							<span class="name">
+								<span v-if="header.description" v-tooltip="header.description" class="description-dot"></span>
+								<slot :name="`header.${header.value}`" :header="header">
+									{{ header.text }}
+								</slot>
+							</span>
+
+							<v-icon
+								v-if="header.sortable"
+								v-tooltip.top="t(getTooltipForSortIcon(header))"
+								name="sort"
+								class="action-icon"
+								small
+							/>
+						</div>
+
+						<!-- ---------------------------------- -->
+						<span
+							v-if="$slots['header-append']"
+							:class="{'manual append all-header-append': true, 'dropdown-menu-open': !!(addAfterHeader === header.value && isMenuOpen)}"
+							@click.stop="$emit('clicked-header', header.value)"
+						>
+							<slot name="header-append"/>
 						</span>
+						<!-- ---------------------------------- -->
 
-						<v-icon
-							v-if="header.sortable"
-							v-tooltip.top="t(getTooltipForSortIcon(header))"
-							name="sort"
-							class="action-icon"
-							small
-						/>
-					</div>
 					<span
 						v-if="showResize"
 						class="resize-handle"
@@ -260,7 +277,7 @@ function toggleManualSort() {
 
 			<template #footer>
 				<th class="spacer cell" scope="col" />
-				<td v-if="$slots['header-append']" class="manual append cell" @click.stop>
+				<td v-if="$slots['header-append']" class="manual append cell" @click.stop="$emit('clicked-header', '')">
 					<slot name="header-append" />
 				</td>
 				<th v-if="hasItemAppendSlot && !$slots['header-append']" class="spacer cell" scope="col" />
@@ -333,8 +350,21 @@ function toggleManualSort() {
 			transform: scaleY(-1);
 		}
 
-		&:hover .action-icon {
-			opacity: 1;
+		.all-header-append {
+			opacity: 0;
+			&.dropdown-menu-open {
+				opacity: 1;
+			}
+		}
+
+// CHANGED
+		&:hover  {
+			.action-icon {
+				opacity: 1;
+			}
+			.all-header-append {
+				opacity: 1;
+			}
 		}
 
 		&.sort-asc,
@@ -405,6 +435,13 @@ function toggleManualSort() {
 		&:hover::after {
 			background-color: var(--primary);
 		}
+	}
+	// CHANGED
+	.all-header-append {
+		position: absolute;
+		top: 50%;
+		right: 10px;
+		transform: translateY(-50%);
 	}
 }
 
