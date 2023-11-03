@@ -24,7 +24,7 @@ import { notify } from '@/utils/notify';
 import api from '@/api';
 import { nextTick } from 'vue';
 
-interface Props {
+type Props = {
 	collection: string;
 	selection?: Item[];
 	readonly: boolean;
@@ -256,6 +256,15 @@ const fieldsWritable = useSync(props, 'fields', emit);
 const { getFromAliasedItem } = useAliasFields(fieldsWritable, collection);
 
 function addField(fieldKey: string) {
+	const headerName = addFieldFromHeaderValue.value
+
+	if(headerName) {
+		const addAtIndex = fieldsWritable.value.findIndex(h => h === headerName)
+		const existedHeaders = fieldsWritable.value
+		fieldsWritable.value = [ ...existedHeaders.slice(0, addAtIndex + 1), fieldKey, ...existedHeaders.slice(addAtIndex + 1) ]
+		return
+	}
+
 	fieldsWritable.value = [...fieldsWritable.value, fieldKey];
 }
 
@@ -309,6 +318,17 @@ async function copyValues(fieldKey: string) {
 		});
 	}
 }
+
+// CHANGED
+const addFieldFromHeaderValue = ref(null)
+const openMenuId = ref<string | null>(null)
+
+function onActivator(toggle: () => void, id: string) {
+	// remember the currently open menu and make this only menu open for the entire table
+	openMenuId.value = id
+	toggle()
+}
+
 </script>
 
 <template>
@@ -332,10 +352,16 @@ async function copyValues(fieldKey: string) {
 			:manual-sort-key="sortField"
 			allow-header-reorder
 			selection-use-keys
+
+			:add-after-header="addFieldFromHeaderValue"
+			:isMenuOpen="openMenuId !== null"
+
 			@click:row="onRowClick"
 			@update:sort="onSortChange"
 			@manual-sort="changeManualSort"
-		>
+
+			@clicked-header="addFieldFromHeaderValue = $event"
+			>
 			<template v-for="header in tableHeaders" :key="header.value" #[`item.${header.value}`]="{ item }">
 				<render-display
 					:value="getFromAliasedItem(item, header.value)"
@@ -430,15 +456,15 @@ async function copyValues(fieldKey: string) {
 			</template>
 
 			<template #header-append>
-				<v-menu placement="bottom-end" show-arrow :close-on-content-click="false">
-					<template #activator="{ toggle, active }">
+				<v-menu v-model:open-menu-id="openMenuId" :is-tabular="true" placement="bottom-end" show-arrow :close-on-content-click="false" >
+					<template #activator="{ toggle, active, id }">
 						<v-icon
 							v-tooltip="t('add_field')"
 							class="add-field"
 							name="add"
 							:class="{ active }"
 							clickable
-							@click="toggle"
+							@click="onActivator(toggle, id)"
 						/>
 					</template>
 
