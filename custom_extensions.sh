@@ -85,6 +85,9 @@ do
             # Ensure that the destination directory exists
             echo "This is a bundle"
             mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_name}
+            pwd
+            ls -lsa
+            tree
             mv "./${ext_type}/${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
         else
             # Ensure that the destination directory exists
