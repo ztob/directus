@@ -52,6 +52,8 @@ fi
 # Corresponding migrations to skip
 skip_migrations="add-chat add-saved-searches add-collaboration"
 
+tree
+
 for folder in *
 do
     # If the folder name starts with directus-extension, this is a bundle
@@ -102,6 +104,8 @@ do
     cd ..
 
 done
+
+tree
 
 if [ ! -d "migrations" ]; then
     echo "No migrations found"
