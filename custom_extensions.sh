@@ -110,8 +110,6 @@ do
 
 done
 
-rm -rf $DIRECTUS_EXTENSIONS/
-
 tree
 
 if [ ! -d "migrations" ]; then
