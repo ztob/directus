@@ -80,7 +80,10 @@ do
         echo "Adding ${ext_type}/${ext_name}"
         # Move all the files from the extension to the directory (recursive)
         if [ "${ext_type}" = "bundles" ]; then
-            mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/"
+            # Ensure that the destination directory exists
+            echo "This is a bundle"
+            mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_name}
+            mv "./${ext_type}/${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
         else
             # Ensure that the destination directory exists
             mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}
