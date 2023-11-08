@@ -88,13 +88,13 @@ do
             pwd
             ls -lsa
             tree
-            mv "./${ext_type}/${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
+            mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
         else
             # Ensure that the destination directory exists
             mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}
             mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}/"
         fi
-        mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}/"
+        # mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}/"
         # Sanity check: list the files in the resulting directory
         echo "Contents of extensions/${ext_type}/${ext_name}:"
         ls -la ${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}/
