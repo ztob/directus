@@ -84,14 +84,15 @@ do
         if [ "${ext_type}" = "bundles" ]; then
             # Ensure that the destination directory exists
             echo "This is a bundle"
-            mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_name}
+            mkdir -p ${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}
             pwd
             ls -lsa
+            ls -lsa ${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}
             tree
-            mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
-            if [ -f "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json" ]; then
-                rm "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json"
-            fi
+            mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/"
+            # if [ -f "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json" ]; then
+            #     rm "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json"
+            # fi
         else
             # Ensure that the destination directory exists
             mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}
