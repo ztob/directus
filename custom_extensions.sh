@@ -89,6 +89,9 @@ do
             ls -lsa
             tree
             mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
+            if [ -f "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json" ]; then
+                rm "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json"
+            fi
         else
             # Ensure that the destination directory exists
             mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}
