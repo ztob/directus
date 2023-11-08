@@ -89,8 +89,6 @@ do
             ls -lsa
             tree
             mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/${ext_name}/"
-            cd ..
-            rm -rf "${ext_type}/"
         else
             # Ensure that the destination directory exists
             mkdir -p ${DIRECTUS_EXTENSIONS}/${ext_type}/${ext_name}
@@ -109,6 +107,8 @@ do
     cd ..
 
 done
+
+rm -rf directus/directus-custom-extensions-release/bundles/
 
 tree
 
