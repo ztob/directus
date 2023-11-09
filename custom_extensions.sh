@@ -85,11 +85,14 @@ do
             # Ensure that the destination directory exists
             echo "This is a bundle"
             mkdir -p ${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}
+            mkdir -p ${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/dist
             pwd
             ls -lsa
             ls -lsa ${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}
             tree
-            mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/"
+            mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/dist/"
+            mv "${DIRECTUS_EXTENSIONS}/${ext_name}/dist/package.json" "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/"
+            
             # if [ -f "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json" ]; then
             #     rm "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json"
             # fi
