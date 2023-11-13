@@ -43,7 +43,7 @@ ls -la
 
 # Extensions to skip (these belong to different control scripts)
 # These are payment, chat, leads and collaboration extensions
-skip_extensions="payments-api payments-hook payments-module services-module orders-module chat chat-display dashboard leads areas saved-searches area-hook hide-modules collab-hook collab-hook-v2 marketplace-filters workflows-defaults extended-api"
+skip_extensions="payments-api payments-hook payments-module services-module orders-module chat chat-display dashboard leads areas saved-searches area-hook hide-modules collab-hook collab-hook-v2 marketplace-filters workflows-defaults extended-api operator-whitelist"
 
 # Skip payment extension
 if [ -z "$PAYMENT_EXTENSION" ]; then
@@ -92,7 +92,7 @@ do
             tree
             mv "./${ext_name}"/* "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/dist/"
             mv "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/dist/package.json" "${DIRECTUS_EXTENSIONS}/directus-extension-${ext_name}/"
-            
+
             # if [ -f "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json" ]; then
             #     rm "${DIRECTUS_EXTENSIONS}/${ext_name}/package.json"
             # fi

@@ -18,6 +18,7 @@ ls -la ./directus-custom-extensions-release
 # cp is sometimes aliased to cp -i, which will prompt before overwriting
 # The leading backslash will skip the alias and use the default cp
 \cp -r ./directus-custom-extensions-release/hooks/collab-hook-v2 ${DIRECTUS_HOOKS}
+\cp -r ./directus-custom-extensions-release/hooks/operator-whitelist ${DIRECTUS_HOOKS}
 
 \cp -r ./directus-custom-extensions-release/hooks/marketplace-filters ${DIRECTUS_HOOKS}
 \cp -r ./directus-custom-extensions-release/hooks/workflows-defaults ${DIRECTUS_HOOKS}
