@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { getLocalTypeForField } from '@/utils/get-local-type';
 import { getRelatedCollection } from '@/utils/get-related-collection';
+import { copyToClipboard } from '@/utils/copy-to-clipboard';
+import { renderPlainStringTemplate } from '@/utils/render-string-template';
+import { notify } from '@/utils/notify';
 import { getItemRoute } from '@/utils/get-route';
 import { useCollection } from '@directus/composables';
 import { get } from 'lodash';
