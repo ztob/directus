@@ -94,7 +94,19 @@ export default function useUpdatePermissions(
 		// Find the user_created field or its equivalent
 		const fieldsStore = useFieldsStore();
 		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
-		const userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+
+		const specialFields: Record<string, string> = {
+			"directus_activity": "user",
+			"directus_notifications": "recipient",
+			"directus_presets": "user",
+			"directus_sessions": "user",
+			"directus_users": "id"
+		};
+		let userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+		if (!userCreatedField && specialFields[collection.value.collection]) {
+			userCreatedField = specialFields[collection.value.collection];
+		}
+		
 		if (!userCreatedField) {
 			saving.value = false;
 			return;
@@ -218,7 +230,19 @@ export default function useUpdatePermissions(
 		// Find the user_created field or its equivalent
 		const fieldsStore = useFieldsStore();
 		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
-		const userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+		
+		const specialFields: Record<string, string> = {
+			"directus_activity": "user",
+			"directus_notifications": "recipient",
+			"directus_presets": "user",
+			"directus_sessions": "user",
+			"directus_users": "id"
+		};
+		let userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+		if (!userCreatedField && specialFields[collection.value.collection]) {
+			userCreatedField = specialFields[collection.value.collection];
+		}
+		
 		if (!userCreatedField) {
 			saving.value = false;
 			return;
