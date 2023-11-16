@@ -198,8 +198,8 @@ function useMovetoFolder() {
 				title: t('file_moved', { folder }),
 				icon: 'folder_move',
 			});
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			moveToDialogActive.value = false;
 			moving.value = false;
@@ -368,12 +368,12 @@ function useMovetoFolder() {
 
 <style lang="scss" scoped>
 .action-delete {
-	--v-button-background-color-hover: var(--danger) !important;
+	--v-button-background-color-hover: var(--theme--danger) !important;
 	--v-button-color-hover: var(--white) !important;
 }
 
 .header-icon.secondary {
-	--v-button-background-color: var(--background-normal);
+	--v-button-background-color: var(--theme--background-normal);
 }
 
 .file-item {

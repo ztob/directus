@@ -1,6 +1,7 @@
 {
 	"name": "directus-monorepo",
 	"private": true,
+	"homepage": "https://directus.io",
 	"scripts": {
 		"build": "pnpm --recursive --filter '!docs' run build",
 		"format": "prettier --cache --check .",
@@ -37,9 +38,9 @@
 		"typescript": "4.9.5",
 		"uuid": "9.0.0"
 	},
-	"packageManager": "pnpm@8.8.0",
+	"packageManager": "pnpm@8.9.0",
 	"engines": {
 		"node": ">=18.0.0",
-		"pnpm": "~8.8.0"
+		"pnpm": "~8.9.0"
 	}
 }
