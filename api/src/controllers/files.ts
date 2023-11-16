@@ -10,7 +10,7 @@ import Joi from 'joi';
 import { minimatch } from 'minimatch';
 import path from 'path';
 import env from '../env.js';
-import { ContentTooLargeError, ErrorCode, InvalidPayloadError, ServiceUnavailableError } from '../errors/index.js';
+import { ErrorCode, InvalidPayloadError, ServiceUnavailableError } from '@directus/errors';
 import { respond } from '../middleware/respond.js';
 import useCollection from '../middleware/use-collection.js';
 import { validateBatch } from '../middleware/validate-batch.js';
@@ -256,9 +256,13 @@ router.post(
 			schema: req.schema,
 		});
 
-		const values: Record<string, any> = await filesService.readOne(req.body.key, {
-			fields: Array.from(fields),
-		}, { emitEvents: false });
+		const values: Record<string, any> = await filesService.readOne(
+			req.body.key,
+			{
+				fields: Array.from(fields),
+			},
+			{ emitEvents: false }
+		);
 
 		// Use micromustache to render the template strings
 		const subject = req.body.subject ? render(req.body.subject, values) : '';
@@ -272,7 +276,7 @@ router.post(
 		const exists = await storage.location(values['storage']).exists(values['filename_disk']);
 
 		if (!exists) {
-			throw new InvalidPayloadError({reason: `File does not exist`});
+			throw new InvalidPayloadError({ reason: `File does not exist` });
 		}
 
 		const fileStream = await storage.location(values['storage']).read(values['filename_disk']);
@@ -287,19 +291,21 @@ router.post(
 				to: req.body.emails,
 				subject,
 				text: body,
-				attachments: [{
-					filename: values['filename_download'],
-					content: fileStream,
-				}]
+				attachments: [
+					{
+						filename: values['filename_download'],
+						content: fileStream,
+					},
+				],
 			});
 
 			res.json({
 				success: true,
 				accepted: result.accepted?.length ?? 0,
-				rejected: result.rejected?.length ?? (req.body.emails.length - (result.accepted?.length ?? 0)),
+				rejected: result.rejected?.length ?? req.body.emails.length - (result.accepted?.length ?? 0),
 			});
 		} catch (error: any) {
-			throw new ServiceUnavailableError({reason: 'Error sending email', service: 'files' });
+			throw new ServiceUnavailableError({ reason: 'Error sending email', service: 'files' });
 		}
 	})
 );

@@ -1,4 +1,4 @@
-import { defineInterface } from '@directus/utils';
+import { defineInterface } from '@directus/extensions';
 import Options from './options.vue';
 import Interface from './iframe.vue';
 
