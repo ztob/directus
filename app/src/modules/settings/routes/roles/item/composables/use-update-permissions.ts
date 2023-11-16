@@ -1,8 +1,8 @@
 import api from '@/api';
 import { useFieldsStore } from '@/stores/fields';
-import { Permission, Collection } from '@directus/types';
 import { unexpectedError } from '@/utils/unexpected-error';
-import { inject, ref, Ref } from 'vue';
+import { Collection, Permission } from '@directus/types';
+import { inject, ref, type Ref } from 'vue';
 
 const ACTIONS = ['create', 'read', 'update', 'delete', 'share'] as const;
 type Action = typeof ACTIONS[number];
@@ -53,8 +53,8 @@ export default function useUpdatePermissions(
 					permissions: {},
 					validation: {},
 				});
-			} catch (err: any) {
-				unexpectedError(err);
+			} catch (error) {
+				unexpectedError(error);
 			} finally {
 				await refresh?.();
 				saving.value = false;
@@ -69,8 +69,8 @@ export default function useUpdatePermissions(
 					permissions: {},
 					validation: {},
 				});
-			} catch (err: any) {
-				unexpectedError(err);
+			} catch (error) {
+				unexpectedError(error);
 			} finally {
 				await refresh?.();
 				saving.value = false;
@@ -106,7 +106,7 @@ export default function useUpdatePermissions(
 		if (!userCreatedField && specialFields[collection.value.collection]) {
 			userCreatedField = specialFields[collection.value.collection];
 		}
-		
+
 		if (!userCreatedField) {
 			saving.value = false;
 			return;
@@ -158,8 +158,8 @@ export default function useUpdatePermissions(
 
 		try {
 			await api.delete(`/permissions/${permission.id}`);
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			await refresh?.();
 			saving.value = false;
@@ -190,8 +190,8 @@ export default function useUpdatePermissions(
 							permissions: {},
 							validation: {},
 						});
-					} catch (err: any) {
-						unexpectedError(err);
+					} catch (error) {
+						unexpectedError(error);
 					}
 				} else {
 					try {
@@ -203,8 +203,8 @@ export default function useUpdatePermissions(
 							permissions: {},
 							validation: {},
 						});
-					} catch (err: any) {
-						unexpectedError(err);
+					} catch (error) {
+						unexpectedError(error);
 					}
 				}
 			})
@@ -230,7 +230,7 @@ export default function useUpdatePermissions(
 		// Find the user_created field or its equivalent
 		const fieldsStore = useFieldsStore();
 		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
-		
+
 		const specialFields: Record<string, string> = {
 			"directus_activity": "user",
 			"directus_notifications": "recipient",
@@ -242,7 +242,7 @@ export default function useUpdatePermissions(
 		if (!userCreatedField && specialFields[collection.value.collection]) {
 			userCreatedField = specialFields[collection.value.collection];
 		}
-		
+
 		if (!userCreatedField) {
 			saving.value = false;
 			return;
@@ -291,8 +291,8 @@ export default function useUpdatePermissions(
 
 		try {
 			await api.delete('/permissions', { data: permissions.value.map((p) => p.id) });
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			await refresh?.();
 			saving.value = false;

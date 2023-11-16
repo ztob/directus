@@ -150,8 +150,8 @@ function setupChart() {
 			zoom: {
 				enabled: false,
 			},
-			fontFamily: 'var(--family-sans-serif)',
-			foreColor: 'var(--foreground-subdued)',
+			fontFamily: 'var(--theme--font-family-sans-serif)',
+			foreColor: 'var(--theme--foreground-subdued)',
 			animations: {
 				enabled: false,
 			},
@@ -193,7 +193,7 @@ function setupChart() {
 			},
 		},
 		grid: {
-			borderColor: 'var(--border-subdued)',
+			borderColor: 'var(--theme--border-color-subdued)',
 			padding: {
 				top: props.showHeader ? -20 : -4,
 				bottom: 0,
@@ -242,8 +242,8 @@ function setupChart() {
 				show: props.showXAxis ?? true,
 				offsetY: -4,
 				style: {
-					fontFamily: 'var(--family-sans-serif)',
-					foreColor: 'var(--foreground-subdued)',
+					fontFamily: 'var(--theme--font-family-sans-serif)',
+					foreColor: 'var(--theme--foreground-subdued)',
 					fontWeight: 600,
 					fontSize: '10px',
 				},
@@ -251,7 +251,7 @@ function setupChart() {
 			},
 			crosshairs: {
 				stroke: {
-					color: 'var(--border-normal)',
+					color: 'var(--theme--form--field--input--border-color)',
 				},
 			},
 		},
@@ -290,8 +290,8 @@ function setupChart() {
 								  } as any);
 						},
 						style: {
-							fontFamily: 'var(--family-sans-serif)',
-							foreColor: 'var(--foreground-subdued)',
+							fontFamily: 'var(--theme--font-family-sans-serif)',
+							foreColor: 'var(--theme--foreground-subdued)',
 							fontWeight: 600,
 							fontSize: '10px',
 						},
@@ -344,16 +344,16 @@ function setupChart() {
 
 <style>
 .apexcharts-tooltip.apexcharts-theme-light {
-	border-color: var(--border-normal) !important;
+	border-color: var(--theme--form--field--input--border-color) !important;
 }
 
 .apexcharts-tooltip.apexcharts-theme-light .apexcharts-tooltip-title {
-	border-color: var(--border-normal) !important;
+	border-color: var(--theme--form--field--input--border-color) !important;
 	margin-bottom: 0;
 	padding: 0 4px;
 	font-weight: 600 !important;
 	font-size: 10px !important;
-	background-color: var(--background-subdued) !important;
+	background-color: var(--theme--background-subdued) !important;
 }
 
 .apexcharts-tooltip-y-group {
@@ -363,7 +363,7 @@ function setupChart() {
 }
 
 .apexcharts-tooltip-series-group {
-	background-color: var(--background-normal) !important;
+	background-color: var(--theme--background-normal) !important;
 	padding: 0;
 }
 

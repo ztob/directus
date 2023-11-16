@@ -48,6 +48,8 @@ TODO
 /api/extensions/
 /tests/blackbox/uploads/
 /tests/blackbox/server-log-*
+/tests/blackbox/sequencer-data.json
+/packages/extensions-sdk/temp-extension-*/
 /packages/extensions-sdk/temp-extension-*
 *.db
 ts-errors.yaml

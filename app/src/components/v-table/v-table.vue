@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { i18n } from '@/lang/';
 import { hideDragImage } from '@/utils/hide-drag-image';
-import { ShowSelect } from '@directus/types';
+import type { ShowSelect } from '@directus/extensions';
 import { clone, forEach, pick } from 'lodash';
 import { computed, ref, useSlots } from 'vue';
 import Draggable from 'vuedraggable';
@@ -321,7 +321,7 @@ function onAddFilter(filterBy: string, value: string | number | boolean) {
 			<draggable
 				v-else
 				v-model="internalItems"
-				:force-fallback="true"
+				force-fallback
 				:item-key="itemKey"
 				tag="tbody"
 				handle=".drag-handle"
@@ -365,16 +365,19 @@ function onAddFilter(filterBy: string, value: string | number | boolean) {
 </template>
 
 <style scoped>
-:global(body) {
-	--v-table-height: auto;
-	--v-table-sticky-offset-top: 0;
-	--v-table-color: var(--foreground-normal);
-	--v-table-background-color: var(--background-input);
-}
+/*
+
+	Available Variables:
+
+		--v-table-sticky-offset-top  [0]
+		--v-table-color              [var(--theme--foreground)]
+		--v-table-background-color   [transparent]
+
+*/
 
 .v-table {
 	position: relative;
-	height: var(--v-table-height);
+	height: auto;
 	overflow-y: auto;
 }
 
@@ -398,7 +401,7 @@ table :deep(thead) {
 
 table :deep(td),
 table :deep(th) {
-	color: var(--v-table-color);
+	color: var(--v-table-color, var(--theme--foreground));
 }
 
 table :deep(tr),
@@ -435,7 +438,7 @@ table :deep(.loading-indicator > th) {
 }
 
 table :deep(.sortable-ghost .cell) {
-	background-color: var(--background-subdued);
+	background-color: var(--theme--background-subdued);
 }
 
 .loading table {
@@ -450,7 +453,7 @@ table :deep(.sortable-ghost .cell) {
 
 .loading .loading-indicator .v-progress-linear {
 	--v-progress-linear-height: 2px;
-	--v-progress-linear-color: var(--border-normal-alt);
+	--v-progress-linear-color: var(--theme--form--field--input--border-color-hover);
 
 	position: absolute;
 	top: -2px;
@@ -471,18 +474,18 @@ table :deep(.sortable-ghost .cell) {
 .loading-text,
 .no-items-text {
 	text-align: center;
-	background-color: var(--background-input);
+	background-color: var(--theme--form--field--input--background);
 }
 
 .loading-text td,
 .no-items-text td {
 	padding: 16px;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 }
 
 .inline {
-	border: 2px solid var(--border-normal);
-	border-radius: var(--border-radius);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+	border-radius: var(--theme--border-radius);
 }
 
 .inline table :deep(.table-row:last-of-type .cell) {
@@ -490,7 +493,7 @@ table :deep(.sortable-ghost .cell) {
 }
 
 .disabled {
-	--v-table-color: var(--foreground-subdued);
-	--v-table-background-color: var(--background-subdued);
+	--v-table-color: var(--theme--foreground-subdued);
+	--v-table-background-color: var(--theme--background-subdued);
 }
 </style>

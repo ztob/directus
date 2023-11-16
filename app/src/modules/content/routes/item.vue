@@ -8,8 +8,10 @@ import { useLocalStorage } from '@/composables/use-local-storage';
 import { usePermissions } from '@/composables/use-permissions';
 import { useShortcut } from '@/composables/use-shortcut';
 import { useTemplateData } from '@/composables/use-template-data';
+import { useVersions } from '@/composables/use-versions';
 import { getCollectionRoute, getItemRoute } from '@/utils/get-route';
 import { renderStringTemplate } from '@/utils/render-string-template';
+import { translateShortcut } from '@/utils/translate-shortcut';
 import CommentsSidebarDetail from '@/views/private/components/comments-sidebar-detail.vue';
 import FlowSidebarDetail from '@/views/private/components/flow-sidebar-detail.vue';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
@@ -21,6 +23,7 @@ import { useHead } from '@unhead/vue';
 import { useRouter } from 'vue-router';
 import LivePreview from '../components/live-preview.vue';
 import ContentNavigation from '../components/navigation.vue';
+import VersionMenu from '../components/version-menu.vue';
 import ContentNotFound from './not-found.vue';
 
 
@@ -49,6 +52,19 @@ const revisionsDrawerDetailRef = ref<InstanceType<typeof RevisionsDrawerDetail> 
 const { info: collectionInfo, defaults, primaryKeyField, isSingleton, accountabilityScope } = useCollection(collection);
 
 const {
+	readVersionsAllowed,
+	currentVersion,
+	versions,
+	loading: versionsLoading,
+	query,
+	addVersion,
+	updateVersion,
+	deleteVersion,
+	saveVersionLoading,
+	saveVersion,
+} = useVersions(collection, isSingleton, primaryKey);
+
+const {
 	isNew,
 	edits,
 	hasEdits,
@@ -65,7 +81,7 @@ const {
 	saveAsCopy,
 	refresh,
 	validationErrors,
-} = useItem(collection, primaryKey);
+} = useItem(collection, primaryKey, query);
 
 const { filter } = usePreset(collection);
 
@@ -126,8 +142,29 @@ const archiveTooltip = computed(() => {
 	return t('archive');
 });
 
-useShortcut('meta+s', saveAndStay, form);
-useShortcut('meta+shift+s', saveAndAddNew, form);
+useShortcut(
+	'meta+s',
+	() => {
+		if (unref(currentVersion) === null) {
+			saveAndStay();
+		} else {
+			saveVersionAction('stay');
+		}
+	},
+	form
+);
+
+useShortcut(
+	'meta+shift+s',
+	() => {
+		if (unref(currentVersion) === null) {
+			saveAndAddNew();
+		} else {
+			saveVersionAction('quit');
+		}
+	},
+	form
+);
 
 const {
 	createAllowed,
@@ -155,12 +192,21 @@ const disabledOptions = computed(() => {
 	return [];
 });
 
+watch(currentVersion, () => {
+	edits.value = {};
+});
+
 const previewTemplate = computed(() => collectionInfo.value?.meta?.preview_url ?? '');
 
 const { templateData: previewData, fetchTemplateValues } = useTemplateData(collectionInfo, primaryKey, previewTemplate);
 
 const previewURL = computed(() => {
-	const { displayValue } = renderStringTemplate(previewTemplate.value, previewData);
+	const enrichedPreviewData = {
+		...unref(previewData),
+		$version: currentVersion.value ? currentVersion.value.key : 'main',
+	};
+
+	const { displayValue } = renderStringTemplate(previewTemplate.value, enrichedPreviewData);
 
 	return displayValue.value || null;
 });
@@ -219,9 +265,7 @@ function toggleSplitView() {
 	}
 }
 
-watch(saving, async (newVal, oldVal) => {
-	if (newVal === true || oldVal === false) return;
-
+async function refreshLivePreview() {
 	try {
 		await fetchTemplateValues();
 		window.refreshLivePreview(previewURL.value);
@@ -229,6 +273,18 @@ watch(saving, async (newVal, oldVal) => {
 	} catch (error) {
 		// noop
 	}
+}
+
+watch(saving, async (newVal, oldVal) => {
+	if (newVal === true || oldVal === false) return;
+
+	await refreshLivePreview();
+});
+
+watch(saveVersionLoading, async (newVal, oldVal) => {
+	if (newVal === true || oldVal === false) return;
+
+	await refreshLivePreview();
 });
 
 onBeforeUnmount(() => {
@@ -255,6 +311,29 @@ function useBreadcrumb() {
 	]);
 
 	return { breadcrumb };
+}
+
+async function saveVersionAction(action: 'main' | 'stay' | 'quit') {
+	if (isSavable.value === false) return;
+
+	try {
+		await saveVersion(edits);
+		edits.value = {};
+
+		switch (action) {
+			case 'main':
+				currentVersion.value = null;
+				break;
+			case 'stay':
+				refresh();
+				break;
+			case 'quit':
+				if (!props.singleton) router.push(`/content/${props.collection}`);
+				break;
+		}
+	} catch {
+		// Save version shows unexpected error dialog
+	}
 }
 
 async function saveAndQuit() {
@@ -289,6 +368,7 @@ async function saveAndStay() {
 
 async function saveAndAddNew() {
 	if (isSavable.value === false) return;
+	if (unref(currentVersion) !== null) return;
 
 	try {
 		await save();
@@ -472,6 +552,28 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 			<v-breadcrumb v-else :items="breadcrumb" />
 		</template>
 
+		<template #title-outer:append>
+			<version-menu
+				v-if="
+					collectionInfo.meta &&
+					collectionInfo.meta.versioning &&
+					!isNew &&
+					internalPrimaryKey !== '+' &&
+					readVersionsAllowed &&
+					!versionsLoading
+				"
+				:collection="collection"
+				:primary-key="internalPrimaryKey"
+				:has-edits="hasEdits"
+				:current-version="currentVersion"
+				:versions="versions"
+				@add="addVersion"
+				@update="updateVersion"
+				@delete="deleteVersion"
+				@switch="currentVersion = $event"
+			/>
+		</template>
+
 		<template #actions>
 			<v-button
 				v-if="previewURL"
@@ -485,7 +587,12 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 				<v-icon name="visibility" outline />
 			</v-button>
 
-			<v-dialog v-if="!isNew" v-model="confirmDelete" :disabled="deleteAllowed === false" @esc="confirmDelete = false">
+			<v-dialog
+				v-if="!isNew && currentVersion === null"
+				v-model="confirmDelete"
+				:disabled="deleteAllowed === false"
+				@esc="confirmDelete = false"
+			>
 				<template #activator="{ on }">
 					<v-button
 						v-if="collectionInfo.meta && collectionInfo.meta.singleton === false"
@@ -516,7 +623,7 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 			</v-dialog>
 
 			<v-dialog
-				v-if="collectionInfo.meta && collectionInfo.meta.archive_field && !isNew"
+				v-if="collectionInfo.meta && collectionInfo.meta.archive_field && !isNew && currentVersion === null"
 				v-model="confirmArchive"
 				:disabled="archiveAllowed === false"
 				@esc="confirmArchive = false"
@@ -560,9 +667,11 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 			</v-button>
 
 			<v-button
+				v-if="currentVersion === null"
 				v-tooltip.bottom="saveAllowed ? t('save') : t('not_allowed')"
 				rounded
 				icon
+				:tooltip="saveAllowed ? t('save') : t('not_allowed')"
 				:loading="saving"
 				:disabled="!isSavable"
 				@click="saveAndQuit"
@@ -578,6 +687,42 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 						@save-as-copy="saveAsCopyAndNavigate"
 						@discard-and-stay="discardAndStay"
 					/>
+				</template>
+			</v-button>
+			<v-button
+				v-else
+				rounded
+				icon
+				:tooltip="t('save_version')"
+				:loading="saveVersionLoading"
+				:disabled="!isSavable"
+				@click="saveVersionAction('main')"
+			>
+				<v-icon name="beenhere" />
+
+				<template #append-outer>
+					<v-menu v-if="collectionInfo.meta && collectionInfo.meta.singleton !== true && isSavable === true" show-arrow>
+						<template #activator="{ toggle }">
+							<v-icon class="version-more-options" name="more_vert" clickable @click="toggle" />
+						</template>
+
+						<v-list>
+							<v-list-item clickable @click="saveVersionAction('stay')">
+								<v-list-item-icon><v-icon name="beenhere" /></v-list-item-icon>
+								<v-list-item-content>{{ t('save_and_stay') }}</v-list-item-content>
+								<v-list-item-hint>{{ translateShortcut(['meta', 's']) }}</v-list-item-hint>
+							</v-list-item>
+							<v-list-item clickable @click="saveVersionAction('quit')">
+								<v-list-item-icon><v-icon name="done_all" /></v-list-item-icon>
+								<v-list-item-content>{{ t('save_and_quit') }}</v-list-item-content>
+								<v-list-item-hint>{{ translateShortcut(['meta', 'shift', 's']) }}</v-list-item-hint>
+							</v-list-item>
+							<v-list-item clickable @click="discardAndStay">
+								<v-list-item-icon><v-icon name="undo" /></v-list-item-icon>
+								<v-list-item-content>{{ t('discard_all_changes') }}</v-list-item-content>
+							</v-list-item>
+						</v-list>
+					</v-menu>
 				</template>
 			</v-button>
 		</template>
@@ -627,12 +772,23 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 					ref="revisionsDrawerDetailRef"
 					:collection="collection"
 					:primary-key="internalPrimaryKey"
+					:version="currentVersion"
 					:scope="accountabilityScope"
 					@revert="revert"
 				/>
-				<comments-sidebar-detail :collection="collection" :primary-key="internalPrimaryKey" />
-				<shares-sidebar-detail :collection="collection" :primary-key="internalPrimaryKey" :allowed="shareAllowed" />
+				<comments-sidebar-detail
+					v-if="currentVersion === null"
+					:collection="collection"
+					:primary-key="internalPrimaryKey"
+				/>
+				<shares-sidebar-detail
+					v-if="currentVersion === null"
+					:collection="collection"
+					:primary-key="internalPrimaryKey"
+					:allowed="shareAllowed"
+				/>
 				<flow-sidebar-detail
+					v-if="currentVersion === null"
 					location="item"
 					:collection="collection"
 					:primary-key="internalPrimaryKey"
@@ -646,14 +802,14 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 
 <style lang="scss" scoped>
 .action-delete {
-	--v-button-background-color-hover: var(--danger) !important;
+	--v-button-background-color-hover: var(--theme--danger) !important;
 	--v-button-color-hover: var(--white) !important;
 }
 
 .header-icon.secondary {
-	--v-button-background-color: var(--background-normal);
-	--v-button-color-disabled: var(--foreground-normal);
-	--v-button-color-active: var(--foreground-normal);
+	--v-button-background-color: var(--theme--background-normal);
+	--v-button-color-disabled: var(--theme--foreground);
+	--v-button-color-active: var(--theme--foreground);
 }
 
 .v-form {
@@ -668,5 +824,13 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 
 .title-loader {
 	width: 260px;
+}
+
+:deep(.version-more-options.v-icon) {
+	color: var(--theme--foreground-subdued);
+
+	&:hover {
+		color: var(--theme--foreground);
+	}
 }
 </style>

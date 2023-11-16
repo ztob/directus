@@ -276,8 +276,8 @@ function useUpload() {
 			notify({
 				title: t('import_data_success', { filename: file.name }),
 			});
-		} catch (err: any) {
-			const code = err?.response?.data?.errors?.[0]?.extensions?.code;
+		} catch (error: any) {
+			const code = error?.response?.data?.errors?.[0]?.extensions?.code;
 
 			notify({
 				title: te(`errors.${code}`) ? t(`errors.${code}`) : t('import_data_error'),
@@ -285,7 +285,7 @@ function useUpload() {
 			});
 
 			if (code === 'INTERNAL_SERVER_ERROR') {
-				unexpectedError(err);
+				unexpectedError(error);
 			}
 		} finally {
 			uploading.value = false;
@@ -354,8 +354,8 @@ async function exportDataFiles() {
 			type: 'success',
 			icon: 'file_download',
 		});
-	} catch (err: any) {
-		unexpectedError(err);
+	} catch (error) {
+		unexpectedError(error);
 	} finally {
 		exporting.value = false;
 	}
@@ -624,8 +624,8 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 }
 
 .export-fields {
-	--folder-picker-background-color: var(--background-subdued);
-	--folder-picker-color: var(--background-normal);
+	--folder-picker-background-color: var(--theme--background-subdued);
+	--folder-picker-color: var(--theme--background-normal);
 
 	margin-top: 24px;
 	padding: var(--content-padding);
@@ -651,9 +651,9 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 	padding-top: 0px;
 	padding-bottom: 0px;
 	color: var(--white);
-	background-color: var(--primary);
-	border: var(--border-width) solid var(--primary);
-	border-radius: var(--border-radius);
+	background-color: var(--theme--primary);
+	border: var(--theme--border-width) solid var(--theme--primary);
+	border-radius: var(--theme--border-radius);
 
 	.type-text {
 		display: flex;
@@ -668,7 +668,7 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 }
 
 .preview {
-	--v-icon-color: var(--foreground-subdued);
+	--v-icon-color: var(--theme--foreground-subdued);
 
 	display: flex;
 	align-items: center;
@@ -677,16 +677,16 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 	height: 40px;
 	margin-left: -8px;
 	overflow: hidden;
-	background-color: var(--background-normal);
-	border-radius: var(--border-radius);
+	background-color: var(--theme--background-normal);
+	border-radius: var(--theme--border-radius);
 
 	&.has-file {
-		background-color: var(--primary-alt);
+		background-color: var(--theme--primary-background);
 	}
 }
 
 .extension {
-	color: var(--primary);
+	color: var(--theme--primary);
 	font-weight: 600;
 	font-size: 11px;
 	text-transform: uppercase;
@@ -712,16 +712,16 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 	text-overflow: ellipsis;
 
 	&.no-file {
-		color: var(--foreground-subdued);
+		color: var(--theme--foreground-subdued);
 	}
 }
 
 :deep(.v-button) .button:disabled {
-	--v-button-background-color-disabled: var(--background-normal-alt);
+	--v-button-background-color-disabled: var(--theme--background-accent);
 }
 
 .download-local {
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 	text-align: center;
 	display: block;
 	width: 100%;
@@ -729,7 +729,7 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 	transition: color var(--fast) var(--transition);
 
 	&:hover {
-		color: var(--primary);
+		color: var(--theme--primary);
 	}
 }
 </style>

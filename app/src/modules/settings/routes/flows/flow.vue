@@ -84,8 +84,8 @@ async function deleteFlow() {
 	try {
 		await api.delete(`/flows/${flow.value.id}`);
 		await flowsStore.hydrate();
-	} catch (err: any) {
-		unexpectedError(err);
+	} catch (error) {
+		unexpectedError(error);
 	} finally {
 		deleting.value = false;
 		router.push('/settings/flows');
@@ -301,7 +301,7 @@ async function saveChanges() {
 		stagedFlow.value = {};
 		editMode.value = false;
 	} catch (error) {
-		unexpectedError(error as Error);
+		unexpectedError(error);
 	} finally {
 		saving.value = false;
 	}
@@ -412,8 +412,8 @@ async function movePanel() {
 		await flowsStore.hydrate();
 
 		movePanelID.value = undefined;
-	} catch (err: any) {
-		unexpectedError(err);
+	} catch (error) {
+		unexpectedError(error);
 	} finally {
 		movePanelLoading.value = false;
 	}
@@ -441,9 +441,9 @@ function arrowStop() {
 	}
 
 	// make sure only one arrow can be connected to an attachment
-	if (nearPanel && parentPanels.value[nearPanel]) {
-		const currentlyConnected = parentPanels.value[nearPanel];
+	const currentlyConnected = nearPanel && parentPanels.value[nearPanel];
 
+	if (currentlyConnected) {
 		if (currentlyConnected.id === '$trigger') {
 			flow.value = merge({}, flow.value, { operation: null });
 		} else {
@@ -471,11 +471,11 @@ function arrowStop() {
 }
 
 function isLoop(currentId: string, attachTo: string) {
-	let parent = currentId;
+	let parent: string | undefined = currentId;
 
 	while (parent !== undefined) {
 		if (parent === attachTo) return true;
-		parent = parentPanels.value[parent]?.id ?? undefined;
+		parent = parentPanels.value[parent]?.id;
 	}
 
 	return false;
@@ -545,7 +545,7 @@ function discardAndLeave() {
 			<display-color
 				v-tooltip="flow?.status === 'active' ? t('active') : t('inactive')"
 				class="status-dot"
-				:value="flow?.status === 'active' ? 'var(--primary)' : 'var(--foreground-subdued)'"
+				:value="flow?.status === 'active' ? 'var(--theme--primary)' : 'var(--theme--foreground-subdued)'"
 			/>
 		</template>
 
@@ -713,10 +713,10 @@ function discardAndLeave() {
 
 <style scoped lang="scss">
 .header-icon {
-	--v-button-background-color: var(--primary-10);
-	--v-button-color: var(--primary);
-	--v-button-background-color-hover: var(--primary-25);
-	--v-button-color-hover: var(--primary);
+	--v-button-background-color: var(--theme--primary-background);
+	--v-button-color: var(--theme--primary);
+	--v-button-background-color-hover: var(--theme--primary-subdued);
+	--v-button-color-hover: var(--theme--primary);
 }
 
 .status-dot {
@@ -736,12 +736,12 @@ function discardAndLeave() {
 }
 
 .clear-changes {
-	--v-button-background-color: var(--foreground-subdued);
-	--v-button-background-color-hover: var(--foreground-normal);
+	--v-button-background-color: var(--theme--foreground-subdued);
+	--v-button-background-color-hover: var(--theme--foreground);
 }
 
 .delete-flow {
-	--v-button-background-color-hover: var(--danger) !important;
+	--v-button-background-color-hover: var(--theme--danger) !important;
 	--v-button-color-hover: var(--white) !important;
 }
 

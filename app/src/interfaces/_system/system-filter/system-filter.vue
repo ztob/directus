@@ -273,7 +273,7 @@ function addKeyAsNode() {
 	</v-notice>
 
 	<div v-else class="system-filter" :class="{ inline, empty: innerValue.length === 0, field: fieldName !== undefined }">
-		<v-list :mandatory="true">
+		<v-list mandatory>
 			<div v-if="innerValue.length === 0" class="no-rules">
 				{{ t('interfaces.filter.no_rules') }}
 			</div>
@@ -361,14 +361,14 @@ function addKeyAsNode() {
 	:deep(.group) {
 		margin-left: 18px;
 		padding-left: 10px;
-		border-left: var(--border-width) solid var(--border-subdued);
+		border-left: var(--theme--border-width) solid var(--theme--border-color-subdued);
 	}
 
 	.v-list {
 		min-width: auto;
 		margin: 0px 0px 10px;
 		padding: 20px 20px 12px;
-		border: var(--border-width) solid var(--border-subdued);
+		border: var(--theme--border-width) solid var(--theme--border-color-subdued);
 
 		& > :deep(.group) {
 			margin-left: 0px;
@@ -392,13 +392,13 @@ function addKeyAsNode() {
 		}
 
 		.no-rules {
-			color: var(--foreground-subdued);
-			font-family: var(--family-monospace);
+			color: var(--theme--form--field--input--foreground-subdued);
+			font-family: var(--theme--font-family-monospace);
 		}
 	}
 
 	.add-filter {
-		color: var(--primary);
+		color: var(--theme--primary);
 	}
 
 	&.inline {
@@ -423,14 +423,14 @@ function addKeyAsNode() {
 			width: 100%;
 			height: 30px;
 			padding: 0;
-			color: var(--foreground-subdued);
-			background-color: var(--background-page);
-			border: var(--border-width) solid var(--border-subdued);
+			color: var(--theme--form--field--input--foreground-subdued);
+			background-color: var(--theme--form--field--input--background);
+			border: var(--theme--border-width) solid var(--theme--border-color-subdued);
 			border-radius: 100px;
 			transition: border-color var(--fast) var(--transition);
 			&:hover,
 			&.active {
-				border-color: var(--border-normal);
+				border-color: var(--theme--form--field--input--border-color);
 			}
 			&.active {
 				.expand_more {
@@ -453,7 +453,7 @@ function addKeyAsNode() {
 
 .field .buttons {
 	button {
-		color: var(--primary);
+		color: var(--theme--primary);
 		display: inline-block;
 		cursor: pointer;
 	}

@@ -152,6 +152,6 @@ function updateItemsCollection(collection: string, itemsNum: number) {
 
 <style scoped>
 .hidden {
-	--v-list-item-color: var(--foreground-subdued);
+	--v-list-item-color: var(--theme--foreground-subdued);
 }
 </style>

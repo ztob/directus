@@ -284,7 +284,7 @@ function isFieldDisabled(element: Filter) {
 		:group="{ name: 'g1' }"
 		:item-key="getIndex"
 		:swap-threshold="0.3"
-		:force-fallback="true"
+		force-fallback
 		@change="$emit('change')"
 	>
 		<template #item="{ element, index }">
@@ -411,8 +411,8 @@ function isFieldDisabled(element: Filter) {
 	margin-bottom: 8px;
 	padding: 2px 6px;
 	padding-right: 8px;
-	background-color: var(--background-page);
-	border: var(--border-width) solid var(--border-subdued);
+	background-color: var(--theme--form--field--input--background);
+	border: var(--theme--border-width) solid var(--theme--border-color-subdued);
 	border-radius: 100px;
 	transition: border-color var(--fast) var(--transition);
 
@@ -430,25 +430,25 @@ function isFieldDisabled(element: Filter) {
 	}
 
 	.logic-type {
-		color: var(--foreground-subdued);
+		color: var(--theme--form--field--input--foreground-subdued);
 
 		.key {
 			margin-right: 4px;
 			padding: 2px 6px;
-			color: var(--primary);
-			background-color: var(--primary-alt);
+			color: var(--theme--primary);
+			background-color: var(--theme--primary-background);
 			border-radius: 6px;
 			cursor: pointer;
 			transition: var(--fast) var(--transition);
 			transition-property: color, background-color;
 
 			&:hover {
-				background-color: var(--primary-25);
+				background-color: var(--theme--primary-subdued);
 			}
 		}
 
 		&.or .key {
-			color: var(--secondary);
+			color: var(--theme--secondary);
 			background-color: var(--secondary-alt);
 
 			&:hover {
@@ -477,7 +477,7 @@ function isFieldDisabled(element: Filter) {
 	&.raw-field-names {
 		.plain-name,
 		.name {
-			font-family: var(--family-monospace);
+			font-family: var(--theme--font-family-monospace);
 		}
 	}
 
@@ -495,7 +495,7 @@ function isFieldDisabled(element: Filter) {
 			z-index: -1;
 			width: calc(100% + 8px);
 			height: 100%;
-			background-color: var(--background-normal);
+			background-color: var(--theme--background-normal);
 			border-radius: 6px;
 			opacity: 0;
 			transition: opacity var(--fast) var(--transition);
@@ -517,8 +517,8 @@ function isFieldDisabled(element: Filter) {
 	}
 
 	.delete {
-		--v-icon-color: var(--foreground-subdued);
-		--v-icon-color-hover: var(--danger);
+		--v-icon-color: var(--theme--form--field--input--foreground-subdued);
+		--v-icon-color-hover: var(--theme--danger);
 
 		position: absolute;
 		top: 50%;
@@ -562,7 +562,7 @@ function isFieldDisabled(element: Filter) {
 
 
 	&:hover {
-		border-color: var(--border-normal);
+		border-color: var(--theme--form--field--input--border-color);
 
 		.delete,
 		// changed
@@ -579,7 +579,7 @@ function isFieldDisabled(element: Filter) {
 	}
 
 	.drag-handle {
-		--v-icon-color: var(--foreground-subdued);
+		--v-icon-color: var(--theme--form--field--input--foreground-subdued);
 
 		margin-right: 4px;
 		cursor: grab;
@@ -593,7 +593,7 @@ function isFieldDisabled(element: Filter) {
 		.delete {
 			right: 8px;
 			left: unset;
-			background-color: var(--background-page);
+			background-color: var(--theme--background);
 		}
 		// changed
 		.filter_field_icons {
@@ -617,8 +617,8 @@ function isFieldDisabled(element: Filter) {
 
 .group :deep(.sortable-ghost) {
 	.node .header {
-		background-color: var(--primary-alt);
-		border-color: var(--primary);
+		background-color: var(--theme--primary-background);
+		border-color: var(--theme--form--field--input--border-color-focus);
 
 		> * {
 			opacity: 0;

@@ -68,12 +68,12 @@ const sideDrawerWritable = useSync(props, 'useSideDrawer', emit);
 }
 
 .drag-handle {
-	--v-icon-color: var(--foreground-subdued);
+	--v-icon-color: var(--theme--foreground-subdued);
 
 	cursor: ns-resize;
 
 	&:hover {
-		--v-icon-color: var(--foreground-normal);
+		--v-icon-color: var(--theme--foreground);
 	}
 }
 </style>

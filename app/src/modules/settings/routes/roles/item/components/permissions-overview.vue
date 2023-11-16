@@ -12,7 +12,7 @@ import PermissionsOverviewRow from './permissions-overview-row.vue';
 
 const props = defineProps<{
 	role?: string;
-	// the permission row primary key in case we're on the permission detail modal view
+	/** the permission row primary key in case we're on the permission detail modal view */
 	permission?: string;
 	appAccess?: boolean;
 }>();
@@ -63,10 +63,9 @@ function usePermissions() {
 
 			const response = await api.get('/permissions', { params });
 			permissions.value = response.data.data;
-
 			emit('permission-change', response.data.data);
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			loading.value = false;
 		}
@@ -84,8 +83,8 @@ function usePermissions() {
 				if (permission.id === id) return response.data.data;
 				return permission;
 			});
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			refreshing.value = refreshing.value.filter((inProgressID) => inProgressID !== id);
 		}
@@ -166,7 +165,9 @@ function useReset() {
 						:role="role"
 						:permissions="permissions.filter((p) => p.collection === collection.collection)"
 						:refreshing="refreshing"
-						:app-minimal="appAccess && appMinimalPermissions.filter((p) => p.collection === collection.collection)"
+						:app-minimal="
+							appAccess ? appMinimalPermissions.filter((p) => p.collection === collection.collection) : undefined
+						"
 					/>
 				</div>
 			</transition-expand>
@@ -207,22 +208,22 @@ function useReset() {
 
 	.instant-save {
 		margin-left: 4px;
-		color: var(--warning);
+		color: var(--theme--warning);
 	}
 }
 
 .table {
 	max-width: 792px;
-	background-color: var(--background-input);
-	border: var(--border-width) solid var(--border-normal);
-	border-radius: var(--border-radius);
+	background-color: var(--theme--form--field--input--background);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+	border-radius: var(--theme--border-radius);
 }
 
 .system-toggle {
 	width: 100%;
 	height: 48px;
-	color: var(--foreground-subdued);
-	background-color: var(--background-subdued);
+	color: var(--theme--foreground-subdued);
+	background-color: var(--theme--background-subdued);
 
 	.v-icon {
 		vertical-align: -7px;
@@ -232,16 +233,16 @@ function useReset() {
 .reset-toggle {
 	display: block;
 	margin: 8px auto;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 	text-align: center;
 
 	button {
-		color: var(--primary) !important;
+		color: var(--theme--primary) !important;
 		transition: color var(--fast) var(--transition);
 	}
 
 	button:hover {
-		color: var(--foreground-normal) !important;
+		color: var(--theme--foreground) !important;
 	}
 }
 </style>
