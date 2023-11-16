@@ -210,6 +210,7 @@ export class ExportService {
 		format: ExportFormat,
 		options?: {
 			file?: Partial<File>;
+			emitEvents?: boolean;
 		}
 	) {
 		const { createTmpFile } = await import('@directus/utils/node');
@@ -265,12 +266,41 @@ export class ExportService {
 						limit = requestedLimit - readCount;
 					}
 
-					const result = await service.readByQuery({
+					const updatedQuery = {
 						...query,
 						sort,
 						limit,
 						offset: batch * env['EXPORT_BATCH_SIZE'],
-					});
+					}
+					let result = await service.readByQuery(updatedQuery);
+					if (options?.emitEvents !== false) {
+						result = await emitter.emitFilter(
+							'export.batch',
+							result,
+							{
+								collection,
+								query: updatedQuery,
+							},
+							{
+								database,
+								schema: this.schema,
+								accountability: this.accountability,
+							}
+						);
+						emitter.emitAction(
+							'export.batch',
+							{
+								payload: result,
+								query: updatedQuery,
+								collection: collection,
+							},
+							{
+								database,
+								schema: this.schema,
+								accountability: this.accountability,
+							}
+						);
+					}
 
 					readCount += result.length;
 

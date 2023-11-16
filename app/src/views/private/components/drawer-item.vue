@@ -59,8 +59,14 @@ const { internalActive } = useActiveState();
 const { junctionFieldInfo, relatedCollection, relatedCollectionInfo, setRelationEdits, relatedPrimaryKeyField } =
 	useRelation();
 
-const { internalEdits, loading, initialValues, refresh } = useItem();
+const { internalEdits, loading, initialValues, refresh, fetchItem } = useItem();
 const { save, cancel } = useActions();
+
+defineExpose({
+	save,
+	cancel,
+	fetchItem
+});
 
 const { collection } = toRefs(props);
 
@@ -211,7 +217,7 @@ function useItem() {
 		{ immediate: true }
 	);
 
-	return { internalEdits, loading, initialValues, refresh };
+	return { internalEdits, loading, initialValues, refresh, fetchItem };
 
 	async function refresh() {
 		if (props.active) {

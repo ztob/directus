@@ -16,6 +16,8 @@ import { isEqual } from 'lodash';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../components/navigation.vue';
 
+import SaveOptions from '@/views/private/components/save-options.vue';
+
 type FormattedPreset = {
 	id: number;
 	scope: string;
@@ -52,6 +54,7 @@ const { loading, preset } = usePreset();
 const { fields } = useForm();
 const { edits, hasEdits, initialValues, values, layoutQuery, layoutOptions, updateFilters, search } = useValues();
 const { save, saving } = useSave();
+
 const { deleting, deleteAndQuit, confirmDelete } = useDelete();
 
 const layoutFilter = computed<any>({
@@ -82,6 +85,80 @@ useShortcut('meta+s', () => {
 });
 
 const { confirmLeave, leaveTo } = useEditsGuard(hasEdits);
+
+// CUSTOM ADDITIONAL SETTINGS
+const disabledOptions = ['save-and-stay', 'save-and-add-new', 'discard-and-stay'];
+
+const { isCopySaving, saveAsCopyAndNavigate } = useSaveAsCopy();
+
+function useSaveAsCopy() {
+	const isCopySaving = ref(false);
+
+	return { isCopySaving, saveAsCopyAndNavigate };
+
+	async function saveAsCopyAndNavigate() {
+		isCopySaving.value = true;
+
+		const editsParsed: Partial<Preset> = {};
+
+		const keys = [
+			'icon',
+			'color',
+			'collection',
+			'layout',
+			'layout_query',
+			'layout_options',
+			'filter',
+			'search',
+		] as (keyof Preset)[];
+
+		// initial values + the edits fields that overrode the initial values
+		const newEdits = {
+			...initialValues.value,
+			...edits.value,
+		} as FormattedPreset;
+
+		if ('name' in newEdits) editsParsed.bookmark = newEdits.name;
+
+		for (const key of keys) {
+			if (key in newEdits) editsParsed[key] = newEdits[key];
+		}
+
+		if (newEdits.scope as any) {
+			if (newEdits.scope.startsWith('role_')) {
+				editsParsed.role = newEdits.scope.substring(5);
+				editsParsed.user = null;
+			} else if (newEdits.scope.startsWith('user_')) {
+				editsParsed.user = newEdits.scope.substring(5);
+				editsParsed.role = null;
+			} else {
+				editsParsed.role = null;
+				editsParsed.user = null;
+			}
+		}
+
+		try {
+			const { data: { data: { id: newPresetId } } } = await api.post(`/presets`, editsParsed);
+			// await api.post(`/presets`, editsParsed);
+			edits.value = {};
+			await presetsStore.hydrate();
+
+			router.push(`/settings/presets`);
+
+			let timeout = null;
+
+			timeout = setTimeout(() => {
+				if (newPresetId) router.push(`/settings/presets/${newPresetId}`);
+				clearTimeout(timeout)
+			}, 200);
+		} catch (err: any) {
+			unexpectedError(err);
+		} finally {
+			isCopySaving.value = false;
+		}
+	}
+}
+// -------------------------------------------------------------
 
 function useSave() {
 	const saving = ref(false);
@@ -511,10 +588,14 @@ function discardAndLeave() {
 					icon
 					rounded
 					:disabled="hasEdits === false"
-					:loading="saving"
+					:loading="saving || isCopySaving"
 					@click="save"
 				>
 					<v-icon name="check" />
+					<template #append-outer>
+						<save-options v-if="hasEdits === true" :disabled-options="disabledOptions"
+							@save-as-copy="saveAsCopyAndNavigate" />
+					</template>
 				</v-button>
 			</template>
 

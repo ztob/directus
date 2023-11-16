@@ -3,6 +3,7 @@ import api from '@/api';
 import { useExtension } from '@/composables/use-extension';
 import { usePreset } from '@/composables/use-preset';
 import { usePermissionsStore } from '@/stores/permissions';
+import { usePresetsStore } from '@/stores/presets';
 import { useUserStore } from '@/stores/user';
 import { getCollectionRoute, getItemRoute } from '@/utils/get-route';
 import { unexpectedError } from '@/utils/unexpected-error';
@@ -13,7 +14,6 @@ import ExportSidebarDetail from '@/views/private/components/export-sidebar-detai
 import FlowSidebarDetail from '@/views/private/components/flow-sidebar-detail.vue';
 import LayoutSidebarDetail from '@/views/private/components/layout-sidebar-detail.vue';
 import RefreshSidebarDetail from '@/views/private/components/refresh-sidebar-detail.vue';
-import SearchInput from '@/views/private/components/search-input.vue';
 import { useCollection, useLayout } from '@directus/composables';
 import { Filter } from '@directus/types';
 import { mergeFilters } from '@directus/utils';
@@ -22,6 +22,8 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import ContentNavigation from '../components/navigation.vue';
 import ContentNotFound from './not-found.vue';
+
+import CustomSearchInput from './custom-search-input.vue'
 
 type Item = {
 	[field: string]: any;
@@ -39,6 +41,7 @@ const router = useRouter();
 
 const userStore = useUserStore();
 const permissionsStore = usePermissionsStore();
+const presetsStore = usePresetsStore();
 const layoutRef = ref();
 
 const { collection } = toRefs(props);
@@ -67,6 +70,16 @@ const {
 	clearLocalSave,
 } = usePreset(collection, bookmarkID);
 
+// Use a custom filter for the export sidebar detail
+const exportFilter = ref(null);
+const exportFiltersMerged = computed<Filter>(() => {
+	// Merge filters in order of specificity
+	return mergeFilters(
+		filter.value,
+		mergeFilters(exportFilter.value, archiveFilter.value)
+	);
+});
+
 const { layoutWrapper } = useLayout(layout);
 
 const {
@@ -86,10 +99,13 @@ const currentLayout = useExtension('layout', layout);
 
 watch(
 	collection,
-	() => {
+	async () => {
 		if (layout.value === null) {
 			layout.value = 'tabular';
 		}
+		// Update the export filter
+		const presetForAllLayouts = await presetsStore.getPresetForCollection(collection.value);
+		exportFilter.value = presetForAllLayouts?.layout_options?.['_export_filter'] || null;
 	},
 	{ immediate: true }
 );
@@ -276,6 +292,7 @@ function useBookmarks() {
 function clearFilters() {
 	filter.value = null;
 	search.value = null;
+	layoutOptions.value = null
 }
 
 function usePermissions() {
@@ -420,7 +437,7 @@ function usePermissions() {
 			</template>
 
 			<template #actions>
-				<search-input v-model="search" v-model:filter="filter" :collection="collection" />
+				<custom-search-input v-model="search" v-model:filter="filter" v-model:layout_options="layoutOptions" :collection="collection" />
 
 				<v-dialog v-if="selection.length > 0" v-model="confirmDelete" @esc="confirmDelete = false">
 					<template #activator="{ on }">
@@ -575,7 +592,7 @@ function usePermissions() {
 				<refresh-sidebar-detail v-model="refreshInterval" @refresh="refresh" />
 				<export-sidebar-detail
 					:collection="collection"
-					:filter="mergeFilters(filter, archiveFilter)"
+					:filter="exportFiltersMerged"
 					:search="search"
 					:layout-query="layoutQuery"
 					@download="download"

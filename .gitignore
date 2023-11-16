@@ -50,4 +50,9 @@ TODO
 /tests/blackbox/server-log-*
 /tests/blackbox/sequencer-data.json
 /packages/extensions-sdk/temp-extension-*/
+/packages/extensions-sdk/temp-extension-*
+*.db
+ts-errors.yaml
+
+Mockerfile
 /docs/packages/

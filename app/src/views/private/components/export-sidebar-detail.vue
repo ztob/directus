@@ -59,6 +59,7 @@ const exportSettings = reactive({
 	search: props.search,
 	fields: props.layoutQuery?.fields ?? fields.value?.map((field) => field.field),
 	sort: `${primaryKeyField.value?.field ?? ''}`,
+	use_display_values: false,
 });
 
 watch(
@@ -318,6 +319,7 @@ function exportDataLocal() {
 	if (exportSettings.search) params.search = exportSettings.search;
 	if (exportSettings.filter) params.filter = exportSettings.filter;
 	if (exportSettings.search) params.search = exportSettings.search;
+	if (exportSettings.use_display_values) params.use_display_values = exportSettings.use_display_values;
 
 	params.limit = exportSettings.limit ? Math.min(exportSettings.limit, queryLimitMax) : -1;
 

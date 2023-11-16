@@ -7,10 +7,16 @@ import { usePermissionsStore } from '@/stores/permissions';
 import { useUserStore } from '@/stores/user';
 import { Collection } from '@/types/collections';
 import { useSync } from '@directus/composables';
-import type { ShowSelect } from '@directus/extensions';
-import type { Field, Filter, Item } from '@directus/types';
+import { get, getEndpoint } from '@directus/utils';
+import type { Field, Filter, Item, ShowSelect } from '@directus/types';
 import { ComponentPublicInstance, Ref, computed, inject, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import DrawerItem from '@/views/private/components/drawer-item.vue';
+import { unexpectedError } from '@/utils/unexpected-error';
+import { copyToClipboard } from '@/utils/copy-to-clipboard';
+import { notify } from '@/utils/notify';
+import api from '@/api';
+import { nextTick } from 'vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -44,6 +50,10 @@ interface Props {
 	aliasedKeys: string[];
 	onSortChange: (newSort: { by: string; desc: boolean }) => void;
 	onAlignChange?: (field: 'string', align: 'left' | 'center' | 'right') => void;
+	useSideDrawer: boolean;
+	sideDrawerOpen: boolean;
+	sideDrawerItemKey: string | null;
+	refresh: () => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,7 +70,14 @@ const props = withDefaults(defineProps<Props>(), {
 	onAlignChange: () => undefined,
 });
 
-const emit = defineEmits(['update:selection', 'update:tableHeaders', 'update:limit', 'update:fields']);
+const emit = defineEmits([
+	'update:selection',
+	'update:tableHeaders',
+	'update:limit',
+	'update:fields',
+	'update:sideDrawerOpen',
+	'update:sideDrawerItemKey',
+]);
 
 const { t } = useI18n();
 const { collection } = toRefs(props);
@@ -68,6 +85,88 @@ const { collection } = toRefs(props);
 const selectionWritable = useSync(props, 'selection', emit);
 const tableHeadersWritable = useSync(props, 'tableHeaders', emit);
 const limitWritable = useSync(props, 'limit', emit);
+const sideDrawerOpenWritable = useSync(props, 'sideDrawerOpen', emit);
+const sideDrawerItemKey = useSync(props, 'sideDrawerItemKey', emit);
+const itemDrawer = ref();
+const interceptPageLoad = ref<boolean>(false);
+const newItemIndex = ref<number>(0);
+
+const lastVisitedRow = computed<number>(() => {
+	return props.items.findIndex((item) => item[props.primaryKeyField!.field] === sideDrawerItemKey.value);
+});
+
+const backDisabled = computed<boolean>(() => {
+	return lastVisitedRow.value === 0 && props.page === 1;
+});
+
+const nextDisabled = computed<boolean>(() => {
+	return lastVisitedRow.value === props.items.length - 1 && props.page === props.totalPages;
+});
+
+watch(lastVisitedRow, (value) => {
+	// Remove visited class from all rows
+	const rows = document.querySelectorAll('main > div > .v-table tr.visited');
+	rows.forEach((row) => row.classList.remove('visited'));
+
+	if (value !== -1) {
+		const row = document.querySelector(`main > div > .v-table tr:not(.fixed):nth-child(${value + 1})`);
+		row?.classList.add('visited');
+	}
+});
+
+async function saveItem(values: Record<string, any>): Promise<void> {
+	try {
+		await api.patch(`${getEndpoint(collection.value)}/${sideDrawerItemKey.value}`, values);
+	} catch (err: any) {
+		unexpectedError(err);
+	}
+
+	await props.refresh();
+}
+
+function advanceItem(amount: number) {
+	let index = lastVisitedRow.value;
+
+	// console.log('[Advance] Index = ', index, 'key = ', sideDrawerItemKey.value);
+	if (index === -1) {
+		return;
+	}
+
+	index += amount;
+
+	if (index < 0) {
+		if (props.page > 1) {
+			interceptPageLoad.value = true;
+			newItemIndex.value = props.limit - 1;
+			props.toPage(props.page - 1);
+			return;
+		} else {
+			index = 0;
+		}
+	} else if (index >= props.items.length) {
+		if (props.page < props.totalPages) {
+			interceptPageLoad.value = true;
+			newItemIndex.value = 0;
+			props.toPage(props.page + 1);
+			return;
+		} else {
+			index = props.items.length - 1;
+		}
+	}
+
+	const item = props.items[index];
+	const newKey = item[props.primaryKeyField!.field];
+
+	// console.log('[Advance] Limit = ', props.limit, 'Page = ', props.page, '/ ', props.totalPages);
+	// console.log('[Normal] New index = ', index, 'new key = ', newKey);
+	if (sideDrawerItemKey.value !== newKey) {
+		sideDrawerItemKey.value = newKey;
+
+		nextTick(async () => {
+			await itemDrawer.value.fetchItem();
+		});
+	}
+}
 
 const mainElement = inject<Ref<Element | undefined>>('main-element');
 
@@ -78,12 +177,45 @@ watch(
 	() => mainElement?.value?.scrollTo({ top: 0, behavior: 'smooth' })
 );
 
+watch(
+	() => props.items,
+	() => {
+		if (interceptPageLoad.value) {
+			interceptPageLoad.value = false;
+			const item = props.items[newItemIndex.value];
+			const newKey = item[props.primaryKeyField!.field];
+
+			// console.log('[Watcher] Limit = ', props.limit, 'Page = ', props.page, '/ ', props.totalPages);
+			// console.log('[Watcher] New index = ', newItemIndex.value, 'new key = ', newKey);
+			if (sideDrawerItemKey.value !== newKey) {
+				sideDrawerItemKey.value = newKey;
+
+				nextTick(async () => {
+					await itemDrawer.value.fetchItem();
+				});
+			}
+		}
+	}
+);
+
 useShortcut(
 	'meta+a',
 	() => {
 		props.selectAll();
 	},
 	table
+);
+
+useShortcut(
+	['arrowright', 'arrowleft'],
+	(event) => {
+		if (!props.useSideDrawer || !sideDrawerOpenWritable.value) {
+			return;
+		}
+
+		advanceItem(event.key === 'ArrowRight' ? 1 : -1);
+	},
+	itemDrawer
 );
 
 const permissionsStore = usePermissionsStore();
@@ -127,6 +259,53 @@ function addField(fieldKey: string) {
 
 function removeField(fieldKey: string) {
 	fieldsWritable.value = fieldsWritable.value.filter((field) => field !== fieldKey);
+}
+
+function transformToText(obj: any): string {
+	if (typeof obj === 'object') {
+		if (obj === null) {
+			return 'null';
+		} else if (Array.isArray(obj)) {
+			return obj.map((item) => transformToText(item)).join('; ');
+		} else {
+			// If the object has an ID, make sure it is the first field
+			const id = obj.id;
+
+			let str = Object.values(obj)
+				.filter((value) => value !== id)
+				.map((value) => transformToText(value))
+				.join(', ');
+
+			if (id != null) {
+				str = `${id}, ${str}`;
+			}
+
+			return str;
+		}
+	}
+
+	return String(obj);
+}
+
+/**
+ * Copies the values present in the given column to the clipboard
+ * @param fieldKey The name of the field
+ */
+async function copyValues(fieldKey: string) {
+	const values = props.items.map((item) => transformToText(get(item, fieldKey)));
+	const result = await copyToClipboard(values.join('\n'));
+
+	if (result) {
+		notify({
+			type: 'success',
+			title: t('copy_raw_value_success'),
+		});
+	} else {
+		notify({
+			type: 'error',
+			title: t('copy_raw_value_fail'),
+		});
+	}
 }
 </script>
 
@@ -235,6 +414,16 @@ function removeField(fieldKey: string) {
 							{{ t('hide_field') }}
 						</v-list-item-content>
 					</v-list-item>
+
+					<!-- Custom actions -->
+					<v-divider />
+
+					<v-list-item clickable @click="copyValues(header.value)">
+						<v-list-item-icon>
+							<v-icon name="content_copy" />
+						</v-list-item-icon>
+						<v-list-item-content>{{ t('copy') }}</v-list-item-content>
+					</v-list-item>
 				</v-list>
 			</template>
 
@@ -300,6 +489,23 @@ function removeField(fieldKey: string) {
 
 		<slot v-else-if="itemCount === 0 && (filterUser || search)" name="no-results" />
 		<slot v-else-if="itemCount === 0" name="no-items" />
+
+		<drawer-item
+			ref="itemDrawer"
+			v-model:active="sideDrawerOpenWritable"
+			:collection="collection"
+			:primary-key="sideDrawerItemKey"
+			@input="saveItem"
+		>
+			<template #actions>
+				<v-button v-tooltip.bottom="t('back')" icon rounded @click="advanceItem(-1)" :disabled="backDisabled">
+					<v-icon name="navigate_before" />
+				</v-button>
+				<v-button v-tooltip.bottom="t('next')" icon rounded @click="advanceItem(1)" :disabled="nextDisabled">
+					<v-icon name="navigate_next" />
+				</v-button>
+			</template>
+		</drawer-item>
 	</div>
 </template>
 
@@ -321,6 +527,13 @@ function removeField(fieldKey: string) {
 
 		tr {
 			margin-right: var(--content-padding);
+		}
+
+		tr.visited > td {
+			background-color: var(--primary-25);
+		}
+		tr.visited:hover > td {
+			background-color: var(--primary-25) !important;
 		}
 	}
 }
@@ -370,5 +583,9 @@ function removeField(fieldKey: string) {
 
 .flip {
 	transform: scaleY(-1);
+}
+
+.item-drawer-content {
+	padding: 0 var(--content-padding);
 }
 </style>

@@ -18,12 +18,14 @@ import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-d
 import SaveOptions from '@/views/private/components/save-options.vue';
 import SharesSidebarDetail from '@/views/private/components/shares-sidebar-detail.vue';
 import { useCollection } from '@directus/composables';
+import { usePreset } from '@/composables/use-preset';
 import { useHead } from '@unhead/vue';
 import { useRouter } from 'vue-router';
 import LivePreview from '../components/live-preview.vue';
 import ContentNavigation from '../components/navigation.vue';
 import VersionMenu from '../components/version-menu.vue';
 import ContentNotFound from './not-found.vue';
+
 
 interface Props {
 	collection: string;
@@ -80,6 +82,53 @@ const {
 	refresh,
 	validationErrors,
 } = useItem(collection, primaryKey, query);
+
+const { filter, layoutOptions } = usePreset(collection);
+
+watch(() => layoutOptions.value, () => {
+	setTimeout(() => {
+		router.push(`/content/${collection.value}`)
+	}, 500)
+}, { deep: true })
+
+// layoutOptions === null then filter === null
+// layoutOptions !== null then filter === null or filter === []
+// layoutOptions[{filter}] => filter[{filter}] === true then filter[{filter}] === false
+
+// UPDATE FILTER VALUE
+window.addFilterFromInterface = (newFilter: any) => {
+	const is_layoutOptions = Boolean(layoutOptions.value?.all_filters)
+	const is_newFilter_in_layoutOptions = layoutOptions.value?.all_filters.some(f => JSON.stringify(f) === JSON.stringify(newFilter))
+
+	if(is_layoutOptions) {
+
+		if(is_newFilter_in_layoutOptions) {
+			return router.push(`/content/${collection.value}`)
+		}
+
+		if(!is_newFilter_in_layoutOptions) {
+			layoutOptions.value = {
+				...layoutOptions.value,
+				all_filters: [...layoutOptions.value.all_filters, newFilter],
+			}
+
+			if(filter.value && (filter.value?._and || filter.value?._or)) {
+				const operator = filter.value._and ? '_and' : '_or'
+
+				filter.value[operator].push(newFilter)
+			} else {
+				filter.value = { _and: [newFilter] };
+			}
+		}
+
+	} else {
+		filter.value = { _and: [newFilter] };
+		layoutOptions.value = {
+			all_filters: [newFilter],
+			disabled_filters: []
+		}
+	}
+}
 
 const { templateData } = useTemplateData(collectionInfo, primaryKey);
 

@@ -7,8 +7,7 @@
 		"format": "prettier --cache --check .",
 		"lint": "eslint --cache .",
 		"test": "pnpm --recursive --filter '!tests-blackbox' test",
-		"test:blackbox": "pnpm --filter directus deploy --prod dist && pnpm --filter tests-blackbox test",
-		"prepare": "husky install"
+		"test:blackbox": "pnpm --filter directus deploy --prod dist && pnpm --filter tests-blackbox test"
 	},
 	"devDependencies": {
 		"@changesets/cli": "2.26.1",

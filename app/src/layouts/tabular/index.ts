@@ -83,6 +83,9 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 			onAlignChange,
 			activeFields,
 			tableSpacing,
+			useSideDrawer,
+			sideDrawerOpen,
+			sideDrawerItemKey,
 		} = useTable();
 
 		const showingCount = computed(() => {
@@ -110,6 +113,9 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 			limit,
 			activeFields,
 			tableSpacing,
+			useSideDrawer,
+			sideDrawerOpen,
+			sideDrawerItemKey,
 			primaryKeyField,
 			info,
 			showingCount,
@@ -200,6 +206,8 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 			});
 
 			const localWidths = ref<{ [field: string]: number }>({});
+			const sideDrawerOpen = ref<boolean>(false);
+			const sideDrawerItemKey = ref<string | null>(null);
 
 			watch(
 				() => layoutOptions.value,
@@ -232,7 +240,8 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 					return activeFields.value.map((field) => {
 						let description: string | null = null;
 
-						const fieldParts = field.key.split('.');
+						const fieldParts: string[] = field.key.split('.');
+						let relationalFieldName: string | null = null;
 
 						if (fieldParts.length > 1) {
 							const fieldNames = fieldParts.map((fieldKey, index) => {
@@ -242,10 +251,11 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 							});
 
 							description = fieldNames.join(' -> ');
+							relationalFieldName = fieldNames.join('.');
 						}
 
 						return {
-							text: field.name,
+							text: fieldParts.length > 1 ? relationalFieldName : field.name,
 							value: field.key,
 							description,
 							width: localWidths.value[field.key] || layoutOptions.value?.widths?.[field.key] || null,
@@ -281,6 +291,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 			});
 
 			const tableSpacing = syncRefProperty(layoutOptions, 'spacing', 'cozy');
+			const useSideDrawer = syncRefProperty(layoutOptions, 'useSideDrawer', false);
 
 			const tableRowHeight = computed<number>(() => {
 				switch (tableSpacing.value) {
@@ -298,6 +309,9 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 				tableSort,
 				tableHeaders,
 				tableSpacing,
+				useSideDrawer,
+				sideDrawerOpen,
+				sideDrawerItemKey,
 				tableRowHeight,
 				onRowClick,
 				onSortChange,
@@ -317,6 +331,9 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 					} else {
 						selection.value = selection.value.filter((item) => item !== primaryKey);
 					}
+				} else if (useSideDrawer.value === true) {
+					sideDrawerOpen.value = true;
+					sideDrawerItemKey.value = primaryKey;
 				} else {
 					const route = getItemRoute(unref(collection), primaryKey);
 

@@ -13,15 +13,17 @@ interface Props {
 	fields: string[];
 	activeFields: Field[];
 	tableSpacing: 'compact' | 'cozy' | 'comfortable';
+	useSideDrawer: boolean;
 }
 
 const props = defineProps<Props>();
 
-const emit = defineEmits(['update:tableSpacing', 'update:activeFields', 'update:fields']);
+const emit = defineEmits(['update:tableSpacing', 'update:activeFields', 'update:fields', 'update:useSideDrawer']);
 
 const { t } = useI18n();
 
 const tableSpacingWritable = useSync(props, 'tableSpacing', emit);
+const sideDrawerWritable = useSync(props, 'useSideDrawer', emit);
 </script>
 
 <template>
@@ -43,6 +45,15 @@ const tableSpacingWritable = useSync(props, 'tableSpacing', emit);
 					value: 'comfortable',
 				},
 			]"
+		/>
+	</div>
+	<div class="field">
+		<div class="type-label">Same Page Preview</div>
+		<v-checkbox
+			v-model="sideDrawerWritable"
+			label="Enabled"
+			:indeterminate="sideDrawerWritable === null"
+			block
 		/>
 	</div>
 </template>

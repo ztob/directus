@@ -54,6 +54,7 @@ import { useRelationsStore } from '@/stores/relations';
 import { useFieldsStore } from '@/stores/fields';
 import { usePermissionsStore } from '@/stores/permissions';
 import { useUserStore } from '@/stores/user';
+import { unexpectedError } from '@/utils/unexpected-error';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
 import { addRelatedPrimaryKeyToFields } from '@/utils/add-related-primary-key-to-fields';
 import { hideDragImage } from '@/utils/hide-drag-image';
