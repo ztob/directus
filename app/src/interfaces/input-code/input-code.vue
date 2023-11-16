@@ -268,7 +268,7 @@ watch(
 );
 
 function fillTemplate() {
-	if (props.type === 'json') {
+	if (props.type === 'json' && props.template) {
 		try {
 			emit('input', JSON.parse(props.template));
 		} finally {
@@ -310,13 +310,13 @@ function fillTemplate() {
 	top: 10px;
 	right: 10px;
 	z-index: 4;
-	color: var(--primary);
+	color: var(--theme--primary);
 	cursor: pointer;
 	transition: color var(--fast) var(--transition-out);
 	user-select: none;
 
 	&:hover {
-		color: var(--primary-125);
+		color: var(--theme--primary-accent);
 		transition: none;
 	}
 }

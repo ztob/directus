@@ -31,12 +31,12 @@ const props = withDefaults(
 		disabled?: boolean;
 	}>(),
 	{
-		languageField: () => null,
-		languageDirectionField: () => 'direction',
+		languageField: null,
+		languageDirectionField: 'direction',
 		value: () => [],
 		autofocus: false,
 		disabled: false,
-		defaultLanguage: () => null,
+		defaultLanguage: null,
 		userLanguage: false,
 	}
 );
@@ -243,8 +243,8 @@ function useLanguages() {
 			if (!secondLang.value) {
 				secondLang.value = languages.value[1]?.[pkField];
 			}
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			loading.value = false;
 		}
@@ -412,22 +412,22 @@ const secondFields = computed(() => {
 
 	.v-form {
 		--form-vertical-gap: 32px;
-		--v-chip-color: var(--primary);
-		--v-chip-background-color: var(--primary-alt);
+		--v-chip-color: var(--theme--primary);
+		--v-chip-background-color: var(--theme--primary-background);
 
 		margin-top: 32px;
 	}
 
 	.primary {
 		.v-divider {
-			--v-divider-color: var(--primary-50);
+			--v-divider-color: var(--theme--primary-subdued);
 		}
 	}
 
 	.secondary {
 		.v-form {
-			--primary: var(--secondary);
-			--v-chip-color: var(--secondary);
+			--primary: var(--theme--secondary);
+			--v-chip-color: var(--theme--secondary);
 			--v-chip-background-color: var(--secondary-alt);
 		}
 
