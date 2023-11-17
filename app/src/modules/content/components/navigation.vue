@@ -8,7 +8,10 @@ import NavigationItem from './navigation-item.vue';
 
 const props = defineProps<{
 	currentCollection?: string;
+	isLayoutRefreshed: boolean
 }>();
+
+const emit = defineEmits(['update:is-layout-refreshed']);
 
 const { t } = useI18n();
 const { currentCollection } = toRefs(props);
@@ -58,6 +61,8 @@ const hasHiddenCollections = computed(
 				:show-hidden="showHidden"
 				:collection="collection"
 				:search="search"
+				:is-layout-refreshed="isLayoutRefreshed"
+				@update-layout-refreshed="$emit('update:is-layout-refreshed', $event)"
 			/>
 
 			<v-menu v-if="hasHiddenCollections" ref="contextMenu" show-arrow placement="bottom-start">
