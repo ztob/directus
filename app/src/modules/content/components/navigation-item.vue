@@ -6,7 +6,7 @@ import { Collection } from '@/types/collections';
 import { getCollectionRoute } from '@/utils/get-route';
 import { Preset } from '@directus/types';
 import { orderBy } from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import NavigationBookmark from './navigation-bookmark.vue';
 import NavigationItemContent from './navigation-item-content.vue';
@@ -16,7 +16,10 @@ const props = defineProps<{
 	collection: Collection;
 	showHidden?: boolean;
 	search?: string;
+	isLayoutRefreshed: boolean
 }>();
+
+const emit = defineEmits(['update-layout-refreshed']);
 
 const { t } = useI18n();
 
@@ -83,6 +86,11 @@ const collectionsItems = ref<CollectionsItems>({})
 function updateItemsCollection(collection: string, itemsNum: number) {
 	collectionsItems.value[collection] = itemsNum;
 }
+
+watch(() => props.isLayoutRefreshed, () => {
+	if(!props.isLayoutRefreshed) return
+	collectionsItems.value = {}
+})
 </script>
 
 <template>
@@ -116,7 +124,9 @@ function updateItemsCollection(collection: string, itemsNum: number) {
 		:key="bookmark.id"
 		:bookmark="bookmark"
 		:collections-items="collectionsItems"
+		:is-layout-refreshed="isLayoutRefreshed"
 		@update-items-collection="updateItemsCollection"
+		@update-layout-refreshed="$emit('update-layout-refreshed', $event)"
 		/>
 	</v-list-group>
 
