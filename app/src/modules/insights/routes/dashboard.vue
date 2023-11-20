@@ -16,7 +16,7 @@ import { useI18n } from 'vue-i18n';
 import InsightsNavigation from '../components/navigation.vue';
 import InsightsNotFound from './not-found.vue';
 
-interface Props {
+type Props = {
 	primaryKey: string;
 	panelKey?: string | null;
 }
@@ -184,6 +184,10 @@ const discardAndLeave = () => {
 const toggleFullScreen = () => (fullScreen.value = !fullScreen.value);
 const toggleZoomToFit = () => (zoomToFit.value = !zoomToFit.value);
 
+async function refresh() {
+	await insightsStore.refresh(props.primaryKey)
+}
+
 const refreshInterval = computed({
 	get() {
 		return unref(refreshIntervals)[props.primaryKey] ?? null;
@@ -259,6 +263,10 @@ const refreshInterval = computed({
 					@click="toggleFullScreen"
 				>
 					<v-icon name="fullscreen" />
+				</v-button>
+
+				<v-button v-tooltip.bottom="t('refresh')" rounded icon @click="refresh">
+					<v-icon name="refresh" />
 				</v-button>
 
 				<v-button
