@@ -24,6 +24,7 @@ import { getSchema } from '../utils/get-schema.js';
 import { sanitizeColumn } from '../utils/sanitize-schema.js';
 import { shouldClearCache } from '../utils/should-clear-cache.js';
 import { RelationsService } from './relations.js';
+import logger from '../logger.js';
 
 export class FieldsService {
 	knex: Knex;
@@ -378,10 +379,13 @@ export class FieldsService {
 			throw new ForbiddenError();
 		}
 
+		let start = Date.now();
 		const runPostColumnChange = await this.helpers.schema.preColumnChange();
+		logger.trace(`preColumnChange took ${Date.now() - start}ms`);
 		const nestedActionEvents: ActionEventParams[] = [];
 
 		try {
+			start = Date.now();
 			const hookAdjustedField = await emitter.emitFilter(
 				`fields.update`,
 				field,
@@ -399,6 +403,7 @@ export class FieldsService {
 			const record = field.meta
 				? await this.knex.select('id').from('directus_fields').where({ collection, field: field.field }).first()
 				: null;
+			logger.trace(`fields.update hook took ${Date.now() - start}ms`);
 
 			if (
 				hookAdjustedField.type &&
@@ -410,6 +415,7 @@ export class FieldsService {
 			}
 
 			if (hookAdjustedField.schema) {
+				start = Date.now();
 				const existingColumn = await this.schemaInspector.columnInfo(collection, hookAdjustedField.field);
 
 				// Sanitize column only when applying snapshot diff as opts is only passed from /utils/apply-diff.ts
@@ -426,8 +432,10 @@ export class FieldsService {
 						throw await translateDatabaseError(err);
 					}
 				}
+				logger.trace(`schema update took ${Date.now() - start}ms`);
 			}
 
+			start = Date.now();
 			if (hookAdjustedField.meta) {
 				if (record) {
 					await this.itemsService.updateOne(
@@ -450,6 +458,7 @@ export class FieldsService {
 					);
 				}
 			}
+			logger.trace(`directus_fields update took ${Date.now() - start}ms`);
 
 			const actionEvent = {
 				event: 'fields.update',
@@ -473,10 +482,13 @@ export class FieldsService {
 
 			return field.field;
 		} finally {
+			start = Date.now();
 			if (runPostColumnChange) {
 				await this.helpers.schema.postColumnChange();
 			}
+			logger.trace(`postColumnChange took ${Date.now() - start}ms`);
 
+			start = Date.now();
 			if (shouldClearCache(this.cache, opts)) {
 				await this.cache.clear();
 			}
@@ -484,7 +496,9 @@ export class FieldsService {
 			if (opts?.autoPurgeSystemCache !== false) {
 				await clearSystemCache({ autoPurgeCache: opts?.autoPurgeCache });
 			}
+			logger.trace(`cache clearing took ${Date.now() - start}ms`);
 
+			start = Date.now();
 			if (opts?.emitEvents !== false && nestedActionEvents.length > 0) {
 				const updatedSchema = await getSchema();
 
@@ -493,6 +507,7 @@ export class FieldsService {
 					emitter.emitAction(nestedActionEvent.event, nestedActionEvent.meta, nestedActionEvent.context);
 				}
 			}
+			logger.trace(`emitAction took ${Date.now() - start}ms`);
 		}
 	}
 

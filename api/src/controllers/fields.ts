@@ -10,6 +10,7 @@ import { respond } from '../middleware/respond.js';
 import useCollection from '../middleware/use-collection.js';
 import { FieldsService } from '../services/fields.js';
 import asyncHandler from '../utils/async-handler.js';
+import logger from '../logger.js';
 
 const router = Router();
 
@@ -130,10 +131,15 @@ router.patch(
 			throw new InvalidPayloadError({ reason: 'Submitted body has to be an array' });
 		}
 
+		let start = Date.now();
+		logger.trace('Starting batch update of fields');
 		for (const field of req.body) {
 			await service.updateField(req.params['collection']!, field);
 		}
+		logger.trace(`Batch update of fields took ${Date.now() - start}ms`);
 
+		start = Date.now();
+		logger.trace('Starting batch read of fields');
 		try {
 			const results: any = [];
 
@@ -149,6 +155,7 @@ router.patch(
 
 			throw error;
 		}
+		logger.trace(`Batch read of fields took ${Date.now() - start}ms`);
 
 		return next();
 	}),

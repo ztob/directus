@@ -27,7 +27,7 @@ const props = withDefaults(
 	}
 );
 
-const emit = defineEmits(['setNestedSort']);
+const emit = defineEmits(['setNestedSort', 'field-at-position']);
 
 const { t } = useI18n();
 
@@ -159,11 +159,19 @@ async function onGroupSortChange(fields: Field[]) {
 
 	emit('setNestedSort', updates);
 }
+
+// SHOW ADD FIELD AT SPECIFIC POSITION ICON LOGIC
+const isShowSpecPosAddIcon = ref(false)
 </script>
 
 <template>
-	<div class="field-select" :class="field.meta?.width || 'full'">
-		<v-input v-if="disabled" disabled class="field">
+		<div
+			class="field-select"
+			:class="field.meta?.width || 'full'"
+			@mouseover="isShowSpecPosAddIcon = true"
+			@mouseleave="isShowSpecPosAddIcon = false"
+		>
+			<v-input v-if="disabled" disabled class="field">
 			<template #prepend>
 				<v-icon v-tooltip="t('system_fields_locked')" name="lock" />
 			</template>
@@ -210,6 +218,7 @@ async function onGroupSortChange(fields: Field[]) {
 							@delete="deleteActive = true"
 						/>
 					</div>
+
 				</template>
 
 				<template #item="{ element }">
@@ -263,12 +272,20 @@ async function onGroupSortChange(fields: Field[]) {
 							<v-icon name="open_in_new" class="link-icon" small />
 						</router-link>
 
+						<!-- ADD FIELD AT SPECIFIC POSITION ICON -->
+						<v-icon
+							name="add"
+							clickable
+							:class="{ 'specPosAddIcon': !isShowSpecPosAddIcon }"
+							@click="$emit('field-at-position', props.field.meta?.sort)"
+						/>
+
 						<field-select-menu
-							:field="field"
-							@toggle-visibility="toggleVisibility"
-							@set-width="setWidth($event)"
-							@duplicate="duplicateActive = true"
-							@delete="deleteActive = true"
+						:field="field"
+						@toggle-visibility="toggleVisibility"
+						@set-width="setWidth($event)"
+						@duplicate="duplicateActive = true"
+						@delete="deleteActive = true"
 						/>
 					</div>
 				</template>
@@ -527,5 +544,8 @@ async function onGroupSortChange(fields: Field[]) {
 	> * {
 		opacity: 0;
 	}
+}
+.specPosAddIcon {
+	visibility: hidden;
 }
 </style>

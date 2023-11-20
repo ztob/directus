@@ -14,11 +14,12 @@ import { CollectionsItems } from './types';
 interface Props {
 	bookmark: Preset;
 	collectionsItems: CollectionsItems;
+	isLayoutRefreshed: boolean
 }
 
 const props = defineProps<Props>();
 
-const emit = defineEmits(['update-items-collection']);
+const emit = defineEmits(['update-items-collection', 'update-layout-refreshed']);
 
 const { t } = useI18n();
 
@@ -117,12 +118,15 @@ function useDeleteBookmark() {
 const itemsCount = ref('');
 const isCountLoading = ref(false)
 
+const isShowBMCount = computed(() => props.bookmark?.layout_options?.show_items_number)
+
 let refreshIntervalId = null;
 
 watch(() => props.bookmark, () => {
-	const isShowNumber = props.bookmark?.layout_options?.show_items_number
-
-	if (!isShowNumber) return itemsCount.value = ''
+	if (!isShowBMCount.value) {
+		itemsCount.value = ''
+		return
+	}
 
 	if (refreshIntervalId) {
 		clearInterval(refreshIntervalId);
@@ -137,6 +141,20 @@ watch(() => props.bookmark, () => {
 	fetchPresetItems()
 
 }, { deep: true, immediate: true })
+
+watch(() => props.isLayoutRefreshed, () => {
+
+	if (!props.isLayoutRefreshed) return
+
+	if (!isShowBMCount.value) {
+		itemsCount.value = ''
+		return
+	}
+
+	fetchPresetItems()
+	percentage.value = ''
+	emit('update-layout-refreshed', false)
+})
 
 async function fetchPresetItems() {
 	try {
@@ -176,12 +194,11 @@ const isHovering = ref(false)
 const percentage = ref('')
 
 async function getPercentage() {
-	const isShowPercentage = props.bookmark?.layout_options?.show_items_number
-
-	if (!isShowPercentage) {
+	if (!isShowBMCount.value) {
 		percentage.value = '';
-		return;
+		return
 	}
+
 
 	isHovering.value = true;
 	const collection = props.bookmark.collection;
@@ -242,7 +259,7 @@ async function getPercentage() {
 
 		<v-list-item-content>
 			<v-text-overflow :text="`${name} ${isCountLoading ? '(...)' : !itemsCount ? '' : `(${itemsCount})`}`"
-				@mouseover="getPercentage" @mouseleave="isHovering = false" />
+				@mouseover="getPercentage" @mouseleave="isHovering = false"/>
 		</v-list-item-content>
 
 		<span :class="{ 'percentage-tooltip': true, 'active': isHovering }">{{
