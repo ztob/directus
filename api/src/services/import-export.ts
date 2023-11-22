@@ -190,6 +190,12 @@ export class ExportService {
 		this.schema = options.schema;
 	}
 
+	generateTitle(prefix: string = '', collection: string, suffix: string = ''): string {
+		const title = [prefix, collection, getDateFormatted(), suffix].filter(Boolean).join('-');
+
+		return title;
+	}
+
 	/**
 	 * Export the query results as a named file. Will query in batches, and keep appending a tmp file
 	 * until all the data is retrieved. Uploads the result as a new file using the regular
@@ -200,7 +206,12 @@ export class ExportService {
 		query: Partial<Query>,
 		format: ExportFormat,
 		options?: {
-			file?: Partial<File>;
+			file?: Partial<
+				File & {
+					prefix: string;
+					suffix: string;
+				}
+			>;
 			emitEvents?: boolean;
 		}
 	) {
@@ -259,8 +270,10 @@ export class ExportService {
 						sort,
 						limit,
 						offset: batch * env['EXPORT_BATCH_SIZE'],
-					}
+					};
+
 					let result = await service.readByQuery(updatedQuery);
+
 					if (options?.emitEvents !== false) {
 						result = await emitter.emitFilter(
 							'export.batch',
@@ -275,6 +288,7 @@ export class ExportService {
 								accountability: this.accountability,
 							}
 						);
+
 						emitter.emitAction(
 							'export.batch',
 							{
@@ -311,11 +325,13 @@ export class ExportService {
 
 			const storage: string = toArray(env['STORAGE_LOCATIONS'])[0];
 
-			const title = `export-${collection}-${getDateFormatted()}`;
+			const title = this.generateTitle(options?.file?.prefix, collection, options?.file?.suffix);
+
 			const filename = `${title}.${format}`;
 
 			const fileWithDefaults: Partial<File> & { storage: string; filename_download: string } = {
 				...(options?.file ?? {}),
+
 				title: options?.file?.title ?? title,
 				filename_download: options?.file?.filename_download ?? filename,
 				storage: options?.file?.storage ?? storage,
