@@ -2,7 +2,7 @@
 import api from '@/api';
 import { useCollectionsStore } from '@/stores/collections';
 import { unexpectedError } from '@/utils/unexpected-error';
-import { Permission } from '@directus/types';
+import { Permission, Collection } from '@directus/types';
 import { orderBy } from 'lodash';
 import { computed, provide, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -15,6 +15,8 @@ const props = defineProps<{
 	// the permission row primary key in case we're on the permission detail modal view
 	permission?: string;
 	appAccess?: boolean;
+	isUnusedCollsHidden: boolean
+	searchCollections: string | null
 }>();
 
 const emit = defineEmits(['permission-change']);
@@ -23,14 +25,46 @@ const { t } = useI18n();
 
 const collectionsStore = useCollectionsStore();
 
-const regularCollections = computed(() => collectionsStore.databaseCollections);
+const regularCollections = computed(() => {
+	if(props.searchCollections !== null) {
+		return collectionsStore.databaseCollections.filter(coll => coll.collection.toLowerCase().includes(props.searchCollections!))
+	}
 
-const systemCollections = computed(() =>
-	orderBy(
-		collectionsStore.collections.filter((collection) => collection.collection.startsWith('directus_') === true),
-		'name'
-	)
-);
+	// unused collections logic
+	return props.isUnusedCollsHidden ? usedRegularCollections.value : collectionsStore.databaseCollections
+});
+
+const systemCollections = computed(() => {
+	if (props.searchCollections !== null) {
+		const searchFilteredColls = collectionsStore.collections.filter(coll => coll.collection.toLowerCase().includes(props.searchCollections!) && isSystemColl(coll))
+		return orderBy(searchFilteredColls, 'name')
+	}
+
+	// unused collections logic
+	const filteredColls = (props.isUnusedCollsHidden ? usedSystemCollections.value : collectionsStore.collections).filter((coll) => isSystemColl(coll))
+	return orderBy(filteredColls, 'name')
+
+	function isSystemColl(coll: Collection) {
+		return coll.collection.startsWith('directus_') === true
+	}
+});
+
+// THE LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
+const usedRegularCollections = ref<Collection[]>([])
+const usedSystemCollections = ref<Collection[]>([])
+const isUsedCollsCalculated = ref(false)
+
+function filterUnusedCollections(permissions: Permission[], collections: Collection[]) {
+	return collections.filter(coll => {
+
+		// if the permission is minimal then it should always stay
+		const isMinimalPermission = appMinimalPermissions.some(perm => perm.collection === coll.collection)
+		if(isMinimalPermission) return true
+
+		return permissions.some(perm => perm.collection === coll.collection)
+	})
+}
+// ---------------------------------------
 
 const systemVisible = ref(false);
 
@@ -63,6 +97,14 @@ function usePermissions() {
 
 			const response = await api.get('/permissions', { params });
 			permissions.value = response.data.data;
+
+			// if props.isUnusedCollsHidden === true and isUsedCollsCalculated === false then we get the unused collections
+			// just one time at the first render
+			if(props.isUnusedCollsHidden && !isUsedCollsCalculated.value) {
+				usedRegularCollections.value = filterUnusedCollections(response.data.data, collectionsStore.databaseCollections)
+				usedSystemCollections.value = filterUnusedCollections(response.data.data, collectionsStore.collections)
+				isUsedCollsCalculated.value = true
+			}
 
 			emit('permission-change', response.data.data);
 		} catch (err: any) {
