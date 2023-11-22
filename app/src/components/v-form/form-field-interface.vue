@@ -17,10 +17,10 @@ const props = defineProps<{
 	rawEditorEnabled?: boolean;
 	rawEditorActive?: boolean;
 	direction?: string;
-	isFilterLoading: string
+	isFilterLoading: string;
 }>();
 
-defineEmits(['update:modelValue', 'setFieldValue', 'add-filter']);
+defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard']);
 
 const { t } = useI18n();
 
@@ -41,12 +41,17 @@ const value = computed(() =>
 	props.modelValue === undefined ? props.field.schema?.default_value ?? null : props.modelValue
 );
 
-// CHANGED
-function isAddFilterIcon(field: FormField) {
-	if (field.meta?.interface === "add-filter-ext-from-interfaces") return false
-	return Boolean(field.meta?.options?._is_add_filter)
+function isMakeCopyable(field: FormField) {
+	if (field.meta?.interface === 'make-copyable-ext-from-interfaces') return false;
+
+	return Boolean(field.meta?.options?._is_make_copyable);
 }
 
+function isAddFilterIcon(field: FormField) {
+	if (field.meta?.interface === 'add-filter-ext-from-interfaces') return false;
+
+	return Boolean(field.meta?.options?._is_add_filter);
+}
 </script>
 
 <template>
@@ -59,33 +64,37 @@ function isAddFilterIcon(field: FormField) {
 		<v-skeleton-loader v-if="loading && field.hideLoader !== true" />
 
 		<v-error-boundary v-if="interfaceExists && !rawEditorActive" :name="componentName">
-			<div
-				class="field-component"
-			>
+			<div class="field-component">
 				<component
-				:is="componentName"
-				v-bind="(field.meta && field.meta.options) || {}"
-				:autofocus="disabled !== true && autofocus"
-				:disabled="disabled"
-				:loading="loading"
-				:value="value"
-				:batch-mode="batchMode"
-				:batch-active="batchActive"
-				:width="(field.meta && field.meta.width) || 'full'"
-				:type="field.type"
-				:collection="field.collection"
-				:field="field.field"
-				:field-data="field"
-				:primary-key="primaryKey"
-				:length="field.schema && field.schema.max_length"
-				:direction="direction"
-				@input="$emit('update:modelValue', $event)"
-				@set-field-value="$emit('setFieldValue', $event)"
+					:is="componentName"
+					v-bind="(field.meta && field.meta.options) || {}"
+					:autofocus="disabled !== true && autofocus"
+					:disabled="disabled"
+					:loading="loading"
+					:value="value"
+					:batch-mode="batchMode"
+					:batch-active="batchActive"
+					:width="(field.meta && field.meta.width) || 'full'"
+					:type="field.type"
+					:collection="field.collection"
+					:field="field.field"
+					:field-data="field"
+					:primary-key="primaryKey"
+					:length="field.schema && field.schema.max_length"
+					:direction="direction"
+					@input="$emit('update:modelValue', $event)"
+					@set-field-value="$emit('setFieldValue', $event)"
 				/>
-				<span class="add-icon">
-					<v-progress-circular v-if="isFilterLoading === field.field" small indeterminate/>
+
+				<span v-if="isMakeCopyable(field)" class="copy-icon">
+					<v-icon v-tooltip="t('Copy to clipboard')" name="copy" @click="$emit('copy-to-clipboard', value)" />
+				</span>
+
+				<span v-if="isAddFilterIcon(field)" class="add-icon">
+					<v-progress-circular v-if="isFilterLoading === field.field" small indeterminate />
+
 					<v-icon
-						v-if="isFilterLoading !== field.field && isAddFilterIcon(field)"
+						v-else
 						v-tooltip="t('Add to filters')"
 						name="add"
 						@click="$emit('add-filter', { field: field.field, value })"
@@ -129,21 +138,29 @@ function isAddFilterIcon(field: FormField) {
 	}
 }
 
-// CHANGED
 .field-component {
-	// display: flex;
-	// align-items: center;
 	position: relative;
-	.add-icon {
-		cursor: pointer;
+
+	.add-icon,
+	.copy-icon {
 		--v-icon-color: var(--foreground-subdued);
+
+		cursor: pointer;
 		position: absolute;
-		right: -30px;
 		top: 50%;
 		transform: translateY(-50%);
+
 		&:hover {
-			color: #8866FF;
+			--v-icon-color: #8866ff;
 		}
+	}
+
+	.add-icon {
+		right: -65px;
+	}
+
+	.copy-icon {
+		right: -35px;
 	}
 }
 </style>

@@ -8,6 +8,7 @@ import Draggable from 'vuedraggable';
 import TableHeader from './table-header.vue';
 import TableRow from './table-row.vue';
 import { Header, HeaderRaw, Item, ItemSelectEvent, Sort } from './types';
+import { useClipboard } from '@/composables/use-clipboard';
 
 const HeaderDefaults: Header = {
 	text: '',
@@ -40,8 +41,8 @@ interface Props {
 	disabled?: boolean;
 	clickable?: boolean;
 
-	addAfterHeader: string
-	isMenuOpen?: boolean
+	addAfterHeader: string;
+	isMenuOpen?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -73,10 +74,12 @@ const emit = defineEmits([
 	'update:modelValue',
 	'manual-sort',
 	'update:headers',
-	'clicked-header'
+	'clicked-header',
 ]);
 
 const slots = useSlots();
+
+const { copyToClipboard } = useClipboard();
 
 const internalHeaders = computed({
 	get: () => {
@@ -257,12 +260,11 @@ function updateSort(newSort: Sort) {
 // CHANGED
 function onAddFilter(filterBy: string, value: string | number | boolean) {
 	const newFilter = {
-		[filterBy]: value !== null ? { '_eq': value } : { '_null': '' }
+		[filterBy]: value !== null ? { _eq: value } : { _null: '' },
 	};
 
 	window.addFilterFromDisplay(newFilter);
 }
-
 </script>
 
 <template>
@@ -282,15 +284,12 @@ function onAddFilter(filterBy: string, value: string | number | boolean) {
 				:has-item-append-slot="hasItemAppendSlot"
 				:manual-sort-key="manualSortKey"
 				:allow-header-reorder="allowHeaderReorder"
-
 				:add-after-header="addAfterHeader"
 				:is-menu-open="isMenuOpen"
-
 				@toggle-select-all="onToggleSelectAll"
 				@update:sort="updateSort"
-
 				@clicked-header="$emit('clicked-header', $event)"
-				>
+			>
 				<template v-for="header in internalHeaders" #[`header.${header.value}`]>
 					<slot :header="header" :name="`header.${header.value}`" />
 				</template>
@@ -348,6 +347,7 @@ function onAddFilter(filterBy: string, value: string | number | boolean) {
 							})
 						"
 						@add-filter="onAddFilter"
+						@copy-to-clipboard="copyToClipboard"
 					>
 						<template v-for="header in internalHeaders" #[`item.${header.value}`]>
 							<slot :item="element" :name="`item.${header.value}`" />
