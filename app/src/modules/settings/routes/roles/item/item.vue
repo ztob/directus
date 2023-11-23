@@ -203,41 +203,35 @@ async function saveAsCopy() {
 
 // determines whether to hide or not the unused collections ONLY onMounted()
 const isUnusedCollsHidden = ref(false)
-// colors the btn when isHideUnusedCollsBtnColored === true
-const isHideUnusedCollsBtnColored = ref(false)
-// search for used&unused collections
 const searchCollections = ref<string | null>(null)
 
 const isCollsLoading = ref(false)
 
 async function hideUnusedCollections() {
-	isHideUnusedCollsBtnColored.value = !isHideUnusedCollsBtnColored.value
+	isUnusedCollsHidden.value = !isUnusedCollsHidden.value
 
 	try {
 		const { data } = await api.patch(`roles/${primaryKey.value}`, {
-			// if isHideUnusedCollsBtnColored === true then the btn was clicked to 'true' and the unused collections will be hidden
+			// if isUnusedCollsHidden === true then the btn was clicked to 'true' and the unused collections will be hidden
 			// next time user accesses the page
 
-			hide_unused_colls: isHideUnusedCollsBtnColored.value
+			hide_unused_colls: isUnusedCollsHidden.value
 		})
 
-		// set isHideUnusedCollsBtnColored to make sure the value is the same as it is in DB
-		isHideUnusedCollsBtnColored.value = data.data.hide_unused_colls
+		// set isUnusedCollsHidden to make sure the value is the same as it is in DB
+		isUnusedCollsHidden.value = data.data.hide_unused_colls
 	} catch (error) {
 		console.log(error);
 	}
 }
 
-// set isUnusedCollsHidden and isHideUnusedCollsBtnColored when the role loads
+// set isUnusedCollsHidden and isUnusedCollsHidden when the role loads
 onMounted(async () => {
 	try {
 		isCollsLoading.value = true
 		const { data } = await api.get(`roles/${primaryKey.value}`)
 
-		const _isUnusedCollsHidden = data.data.hide_unused_colls
-
-		isUnusedCollsHidden.value = _isUnusedCollsHidden
-		isHideUnusedCollsBtnColored.value = _isUnusedCollsHidden
+		isUnusedCollsHidden.value = data.data.hide_unused_colls
 	} catch (error) {
 		console.log(error);
 	} finally {
@@ -280,7 +274,7 @@ onMounted(async () => {
 				rounded
 				icon
 				secondary
-				:kind="!isHideUnusedCollsBtnColored ? 'normal' : 'success'"
+				:kind="!isUnusedCollsHidden ? 'normal' : 'success'"
 				:loading="isCollsLoading"
 				@click="hideUnusedCollections">
 				<v-icon name="visibility_off" />
