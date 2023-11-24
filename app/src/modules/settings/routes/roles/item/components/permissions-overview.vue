@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { appMinimalPermissions, appRecommendedPermissions } from '../../app-permissions';
 import PermissionsOverviewHeader from './permissions-overview-header.vue';
 import PermissionsOverviewRow from './permissions-overview-row.vue';
+import { useNotificationsStore } from '@/stores/notifications';
 
 const props = defineProps<{
 	role?: string;
@@ -19,13 +20,18 @@ const props = defineProps<{
 	searchCollections: string | null
 }>();
 
+type WatchArguments = [boolean, Permission[], boolean]
+
 const emit = defineEmits(['permission-change']);
 
 const { t } = useI18n();
 
 const collectionsStore = useCollectionsStore();
 
+const notificationsStore = useNotificationsStore();
+
 const { permissions, fetchPermissions, refreshing } = usePermissions();
+const { resetActive, resetSystemPermissions, resetting } = useReset();
 
 const regularCollections = computed(() => {
 	if(props.searchCollections !== null) {
@@ -46,32 +52,38 @@ const systemCollections = computed(() => {
 	const filteredColls = (props.isUnusedCollsHidden ? usedSystemCollections.value : collectionsStore.collections).filter((coll) => isSystemColl(coll))
 	return orderBy(filteredColls, 'name')
 
-	function isSystemColl(coll: Collection) {
-		return coll.collection.startsWith('directus_') === true
-	}
 });
+
+function isSystemColl(coll: Collection) {
+	return coll.collection.startsWith('directus_') === true
+}
 
 // THE LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
 const usedRegularCollections = ref<Collection[]>([])
 const usedSystemCollections = ref<Collection[]>([])
-const modifiedPermsSearchedCollsNames = ref<string[]>([]) // [collection name]
+const modifiedPermsSearchedCollsNames = ref<string[]>([]) // ['collection name']
 
 const isPermsFetched = ref(false)
 const isUsedCollsCalculated = ref(false)
 
-function filterUnusedCollections(permissions: Permission[], collections: Collection[]) {
+function filterUnusedSystemColls(permissions: Permission[], collections: Collection[]) {
 	return collections.filter(coll => {
 
 		// if the permission is minimal then it should always stay
 		const isMinimalPermission = appMinimalPermissions.some(perm => perm.collection === coll.collection)
 		if(isMinimalPermission) return true
+		if(!isSystemColl(coll)) return false
 
 		return permissions.some(perm => perm.collection === coll.collection)
 	})
 }
 
+function filterUnusedRegularColls(permissions: Permission[], collections: Collection[]) {
+	return collections.filter(coll => permissions.some(perm => perm.collection === coll.collection))
+}
+
 watch(() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value],
-	([_, newPerms, __], [___, oldPerms, ____]) => {
+	([_, newPerms, __]: WatchArguments, [___, oldPerms, ____]: WatchArguments) => {
 		if (!props.isUnusedCollsHidden) {
 			isUsedCollsCalculated.value = false
 			return
@@ -80,9 +92,9 @@ watch(() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value]
 		// make sure we fetched permissions(we can have them or not)
 		if (!isPermsFetched.value) return
 
-		// is reset true then we change system collections. the logic down shouldnt fire
+		// if reset true then we change system collections only
 		if (resetting.value) {
-			usedSystemCollections.value = filterUnusedCollections(permissions.value, collectionsStore.collections)
+			usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections)
 			return
 		}
 
@@ -91,12 +103,10 @@ watch(() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value]
 			const isPermsAdded = newPerms.length > oldPerms.length
 			const isPermsDeleted = newPerms.length < oldPerms.length
 
-			if(isPermsAdded) {
-				const newAddedPermsColls = newPerms.filter(newP => !oldPerms.some(oldP => newP.id === oldP.id)).map(perm => perm.collection)
-				modifiedPermsSearchedCollsNames.value = Array.from(new Set([...modifiedPermsSearchedCollsNames.value, ...newAddedPermsColls]))
-			} else if(isPermsDeleted) {
-				const deletedPermsColls = oldPerms.filter(oldP => !newPerms.some(newP => oldP.id === newP.id)).map(perm => perm.collection)
-				modifiedPermsSearchedCollsNames.value = Array.from(new Set([...modifiedPermsSearchedCollsNames.value, ...deletedPermsColls]))
+			if (isPermsAdded) {
+				addPermissionsModifiedFromSearch('add')
+			} else if (isPermsDeleted) {
+				addPermissionsModifiedFromSearch('delete')
 			}
 
 			return
@@ -104,17 +114,34 @@ watch(() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value]
 
 		if (isUsedCollsCalculated.value) return
 
-		usedRegularCollections.value = filterUnusedCollections(permissions.value, collectionsStore.databaseCollections)
-		usedSystemCollections.value = filterUnusedCollections(permissions.value, collectionsStore.collections)
+		usedRegularCollections.value = filterUnusedRegularColls(permissions.value, collectionsStore.databaseCollections)
+		usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections)
+
+		const dbCollsLength = collectionsStore.databaseCollections.length
+		const systemCollsLength = collectionsStore.collections.filter(isSystemColl).length
+
+		const collsHidden = dbCollsLength + systemCollsLength - usedRegularCollections.value.length - usedSystemCollections.value.length
+		const collNum = collsHidden > 1 ? 'Collections' : 'Collection'
+
+		notificationsStore.add({
+			title: `${collsHidden} Unused ${collNum} Hidden`,
+			icon: 'visibility_off',
+			type: 'info',
+		});
 
 		isUsedCollsCalculated.value = true
 
+		function addPermissionsModifiedFromSearch(action: string) {
+			const filterBy = action === 'add' ? newPerms : oldPerms
+			const filterFrom = action === 'add' ? oldPerms : newPerms
+
+			const modifiedPerms = filterBy.filter(newP => !filterFrom.some(oldP => newP.id === oldP.id)).map(perm => perm.collection)
+			modifiedPermsSearchedCollsNames.value = Array.from(new Set([...modifiedPermsSearchedCollsNames.value, ...modifiedPerms]))
+		}
 	}, { immediate: true })
 
 watch(() => props.searchCollections, () => {
 	if (props.searchCollections === null && modifiedPermsSearchedCollsNames.value.length) {
-		console.log(modifiedPermsSearchedCollsNames.value.length);
-
 		modifiedPermsSearchedCollsNames.value.forEach(colName => {
 			const isPermExist = permissions.value.some(perm => perm.collection === colName)
 			const isSystem = colName.startsWith('directus_') === true
@@ -123,24 +150,26 @@ watch(() => props.searchCollections, () => {
 
 				if (isSystem) {
 					const isExistInSystem = usedSystemCollections.value.some(col => col.collection === colName)
-					if (isExistInSystem) return
-					const collToAdd = collectionsStore.collections.find(col => col.collection === colName)
-					usedSystemCollections.value = [...usedSystemCollections.value!, collToAdd!]
+
+					if (!isExistInSystem) {
+						const collToAdd = collectionsStore.collections.find(col => col.collection === colName)
+						usedSystemCollections.value = [...usedSystemCollections.value!, collToAdd!]
+					}
 				} else {
 					const isExistInRegular = usedRegularCollections.value.some(col => col.collection === colName)
-					if (isExistInRegular) return
-					const collToAdd = collectionsStore.databaseCollections.find(col => col.collection === colName)
-					usedRegularCollections.value = [...usedRegularCollections.value!, collToAdd!]
+
+					if (!isExistInRegular) {
+						const collToAdd = collectionsStore.databaseCollections.find(col => col.collection === colName)
+						usedRegularCollections.value = [...usedRegularCollections.value!, collToAdd!]
+					}
 				}
 
 			} else {
+
 				if (isSystem) {
 					usedSystemCollections.value = usedSystemCollections.value.filter(systemCol => {
 						const isMinimalCollPermission = appMinimalPermissions.some(perm => perm.collection === colName)
-						if (isMinimalCollPermission) return true
-
-						if (systemCol.collection === colName) return false
-						return true
+						return isMinimalCollPermission || systemCol.collection !== colName
 					})
 				} else {
 					usedRegularCollections.value = usedRegularCollections.value.filter(perm => perm.collection !== colName)
@@ -154,8 +183,6 @@ watch(() => props.searchCollections, () => {
 // ---------------------------------------
 
 const systemVisible = ref(false);
-
-const { resetActive, resetSystemPermissions, resetting } = useReset();
 
 watch(() => props.permission, fetchPermissions, { immediate: true });
 
@@ -183,6 +210,7 @@ function usePermissions() {
 			const response = await api.get('/permissions', { params });
 			permissions.value = response.data.data;
 
+			// make sure we fetched permissions
 			if(!isPermsFetched.value) {
 				isPermsFetched.value = true
 			}

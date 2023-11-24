@@ -201,7 +201,6 @@ async function saveAsCopy() {
 
 // LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
 
-// determines whether to hide or not the unused collections ONLY onMounted()
 const isUnusedCollsHidden = ref(false)
 const searchCollections = ref<string | null>(null)
 
@@ -212,9 +211,6 @@ async function hideUnusedCollections() {
 
 	try {
 		const { data } = await api.patch(`roles/${primaryKey.value}`, {
-			// if isUnusedCollsHidden === true then the btn was clicked to 'true' and the unused collections will be hidden
-			// next time user accesses the page
-
 			hide_unused_colls: isUnusedCollsHidden.value
 		})
 
@@ -225,7 +221,7 @@ async function hideUnusedCollections() {
 	}
 }
 
-// set isUnusedCollsHidden and isUnusedCollsHidden when the role loads
+// set isUnusedCollsHidden when the role loads
 onMounted(async () => {
 	try {
 		isCollsLoading.value = true
@@ -260,6 +256,7 @@ onMounted(async () => {
 				type="search"
 				:placeholder="t('search_collection')"
 				:full-width="false"
+				:disabled="isCollsLoading"
 			>
 				<template #prepend>
 					<v-icon name="search" outline />
