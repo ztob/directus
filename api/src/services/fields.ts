@@ -381,7 +381,7 @@ export class FieldsService {
 
 		let start = Date.now();
 		const runPostColumnChange = await this.helpers.schema.preColumnChange();
-		logger.trace(`preColumnChange took ${Date.now() - start}ms`);
+		logger.trace(`[fields-benchmark] preColumnChange took ${Date.now() - start}ms`);
 		const nestedActionEvents: ActionEventParams[] = [];
 
 		try {
@@ -403,7 +403,7 @@ export class FieldsService {
 			const record = field.meta
 				? await this.knex.select('id').from('directus_fields').where({ collection, field: field.field }).first()
 				: null;
-			logger.trace(`fields.update hook took ${Date.now() - start}ms`);
+			logger.trace(`[fields-benchmark] fields.update hook took ${Date.now() - start}ms`);
 
 			if (
 				hookAdjustedField.type &&
@@ -432,7 +432,7 @@ export class FieldsService {
 						throw await translateDatabaseError(err);
 					}
 				}
-				logger.trace(`schema update took ${Date.now() - start}ms`);
+				logger.trace(`[fields-benchmark] schema update took ${Date.now() - start}ms`);
 			}
 
 			start = Date.now();
@@ -458,7 +458,7 @@ export class FieldsService {
 					);
 				}
 			}
-			logger.trace(`directus_fields update took ${Date.now() - start}ms`);
+			logger.trace(`[fields-benchmark] directus_fields update took ${Date.now() - start}ms`);
 
 			const actionEvent = {
 				event: 'fields.update',
@@ -486,7 +486,7 @@ export class FieldsService {
 			if (runPostColumnChange) {
 				await this.helpers.schema.postColumnChange();
 			}
-			logger.trace(`postColumnChange took ${Date.now() - start}ms`);
+			logger.trace(`[fields-benchmark] postColumnChange took ${Date.now() - start}ms`);
 
 			start = Date.now();
 			if (shouldClearCache(this.cache, opts)) {
@@ -496,7 +496,7 @@ export class FieldsService {
 			if (opts?.autoPurgeSystemCache !== false) {
 				await clearSystemCache({ autoPurgeCache: opts?.autoPurgeCache });
 			}
-			logger.trace(`cache clearing took ${Date.now() - start}ms`);
+			logger.trace(`[fields-benchmark] cache clearing took ${Date.now() - start}ms`);
 
 			start = Date.now();
 			if (opts?.emitEvents !== false && nestedActionEvents.length > 0) {
@@ -507,7 +507,7 @@ export class FieldsService {
 					emitter.emitAction(nestedActionEvent.event, nestedActionEvent.meta, nestedActionEvent.context);
 				}
 			}
-			logger.trace(`emitAction took ${Date.now() - start}ms`);
+			logger.trace(`[fields-benchmark] emitAction took ${Date.now() - start}ms`);
 		}
 	}
 
