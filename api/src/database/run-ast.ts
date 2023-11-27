@@ -75,12 +75,8 @@ export default async function runAST(
 		);
 
 		// The actual knex query builder instance. This is a promise that resolves with the raw items from the db
-		let dbQuery = await getDBQuery(schema, knex, collection, fieldNodes, query);
+		const dbQuery = await getDBQuery(schema, knex, collection, fieldNodes, query);
 
-		// TODO@geo this is a hack, find a better way
-		if (collection === 'amazon_flex_captcha') {
-			dbQuery = dbQuery.forUpdate();
-		}
 		const rawItems: Item | Item[] = await dbQuery;
 
 		if (!rawItems) return null;
@@ -353,6 +349,10 @@ async function getDBQuery(
 		}
 	}
 
+	// TODO@geo this is a hack, find a better way
+	if (table === 'amazon_flex_captcha') {
+		dbQuery.forUpdate();
+	}
 	if (!needsInnerQuery) return dbQuery;
 
 	const wrapperQuery = knex
