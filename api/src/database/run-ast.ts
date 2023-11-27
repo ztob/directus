@@ -350,7 +350,7 @@ async function getDBQuery(
 	}
 
 	// TODO@geo this is a hack, find a better way
-	if (table === 'amazon_flex_captcha') {
+	if (table === 'amazon_flex_captcha' || table === 'test11') {
 		dbQuery.forUpdate();
 	}
 	if (!needsInnerQuery) return dbQuery;
