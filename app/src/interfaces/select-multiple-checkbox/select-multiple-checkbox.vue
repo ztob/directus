@@ -25,7 +25,7 @@ const props = withDefaults(
 		iconOff: 'check_box_outline_blank',
 		color: 'var(--theme--primary)',
 		itemsShown: 8,
-	}
+	},
 );
 
 const emit = defineEmits(['input']);
@@ -67,7 +67,7 @@ const gridClass = computed(() => {
 });
 
 const { otherValues, addOtherValue, setOtherValue } = useCustomSelectionMultiple(value, choices, (value) =>
-	emit('input', value)
+	emit('input', value),
 );
 </script>
 
@@ -192,7 +192,7 @@ const { otherValues, addOtherValue, setOtherValue } = useCustomSelectionMultiple
 	display: flex;
 	align-items: center;
 	width: 100%;
-	height: var(--input-height);
+	height: var(--theme--form--field--input--height);
 	padding: 10px;
 	border: var(--theme--border-width) dashed var(--theme--form--field--input--border-color);
 	border-radius: var(--theme--border-radius);

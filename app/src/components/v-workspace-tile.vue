@@ -386,7 +386,7 @@ function useDragDrop() {
 	color: var(--theme--foreground-subdued);
 	font-weight: 500;
 	font-size: 12px;
-	font-family: var(--theme--font-family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 	font-style: normal;
 	line-height: 1;
 	text-align: right;
@@ -395,7 +395,9 @@ function useDragDrop() {
 	border-top-left-radius: var(--theme--border-radius);
 	background-color: var(--theme--background);
 	opacity: 0;
-	transition: opacity var(--fast) var(--transition), color var(--fast) var(--transition);
+	transition:
+		opacity var(--fast) var(--transition),
+		color var(--fast) var(--transition);
 	pointer-events: none;
 }
 
@@ -436,7 +438,7 @@ function useDragDrop() {
 	color: var(--theme--foreground-accent);
 	font-weight: 600;
 	font-size: 16px;
-	font-family: var(--theme--font-family-sans-serif);
+	font-family: var(--theme--fonts--sans--font-family);
 	font-style: normal;
 }
 

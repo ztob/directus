@@ -25,7 +25,7 @@ const props = withDefaults(
 		bordered: true,
 		tools: () => ['header', 'nestedlist', 'code', 'image', 'paragraph', 'checklist', 'quote', 'underline'],
 		font: 'sans-serif',
-	}
+	},
 );
 
 const emit = defineEmits<{ input: [value: EditorJS.OutputData | null] }>();
@@ -53,7 +53,7 @@ const tools = getTools(
 		getUploadFieldElement: () => uploaderComponentElement,
 	},
 	props.tools,
-	haveFilesAccess
+	haveFilesAccess,
 );
 
 onMounted(async () => {
@@ -109,7 +109,7 @@ watch(
 		} catch (error) {
 			unexpectedError(error);
 		}
-	}
+	},
 );
 
 async function emitValue(context: EditorJS.API) {
@@ -198,7 +198,8 @@ function sanitizeValue(value: any): EditorJS.OutputData | null {
 }
 
 .bordered {
-	padding: var(--input-padding) 4px var(--input-padding) calc(var(--input-padding) + 8px) !important;
+	padding: var(--theme--form--field--input--padding) 4px var(--theme--form--field--input--padding)
+		calc(var(--theme--form--field--input--padding) + 8px) !important;
 	background-color: var(--theme--background);
 	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
 	border-radius: var(--theme--border-radius);
@@ -213,15 +214,15 @@ function sanitizeValue(value: any): EditorJS.OutputData | null {
 }
 
 .monospace {
-	font-family: var(--theme--font-family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 }
 
 .serif {
-	font-family: var(--theme--font-family-serif);
+	font-family: var(--theme--fonts--serif--font-family);
 }
 
 .sans-serif {
-	font-family: var(--theme--font-family-sans-serif);
+	font-family: var(--theme--fonts--sans--font-family);
 }
 
 .uploader-drawer-content {
@@ -231,7 +232,7 @@ function sanitizeValue(value: any): EditorJS.OutputData | null {
 }
 
 .uploader-preview-image {
-	margin-bottom: var(--form-vertical-gap);
+	margin-bottom: var(--theme--form--row-gap);
 	background-color: var(--theme--background-normal);
 	border-radius: var(--theme--border-radius);
 }

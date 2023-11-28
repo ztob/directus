@@ -46,7 +46,7 @@ const props = withDefaults(
 		sortField: null,
 		userField: null,
 		groupsSortField: null,
-	}
+	},
 );
 
 defineEmits(['update:selection', 'update:limit', 'update:size', 'update:sort', 'update:width']);
@@ -289,7 +289,6 @@ const textFieldConfiguration = computed<Field | undefined>(() => {
 					padding: 12px 16px;
 					background-color: var(--theme--background);
 					border-radius: var(--theme--border-radius);
-					box-shadow: 0px 2px 4px 0px rgba(var(--card-shadow-color), 0.1);
 
 					&:hover .title {
 						// color: var(--theme--primary);
