@@ -17,7 +17,7 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const { collection, role, permissions } = toRefs(props);
-const { setFullAccessAll, setUserAccessAll, setNoAccessAll, getPermission } = useUpdatePermissions(collection, permissions, role);
+const { setFullAccessAll, setUserAccessAll, setNoAccessAll, getPermission, getUserCreatedField } = useUpdatePermissions(collection, permissions, role);
 
 function isLoading(action: string) {
 	const permission = getPermission(action);
@@ -33,7 +33,7 @@ function isLoading(action: string) {
 			<span class="actions">
 				<span class="all" @click="setFullAccessAll">{{ t('all') }}</span>
 				<span class="divider">/</span>
-				<span class="all" @click="setUserAccessAll">{{ t('users') }}</span>
+				<span class="all" :class="{'setCurrentUserAccessDisabled': !(!!getUserCreatedField())}" @click="setUserAccessAll">{{ t('users') }}</span>
 				<span class="divider">/</span>
 				<span class="none" @click="setNoAccessAll">{{ t('none') }}</span>
 			</span>
@@ -112,6 +112,10 @@ function isLoading(action: string) {
 					&.none {
 						color: var(--theme--danger);
 					}
+				}
+				&.setCurrentUserAccessDisabled {
+					pointer-events: none;
+					color: var(--foreground-subdued);
 				}
 			}
 
