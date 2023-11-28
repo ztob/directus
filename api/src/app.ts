@@ -126,7 +126,7 @@ export default async function createApp(): Promise<express.Application> {
 				maxMemoryHeapUsed: env['PRESSURE_LIMITER_MAX_MEMORY_HEAP_USED'],
 				error: new ServiceUnavailableError({ service: 'api', reason: 'Under pressure' }),
 				retryAfter: env['PRESSURE_LIMITER_RETRY_AFTER'],
-			})
+			}),
 		);
 	}
 
@@ -155,9 +155,9 @@ export default async function createApp(): Promise<express.Application> {
 						connectSrc: ["'self'", 'https://*'],
 					},
 				},
-				getConfigFromEnv('CONTENT_SECURITY_POLICY_')
-			)
-		)
+				getConfigFromEnv('CONTENT_SECURITY_POLICY_'),
+			),
+		),
 	);
 
 	if (env['HSTS_ENABLED']) {

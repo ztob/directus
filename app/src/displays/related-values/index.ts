@@ -74,7 +74,7 @@ export default defineDisplay({
 				key: fieldKey,
 				field: fieldsStore.getField(
 					relatedCollections.junctionCollection ?? relatedCollections.relatedCollection,
-					fieldKey
+					fieldKey,
 				),
 			};
 		});

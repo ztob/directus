@@ -50,7 +50,7 @@ const panel = computed<Partial<Panel>>(() => {
 
 const currentTypeInfo = useExtension(
 	'panel',
-	computed(() => panel.value.type ?? null)
+	computed(() => panel.value.type ?? null),
 );
 
 const customOptionsFields = computed(() => {
@@ -379,7 +379,7 @@ const stageChanges = () => {
 }
 
 .setup {
-	--form-vertical-gap: 20px;
+	--theme--form--row-gap: 20px;
 	margin: 34px;
 }
 </style>

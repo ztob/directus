@@ -184,7 +184,7 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const importSchema = Joi.object({
@@ -221,7 +221,7 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const sendSchema = Joi.object({
@@ -346,7 +346,7 @@ router.get(
 		res.locals['payload'] = { data: record || null };
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -382,7 +382,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -409,7 +409,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -432,7 +432,7 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -447,7 +447,7 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 export default router;

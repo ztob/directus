@@ -213,7 +213,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 				() => layoutOptions.value,
 				() => {
 					localWidths.value = {};
-				}
+				},
 			);
 
 			const saveWidthsToLayoutOptions = debounce(() => {

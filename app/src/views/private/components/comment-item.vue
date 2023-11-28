@@ -20,7 +20,7 @@ const props = withDefaults(
 	}>(),
 	{
 		userPreviews: () => ({}),
-	}
+	},
 );
 
 const { editing, cancelEditing } = useEdits();
@@ -32,7 +32,7 @@ function useEdits() {
 
 	watch(
 		() => props.activity,
-		() => (edits.value = props.activity.comment)
+		() => (edits.value = props.activity.comment),
 	);
 
 	return { edits, editing, savingEdits, saveEdits, cancelEditing };
@@ -155,7 +155,7 @@ function useEdits() {
 	background-color: var(--theme--background-normal);
 	border-radius: var(--theme--border-radius);
 	margin: 2px 0;
-	font-family: var(--theme--font-family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 	white-space: nowrap;
 	max-width: 100%;
 	overflow-x: auto;
@@ -167,7 +167,7 @@ function useEdits() {
 	background-color: var(--theme--background-normal);
 	border-radius: var(--theme--border-radius);
 	margin: 2px 0;
-	font-family: var(--theme--font-family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 }
 
 .comment-item .content :deep(pre > code) {
@@ -217,7 +217,9 @@ function useEdits() {
 	font-size: 12px;
 	background-color: var(--theme--background-normal);
 	border-radius: 12px;
-	transition: color var(--fast) var(--transition), background-color var(--fast) var(--transition);
+	transition:
+		color var(--fast) var(--transition),
+		background-color var(--fast) var(--transition);
 }
 
 .comment-item.expand .content .expand-text:hover span {

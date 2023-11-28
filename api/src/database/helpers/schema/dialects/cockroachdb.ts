@@ -6,8 +6,8 @@ export class SchemaHelperCockroachDb extends SchemaHelper {
 	override async changeToType(
 		table: string,
 		column: string,
-		type: typeof KNEX_TYPES[number],
-		options: Options = {}
+		type: (typeof KNEX_TYPES)[number],
+		options: Options = {},
 	): Promise<void> {
 		await this.changeToTypeByCopy(table, column, type, options);
 	}
