@@ -153,7 +153,7 @@ useShortcut(
 			saveVersionAction('stay');
 		}
 	},
-	form
+	form,
 );
 
 useShortcut(
@@ -165,7 +165,7 @@ useShortcut(
 			saveVersionAction('quit');
 		}
 	},
-	form
+	form,
 );
 
 const {
@@ -242,7 +242,7 @@ watch(
 		popupWindow = window.open(
 			targetUrl,
 			'live-preview',
-			'width=900,height=800,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes'
+			'width=900,height=800,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes',
 		);
 
 		if (popupWindow) {
@@ -256,7 +256,7 @@ watch(
 			}, 1000);
 		}
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
 function toggleSplitView() {

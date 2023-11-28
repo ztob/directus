@@ -30,14 +30,14 @@ const { revisionsByDate, revisionsCount, loading, pagesCount, refresh } = useRev
 	ref(null),
 	{
 		action: Action.RUN,
-	}
+	},
 );
 
 watch(
 	() => page.value,
 	(newPage) => {
 		refresh(newPage);
-	}
+	},
 );
 
 const previewing = ref();
@@ -83,7 +83,7 @@ const steps = computed(() => {
 				key,
 				status,
 			};
-		}
+		},
 	);
 });
 </script>
@@ -229,7 +229,7 @@ const steps = computed(() => {
 
 .json {
 	background-color: var(--theme--background-subdued);
-	font-family: var(--theme--font-family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 	border-radius: var(--theme--border-radius);
 	padding: 20px;
 	margin-top: 20px;
@@ -277,7 +277,7 @@ const steps = computed(() => {
 	}
 
 	.mono {
-		font-family: var(--theme--font-family-monospace);
+		font-family: var(--theme--fonts--monospace--font-family);
 		color: var(--theme--foreground-subdued);
 	}
 

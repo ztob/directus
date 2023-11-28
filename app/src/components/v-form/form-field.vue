@@ -129,7 +129,7 @@ function useComputedValues() {
 	const internalValue = ref<any>(getInternalValue());
 
 	const isEdited = computed(
-		() => props.modelValue !== undefined && isEqual(props.modelValue, props.initialValue) === false
+		() => props.modelValue !== undefined && isEqual(props.modelValue, props.initialValue) === false,
 	);
 
 	watch(
@@ -140,7 +140,7 @@ function useComputedValues() {
 			if (!isEqual(internalValue.value, newVal)) {
 				internalValue.value = newVal;
 			}
-		}
+		},
 	);
 
 	return { internalValue, isEdited, defaultValue };

@@ -125,7 +125,7 @@ watch(
 		if (!props.showValidationErrors) return;
 		if (isEqual(newVal, oldVal)) return;
 		if (newVal?.length > 0) el?.value?.scrollIntoView({ behavior: 'smooth' });
-	}
+	},
 );
 
 provide('values', values);
@@ -142,7 +142,7 @@ function useForm() {
 			if (!isEqual(fields.value, newVal)) {
 				fields.value = newVal;
 			}
-		}
+		},
 	);
 
 	const defaultValues = getDefaultValuesFromFields(fields);
@@ -170,8 +170,8 @@ function useForm() {
 
 	const fieldsInGroup = computed(() =>
 		formFields.value.filter(
-			(field: Field) => field.meta?.group === props.group || (props.group === null && isNil(field.meta?.group))
-		)
+			(field: Field) => field.meta?.group === props.group || (props.group === null && isNil(field.meta?.group)),
+		),
 	);
 
 	const fieldNames = computed(() => {
@@ -358,10 +358,10 @@ function useRawEditor() {
 					v-if="fieldsMap[fieldName]!.meta?.special?.includes('group')"
 					v-show="!fieldsMap[fieldName]!.meta?.hidden"
 					:ref="
-					(el: Element) => {
-						formFieldEls[fieldName] = el;
-					}
-				"
+						(el: Element) => {
+							formFieldEls[fieldName] = el;
+						}
+					"
 					:class="[
 						fieldsMap[fieldName]!.meta?.width || 'full',
 						index === firstVisibleFieldIndex ? 'first-visible-field' : '',
@@ -404,7 +404,7 @@ function useRawEditor() {
 						validationErrors.find(
 							(err) =>
 								err.collection === fieldsMap[fieldName]!.collection &&
-								(err.field === fieldName || err.field.endsWith(`(${fieldName})`))
+								(err.field === fieldName || err.field.endsWith(`(${fieldName})`)),
 						)
 					"
 					:badge="badge"

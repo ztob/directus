@@ -128,7 +128,7 @@ export function useItem<T extends Record<string, any>>(
 					return to;
 				}
 			}
-			);
+		);
 
 		const fields = pushGroupOptionsDown(fieldsWithPermissions.value);
 

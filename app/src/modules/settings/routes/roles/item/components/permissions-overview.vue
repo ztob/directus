@@ -16,11 +16,11 @@ const props = defineProps<{
 	/** the permission row primary key in case we're on the permission detail modal view */
 	permission?: string;
 	appAccess?: boolean;
-	isUnusedCollsHidden: boolean
-	searchCollections: string | null
+	isUnusedCollsHidden: boolean;
+	searchCollections: string | null;
 }>();
 
-type WatchArguments = [boolean, Permission[], boolean]
+type WatchArguments = [boolean, Permission[], boolean];
 
 const emit = defineEmits(['permission-change']);
 
@@ -34,94 +34,102 @@ const { permissions, fetchPermissions, refreshing } = usePermissions();
 const { resetActive, resetSystemPermissions, resetting } = useReset();
 
 const regularCollections = computed(() => {
-	if(props.searchCollections !== null) {
-		return collectionsStore.databaseCollections.filter(coll => coll.collection.toLowerCase().includes(props.searchCollections!))
+	if (props.searchCollections !== null) {
+		return collectionsStore.databaseCollections.filter((coll) =>
+			coll.collection.toLowerCase().includes(props.searchCollections!)
+		);
 	}
 
 	// unused collections logic
-	return props.isUnusedCollsHidden ? usedRegularCollections.value : collectionsStore.databaseCollections
+	return props.isUnusedCollsHidden ? usedRegularCollections.value : collectionsStore.databaseCollections;
 });
 
 const systemCollections = computed(() => {
 	if (props.searchCollections !== null) {
-		const searchFilteredColls = collectionsStore.collections.filter(coll => coll.collection.toLowerCase().includes(props.searchCollections!) && isSystemColl(coll))
-		return orderBy(searchFilteredColls, 'name')
+		const searchFilteredColls = collectionsStore.collections.filter(
+			(coll) => coll.collection.toLowerCase().includes(props.searchCollections!) && isSystemColl(coll)
+		);
+
+		return orderBy(searchFilteredColls, 'name');
 	}
 
 	// unused collections logic
-	const filteredColls = (props.isUnusedCollsHidden ? usedSystemCollections.value : collectionsStore.collections).filter((coll) => isSystemColl(coll))
-	return orderBy(filteredColls, 'name')
+	const filteredColls = (props.isUnusedCollsHidden ? usedSystemCollections.value : collectionsStore.collections).filter(
+		(coll) => isSystemColl(coll)
+	);
 
+	return orderBy(filteredColls, 'name');
 });
 
 function isSystemColl(coll: Collection) {
-	return coll.collection.startsWith('directus_') === true
+	return coll.collection.startsWith('directus_') === true;
 }
 
 // THE LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
-const usedRegularCollections = ref<Collection[]>([])
-const usedSystemCollections = ref<Collection[]>([])
-const modifiedPermsSearchedCollsNames = ref<string[]>([]) // ['collection name']
+const usedRegularCollections = ref<Collection[]>([]);
+const usedSystemCollections = ref<Collection[]>([]);
+const modifiedPermsSearchedCollsNames = ref<string[]>([]); // ['collection name']
 
-const isPermsFetched = ref(false)
-const isUsedCollsCalculated = ref(false)
+const isPermsFetched = ref(false);
+const isUsedCollsCalculated = ref(false);
 
 function filterUnusedSystemColls(permissions: Permission[], collections: Collection[]) {
-	return collections.filter(coll => {
-
+	return collections.filter((coll) => {
 		// if the permission is minimal then it should always stay
-		const isMinimalPermission = appMinimalPermissions.some(perm => perm.collection === coll.collection)
-		if(isMinimalPermission) return true
-		if(!isSystemColl(coll)) return false
+		const isMinimalPermission = appMinimalPermissions.some((perm) => perm.collection === coll.collection);
+		if (isMinimalPermission) return true;
+		if (!isSystemColl(coll)) return false;
 
-		return permissions.some(perm => perm.collection === coll.collection)
-	})
+		return permissions.some((perm) => perm.collection === coll.collection);
+	});
 }
 
 function filterUnusedRegularColls(permissions: Permission[], collections: Collection[]) {
-	return collections.filter(coll => permissions.some(perm => perm.collection === coll.collection))
+	return collections.filter((coll) => permissions.some((perm) => perm.collection === coll.collection));
 }
 
-watch(() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value],
+watch(
+	() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value],
 	([_, newPerms, __]: WatchArguments, [___, oldPerms, ____]: WatchArguments) => {
 		if (!props.isUnusedCollsHidden) {
-			isUsedCollsCalculated.value = false
-			return
+			isUsedCollsCalculated.value = false;
+			return;
 		}
 
 		// make sure we fetched permissions(we can have them or not)
-		if (!isPermsFetched.value) return
+		if (!isPermsFetched.value) return;
 
 		// if reset true then we change system collections only
 		if (resetting.value) {
-			usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections)
-			return
+			usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections);
+			return;
 		}
 
 		// if perms are modified when searching collections
 		if (props.searchCollections !== null) {
-			const isPermsAdded = newPerms.length > oldPerms.length
-			const isPermsDeleted = newPerms.length < oldPerms.length
+			const isPermsAdded = newPerms.length > oldPerms.length;
+			const isPermsDeleted = newPerms.length < oldPerms.length;
 
 			if (isPermsAdded) {
-				addPermissionsModifiedFromSearch('add')
+				addPermissionsModifiedFromSearch('add');
 			} else if (isPermsDeleted) {
-				addPermissionsModifiedFromSearch('delete')
+				addPermissionsModifiedFromSearch('delete');
 			}
 
-			return
+			return;
 		}
 
-		if (isUsedCollsCalculated.value) return
+		if (isUsedCollsCalculated.value) return;
 
-		usedRegularCollections.value = filterUnusedRegularColls(permissions.value, collectionsStore.databaseCollections)
-		usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections)
+		usedRegularCollections.value = filterUnusedRegularColls(permissions.value, collectionsStore.databaseCollections);
+		usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections);
 
-		const dbCollsLength = collectionsStore.databaseCollections.length
-		const systemCollsLength = collectionsStore.collections.filter(isSystemColl).length
+		const dbCollsLength = collectionsStore.databaseCollections.length;
+		const systemCollsLength = collectionsStore.collections.filter(isSystemColl).length;
 
-		const collsHidden = dbCollsLength + systemCollsLength - usedRegularCollections.value.length - usedSystemCollections.value.length
-		const collNum = collsHidden > 1 ? 'Collections' : 'Collection'
+		const collsHidden =
+			dbCollsLength + systemCollsLength - usedRegularCollections.value.length - usedSystemCollections.value.length;
+		const collNum = collsHidden > 1 ? 'Collections' : 'Collection';
 
 		notificationsStore.add({
 			title: `${collsHidden} Unused ${collNum} Hidden`,
@@ -129,57 +137,63 @@ watch(() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value]
 			type: 'info',
 		});
 
-		isUsedCollsCalculated.value = true
+		isUsedCollsCalculated.value = true;
 
 		function addPermissionsModifiedFromSearch(action: string) {
-			const filterBy = action === 'add' ? newPerms : oldPerms
-			const filterFrom = action === 'add' ? oldPerms : newPerms
+			const filterBy = action === 'add' ? newPerms : oldPerms;
+			const filterFrom = action === 'add' ? oldPerms : newPerms;
 
-			const modifiedPerms = filterBy.filter(newP => !filterFrom.some(oldP => newP.id === oldP.id)).map(perm => perm.collection)
-			modifiedPermsSearchedCollsNames.value = Array.from(new Set([...modifiedPermsSearchedCollsNames.value, ...modifiedPerms]))
+			const modifiedPerms = filterBy
+				.filter((newP) => !filterFrom.some((oldP) => newP.id === oldP.id))
+				.map((perm) => perm.collection);
+			modifiedPermsSearchedCollsNames.value = Array.from(
+				new Set([...modifiedPermsSearchedCollsNames.value, ...modifiedPerms])
+			);
 		}
-	}, { immediate: true })
+	},
+	{ immediate: true }
+);
 
-watch(() => props.searchCollections, () => {
-	if (props.searchCollections === null && modifiedPermsSearchedCollsNames.value.length) {
-		modifiedPermsSearchedCollsNames.value.forEach(colName => {
-			const isPermExist = permissions.value.some(perm => perm.collection === colName)
-			const isSystem = colName.startsWith('directus_') === true
+watch(
+	() => props.searchCollections,
+	() => {
+		if (props.searchCollections === null && modifiedPermsSearchedCollsNames.value.length) {
+			modifiedPermsSearchedCollsNames.value.forEach((colName) => {
+				const isPermExist = permissions.value.some((perm) => perm.collection === colName);
+				const isSystem = colName.startsWith('directus_') === true;
 
-			if (isPermExist) {
+				if (isPermExist) {
+					if (isSystem) {
+						const isExistInSystem = usedSystemCollections.value.some((col) => col.collection === colName);
 
-				if (isSystem) {
-					const isExistInSystem = usedSystemCollections.value.some(col => col.collection === colName)
+						if (!isExistInSystem) {
+							const collToAdd = collectionsStore.collections.find((col) => col.collection === colName);
+							usedSystemCollections.value = [...usedSystemCollections.value!, collToAdd!];
+						}
+					} else {
+						const isExistInRegular = usedRegularCollections.value.some((col) => col.collection === colName);
 
-					if (!isExistInSystem) {
-						const collToAdd = collectionsStore.collections.find(col => col.collection === colName)
-						usedSystemCollections.value = [...usedSystemCollections.value!, collToAdd!]
+						if (!isExistInRegular) {
+							const collToAdd = collectionsStore.databaseCollections.find((col) => col.collection === colName);
+							usedRegularCollections.value = [...usedRegularCollections.value!, collToAdd!];
+						}
 					}
 				} else {
-					const isExistInRegular = usedRegularCollections.value.some(col => col.collection === colName)
-
-					if (!isExistInRegular) {
-						const collToAdd = collectionsStore.databaseCollections.find(col => col.collection === colName)
-						usedRegularCollections.value = [...usedRegularCollections.value!, collToAdd!]
+					if (isSystem) {
+						usedSystemCollections.value = usedSystemCollections.value.filter((systemCol) => {
+							const isMinimalCollPermission = appMinimalPermissions.some((perm) => perm.collection === colName);
+							return isMinimalCollPermission || systemCol.collection !== colName;
+						});
+					} else {
+						usedRegularCollections.value = usedRegularCollections.value.filter((perm) => perm.collection !== colName);
 					}
 				}
+			});
 
-			} else {
-
-				if (isSystem) {
-					usedSystemCollections.value = usedSystemCollections.value.filter(systemCol => {
-						const isMinimalCollPermission = appMinimalPermissions.some(perm => perm.collection === colName)
-						return isMinimalCollPermission || systemCol.collection !== colName
-					})
-				} else {
-					usedRegularCollections.value = usedRegularCollections.value.filter(perm => perm.collection !== colName)
-				}
-			}
-		})
-
-		modifiedPermsSearchedCollsNames.value = []
+			modifiedPermsSearchedCollsNames.value = [];
+		}
 	}
-})
+);
 // ---------------------------------------
 
 const systemVisible = ref(false);
@@ -211,8 +225,8 @@ function usePermissions() {
 			permissions.value = response.data.data;
 
 			// make sure we fetched permissions
-			if(!isPermsFetched.value) {
-				isPermsFetched.value = true
+			if (!isPermsFetched.value) {
+				isPermsFetched.value = true;
 			}
 
 			emit('permission-change', response.data.data);
@@ -303,7 +317,7 @@ function useReset() {
 				:refreshing="refreshing"
 			/>
 
-			<button class="system-toggle" @click="systemVisible = !systemVisible">
+			<button class="system-toggle" :class="{ active: systemVisible }" @click="systemVisible = !systemVisible">
 				{{ t('system_collections') }}
 				<v-icon :name="systemVisible ? 'expand_less' : 'expand_more'" />
 			</button>
@@ -376,6 +390,13 @@ function useReset() {
 	height: 48px;
 	color: var(--theme--foreground-subdued);
 	background-color: var(--theme--background-subdued);
+	border-bottom-left-radius: var(--theme--border-radius);
+	border-bottom-right-radius: var(--theme--border-radius);
+
+	&.active {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+	}
 
 	.v-icon {
 		vertical-align: -7px;

@@ -62,8 +62,9 @@ withDefaults(defineProps<Props>(), {
 .input,
 .input-tall {
 	width: 100%;
-	height: var(--input-height);
-	border: var(--theme--border-width) solid var(--v-skeleton-loader-background-color, var(--theme--form--field--input--background-subdued));
+	height: var(--theme--form--field--input--height);
+	border: var(--theme--border-width) solid
+		var(--v-skeleton-loader-background-color, var(--theme--form--field--input--background-subdued));
 	border-radius: var(--theme--border-radius);
 
 	@include loader;
@@ -75,7 +76,7 @@ withDefaults(defineProps<Props>(), {
 
 .block-list-item {
 	width: 100%;
-	height: var(--input-height);
+	height: var(--theme--form--field--input--height);
 	border-radius: var(--theme--border-radius);
 
 	@include loader;

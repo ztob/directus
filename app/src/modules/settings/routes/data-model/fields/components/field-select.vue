@@ -24,7 +24,7 @@ const props = withDefaults(
 	}>(),
 	{
 		fields: () => [],
-	}
+	},
 );
 
 const emit = defineEmits(['setNestedSort', 'field-at-position']);
@@ -40,7 +40,7 @@ const { duplicateActive, duplicateName, duplicateTo, saveDuplicate, duplicating 
 
 const inter = useExtension(
 	'interface',
-	computed(() => props.field.meta?.interface ?? null)
+	computed(() => props.field.meta?.interface ?? null),
 );
 
 const interfaceName = computed(() => inter.value?.name ?? null);
@@ -57,7 +57,7 @@ const showRelatedCollectionLink = computed(
 	() =>
 		unref(relatedCollectionInfo) !== null &&
 		props.field.collection !== unref(relatedCollectionInfo)?.relatedCollection &&
-		['translations', 'm2o', 'm2m', 'o2m', 'files'].includes(unref(localType) as string)
+		['translations', 'm2o', 'm2m', 'o2m', 'files'].includes(unref(localType) as string),
 );
 
 function setWidth(width: Width) {
@@ -338,8 +338,8 @@ const isShowSpecPosAddIcon = ref(false)
 @import '@/styles/mixins/form-grid';
 
 .field-select {
-	--input-height: 48px;
-	--input-padding: 8px;
+	--input-height: 40px;
+	--theme--form--field--input--padding: 8px;
 }
 
 .full,
@@ -348,11 +348,11 @@ const isShowSpecPosAddIcon = ref(false)
 }
 
 .v-input.monospace {
-	--v-input-font-family: var(--theme--font-family-monospace);
+	--v-input-font-family: var(--theme--fonts--monospace--font-family);
 }
 
 .v-select.monospace {
-	--v-select-font-family: var(--theme--font-family-monospace);
+	--v-select-font-family: var(--theme--fonts--monospace--font-family);
 }
 
 .v-icon {
@@ -389,8 +389,8 @@ const isShowSpecPosAddIcon = ref(false)
 
 .group {
 	position: relative;
-	min-height: var(--input-height);
-	padding: var(--input-padding);
+	min-height: var(--theme--form--field--input--height);
+	padding: var(--theme--form--field--input--padding);
 	padding-top: 40px;
 	padding-bottom: 16px;
 	border-radius: var(--theme--border-radius);
@@ -434,7 +434,7 @@ const isShowSpecPosAddIcon = ref(false)
 		margin-bottom: 8px;
 		padding-top: 8px;
 		color: var(--theme--primary);
-		font-family: var(--theme--font-family-monospace);
+		font-family: var(--theme--fonts--monospace--font-family);
 
 		.drag-handle {
 			--v-icon-color: var(--theme--primary);
@@ -471,7 +471,6 @@ const isShowSpecPosAddIcon = ref(false)
 	}
 
 	&.v-input :deep(.input:hover) {
-		background-color: var(--card-face-color);
 		border: var(--theme--border-width) solid var(--theme--form--field--input--border-color-hover);
 	}
 
@@ -490,13 +489,13 @@ const isShowSpecPosAddIcon = ref(false)
 
 			.name {
 				margin-right: 8px;
-				font-family: var(--theme--font-family-monospace);
+				font-family: var(--theme--fonts--monospace--font-family);
 			}
 
 			.interface {
 				display: none;
 				color: var(--theme--foreground-subdued);
-				font-family: var(--theme--font-family-monospace);
+				font-family: var(--theme--fonts--monospace--font-family);
 				opacity: 0;
 				transition: opacity var(--fast) var(--transition);
 
@@ -527,7 +526,7 @@ const isShowSpecPosAddIcon = ref(false)
 }
 
 .form-grid {
-	--form-vertical-gap: 24px;
+	--theme--form--row-gap: 24px;
 }
 
 .required {

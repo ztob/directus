@@ -87,7 +87,7 @@ const filterInfo = computed<(FilterInfo | FilterInfoField)[]>({
 	set(newVal) {
 		emit(
 			'update:filter',
-			newVal.map((val) => val.node)
+			newVal.map((val) => val.node),
 		);
 	},
 });
@@ -369,7 +369,7 @@ function isFieldDisabled(element: Filter) {
 							<span class="text">
 								{{
 									`— ${filterInfo[index].name === '_and' ? t('interfaces.filter.all') : t('interfaces.filter.any')} ${t(
-										'interfaces.filter.of_the_following'
+										'interfaces.filter.of_the_following',
 									)}`
 								}}
 							</span>
@@ -477,7 +477,7 @@ function isFieldDisabled(element: Filter) {
 	&.raw-field-names {
 		.plain-name,
 		.name {
-			font-family: var(--theme--font-family-monospace);
+			font-family: var(--theme--fonts--monospace--font-family);
 		}
 	}
 

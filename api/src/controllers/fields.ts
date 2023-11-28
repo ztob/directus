@@ -32,7 +32,7 @@ router.get(
 		res.locals['payload'] = { data: fields || null };
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.get(
@@ -49,7 +49,7 @@ router.get(
 		res.locals['payload'] = { data: fields || null };
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.get(
@@ -66,7 +66,7 @@ router.get(
 		res.locals['payload'] = { data: field || null };
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const newFieldSchema = Joi.object({
@@ -118,7 +118,7 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -214,7 +214,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const updateSchema = Joi.object({
@@ -269,7 +269,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -284,7 +284,7 @@ router.delete(
 		await service.deleteField(req.params['collection']!, req.params['field']!);
 		return next();
 	}),
-	respond
+	respond,
 );
 
 // Logic for getting the changed attributes of fields

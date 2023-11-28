@@ -66,7 +66,7 @@ const hasContextMenu = computed(() => isAdmin && props.collection.type === 'tabl
 
 function getChildCollections(collection: Collection) {
 	let collections = collectionsStore.collections.filter(
-		(childCollection) => childCollection.meta?.group === collection.collection
+		(childCollection) => childCollection.meta?.group === collection.collection,
 	);
 
 	if (props.showHidden === false) {
@@ -108,8 +108,8 @@ watch(() => props.isLayoutRefreshed, () => {
 			<navigation-item-content
 				:search="search"
 				:name="collection.name"
-				:icon="collection.meta?.icon"
-				:color="collection.meta?.color"
+				:icon="collection.icon"
+				:color="collection.color"
 			/>
 		</template>
 		<navigation-item
@@ -141,8 +141,8 @@ watch(() => props.isLayoutRefreshed, () => {
 		<navigation-item-content
 			:search="search"
 			:name="collection.name"
-			:icon="collection.meta?.icon"
-			:color="collection.meta?.color"
+			:icon="collection.icon"
+			:color="collection.color"
 		/>
 	</v-list-item>
 
@@ -150,7 +150,7 @@ watch(() => props.isLayoutRefreshed, () => {
 		<v-list>
 			<v-list-item v-if="isAdmin" clickable :to="`/settings/data-model/${collection.collection}`">
 				<v-list-item-icon>
-					<v-icon name="list_alt" />
+					<v-icon name="database" />
 				</v-list-item-icon>
 				<v-list-item-content>
 					<v-text-overflow :text="t('edit_collection')" />

@@ -26,7 +26,7 @@ const { t } = useI18n();
 
 const inter = useExtension(
 	'interface',
-	computed(() => props.field?.meta?.interface ?? 'input')
+	computed(() => props.field?.meta?.interface ?? 'input'),
 );
 
 const interfaceExists = computed(() => !!inter.value);
@@ -38,7 +38,7 @@ const componentName = computed(() => {
 });
 
 const value = computed(() =>
-	props.modelValue === undefined ? props.field.schema?.default_value ?? null : props.modelValue
+	props.modelValue === undefined ? props.field.schema?.default_value ?? null : props.modelValue,
 );
 
 function isMakeCopyable(field: FormField) {
