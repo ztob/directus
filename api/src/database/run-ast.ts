@@ -35,6 +35,11 @@ type RunASTOptions = {
 	 * Whether or not to strip out non-requested required fields automatically (eg IDs / FKs)
 	 */
 	stripNonRequested?: boolean;
+
+	/**
+	 * Callback to run before the query is executed
+	 */
+	beforeQuery?: ((query: Knex.QueryBuilder) => void) | undefined;
 };
 
 /**
@@ -75,7 +80,7 @@ export default async function runAST(
 		);
 
 		// The actual knex query builder instance. This is a promise that resolves with the raw items from the db
-		const dbQuery = await getDBQuery(schema, knex, collection, fieldNodes, query);
+		const dbQuery = await getDBQuery(schema, knex, collection, fieldNodes, query, options?.beforeQuery);
 
 		const rawItems: Item | Item[] = await dbQuery;
 
@@ -244,7 +249,8 @@ async function getDBQuery(
 	knex: Knex,
 	table: string,
 	fieldNodes: (FieldNode | FunctionFieldNode)[],
-	query: Query
+	query: Query,
+	beforeQuery?: (query: Knex.QueryBuilder) => void
 ): Promise<Knex.QueryBuilder> {
 	const preProcess = getColumnPreprocessor(knex, schema, table);
 	const queryCopy = clone(query);
@@ -348,6 +354,9 @@ async function getDBQuery(
 			dbQuery.orderBy(sortRecords);
 		}
 	}
+
+	// Call the beforeQuery callback if it exists
+	beforeQuery?.(dbQuery);
 
 	if (!needsInnerQuery) return dbQuery;
 

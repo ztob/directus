@@ -120,7 +120,7 @@ function redactQuery(originalPath: string) {
 	const url = new URL(originalPath, 'http://example.com/');
 
 	if (url.searchParams.has('access_token')) {
-		url.searchParams.set('access_token', REDACTED_TEXT);
+		// url.searchParams.set('access_token', REDACTED_TEXT);
 	}
 
 	return url.pathname + url.search;
