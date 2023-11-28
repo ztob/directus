@@ -27,7 +27,7 @@ const rootItems = computed(() => {
 		shownCollections.filter((collection) => {
 			return isNil(collection?.meta?.group);
 		}),
-		['meta.sort', 'collection']
+		['meta.sort', 'collection'],
 	);
 });
 
@@ -35,7 +35,7 @@ const dense = computed(() => collectionsStore.visibleCollections.length > 5);
 const showSearch = computed(() => collectionsStore.visibleCollections.length > 20);
 
 const hasHiddenCollections = computed(
-	() => collectionsStore.allCollections.length > collectionsStore.visibleCollections.length
+	() => collectionsStore.allCollections.length > collectionsStore.visibleCollections.length,
 );
 </script>
 
@@ -87,9 +87,9 @@ const hasHiddenCollections = computed(
 
 .empty {
 	.v-button {
-		--v-button-color: var(--foreground-subdued);
-		--v-button-background-color: var(--foreground-subdued);
-		--v-button-background-color-hover: var(--primary);
+		--v-button-color: var(--theme--foreground-subdued);
+		--v-button-background-color: var(--theme--foreground-subdued);
+		--v-button-background-color-hover: var(--theme--primary);
 	}
 }
 
@@ -120,7 +120,7 @@ const hasHiddenCollections = computed(
 }
 
 .hidden-collection {
-	--v-list-item-color: var(--foreground-subdued);
+	--v-list-item-color: var(--theme--foreground-subdued);
 }
 
 .search-input {
@@ -131,6 +131,6 @@ const hasHiddenCollections = computed(
 	z-index: 2;
 	padding: 12px;
 	padding-bottom: 0;
-	background-color: var(--background-normal);
+	background-color: var(--theme--background-normal);
 }
 </style>

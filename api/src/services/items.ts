@@ -9,9 +9,9 @@ import getDatabase from '../database/index.js';
 import runAST from '../database/run-ast.js';
 import emitter from '../emitter.js';
 import env from '../env.js';
-import { ForbiddenError } from '../errors/index.js';
+import { ForbiddenError } from '@directus/errors';
 import { translateDatabaseError } from '../database/errors/translate.js';
-import { InvalidPayloadError } from '../errors/index.js';
+import { InvalidPayloadError } from '@directus/errors';
 import type {
 	AbstractService,
 	AbstractServiceOptions,
@@ -156,7 +156,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 								database: trx,
 								schema: this.schema,
 								accountability: this.accountability,
-							}
+							},
 					  )
 					: payload;
 
@@ -239,7 +239,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 			const { revisions: revisionsO2M, nestedActionEvents: nestedActionEventsO2M } = await payloadService.processO2M(
 				payloadWithPresets,
 				primaryKey,
-				opts
+				opts,
 			);
 
 			nestedActionEvents.push(...nestedActionEventsM2O);
@@ -481,7 +481,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 							database: this.knex,
 							schema: this.schema,
 							accountability: this.accountability,
-						}
+						},
 				  )
 				: query;
 
@@ -529,7 +529,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 							database: this.knex,
 							schema: this.schema,
 							accountability: this.accountability,
-						}
+						},
 				  )
 				: records;
 
@@ -545,7 +545,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 					database: this.knex || getDatabase(),
 					schema: this.schema,
 					accountability: this.accountability,
-				}
+				},
 			);
 		}
 
@@ -701,7 +701,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 							database: this.knex,
 							schema: this.schema,
 							accountability: this.accountability,
-						}
+						},
 				  )
 				: payload;
 
@@ -759,7 +759,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 				const { revisions, nestedActionEvents: nestedActionEventsO2M } = await payloadService.processO2M(
 					payload,
 					key,
-					opts
+					opts,
 				);
 
 				childrenRevisions.push(...revisions);
@@ -783,7 +783,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 						origin: this.accountability!.origin,
 						item: key,
 					})),
-					{ bypassLimits: true }
+					{ bypassLimits: true },
 				);
 
 				if (this.schema.collections[this.collection]!.accountability === 'all') {
@@ -808,7 +808,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 								data:
 									snapshots && Array.isArray(snapshots) ? JSON.stringify(snapshots[index]) : JSON.stringify(snapshots),
 								delta: await payloadService.prepareDelta(payloadWithTypeCasting),
-							}))
+							})),
 						)
 					).filter((revision) => revision.delta);
 
@@ -999,7 +999,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 					database: this.knex,
 					schema: this.schema,
 					accountability: this.accountability,
-				}
+				},
 			);
 		}
 
@@ -1022,7 +1022,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 						origin: this.accountability!.origin,
 						item: key,
 					})),
-					{ bypassLimits: true }
+					{ bypassLimits: true },
 				);
 			}
 		});

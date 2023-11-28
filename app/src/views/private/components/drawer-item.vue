@@ -110,13 +110,13 @@ const title = computed(() => {
 const { fields: relatedCollectionFields } = usePermissions(
 	relatedCollection as any,
 	computed(() => initialValues.value && initialValues.value[props.junctionField as any]),
-	computed(() => props.primaryKey === '+')
+	computed(() => props.primaryKey === '+'),
 );
 
 const { fields: fieldsWithPermissions } = usePermissions(
 	collection,
 	initialValues,
-	computed(() => props.primaryKey === '+')
+	computed(() => props.primaryKey === '+'),
 );
 
 const fields = computed(() => {
@@ -144,7 +144,7 @@ const fieldsWithoutCircular = computed(() => {
 });
 
 const hasVisibleFieldsRelated = computed(() =>
-	relatedCollectionFields.value.some((field: Field) => !field.meta?.hidden)
+	relatedCollectionFields.value.some((field: Field) => !field.meta?.hidden),
 );
 
 const hasVisibleFieldsJunction = computed(() => fields.value.some((field: Field) => !field.meta?.hidden));
@@ -152,14 +152,14 @@ const hasVisibleFieldsJunction = computed(() => fields.value.some((field: Field)
 const emptyForm = computed(() => !hasVisibleFieldsRelated.value && !hasVisibleFieldsJunction.value);
 
 const templatePrimaryKey = computed(() =>
-	junctionFieldInfo.value ? String(props.relatedPrimaryKey) : String(props.primaryKey)
+	junctionFieldInfo.value ? String(props.relatedPrimaryKey) : String(props.primaryKey),
 );
 
 const templateCollection = computed(() => relatedCollectionInfo.value || collectionInfo.value);
 const { templateData, loading: templateDataLoading } = useTemplateData(templateCollection, templatePrimaryKey);
 
 const template = computed(
-	() => relatedCollectionInfo.value?.meta?.display_template || collectionInfo.value?.meta?.display_template || null
+	() => relatedCollectionInfo.value?.meta?.display_template || collectionInfo.value?.meta?.display_template || null,
 );
 
 const { file } = useFile();
@@ -214,7 +214,7 @@ function useItem() {
 				internalEdits.value = {};
 			}
 		},
-		{ immediate: true }
+		{ immediate: true },
 	);
 
 	return { internalEdits, loading, initialValues, refresh, fetchItem };
@@ -248,8 +248,8 @@ function useItem() {
 			const response = await api.get(endpoint, { params: { fields } });
 
 			initialValues.value = response.data.data;
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			loading.value = false;
 		}
@@ -275,8 +275,8 @@ function useItem() {
 				...(initialValues.value || {}),
 				[junctionFieldInfo.value.field]: response.data.data,
 			};
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			loading.value = false;
 		}
@@ -337,7 +337,7 @@ function useActions() {
 		const errors = validateItem(
 			merge({}, defaultValues.value, existingValues, editsToValidate),
 			fieldsToValidate,
-			isNew.value
+			isNew.value,
 		);
 
 		if (errors.length > 0) {
@@ -374,7 +374,13 @@ function useActions() {
 </script>
 
 <template>
-	<v-drawer v-model="internalActive" :title="title" persistent @cancel="cancel">
+	<v-drawer
+		v-model="internalActive"
+		:title="title"
+		:icon="collectionInfo?.meta?.icon ?? undefined"
+		persistent
+		@cancel="cancel"
+	>
 		<template v-if="template !== null && templateData && primaryKey !== '+'" #title>
 			<v-skeleton-loader v-if="loading || templateDataLoading" class="title-loader" type="text" />
 
@@ -395,7 +401,7 @@ function useActions() {
 		</template>
 
 		<div class="drawer-item-content">
-			<file-preview-replace v-if="file" class="preview" :file="file" :in-modal="true" @replace="refresh" />
+			<file-preview-replace v-if="file" class="preview" :file="file" in-modal @replace="refresh" />
 
 			<v-info v-if="emptyForm" :title="t('no_visible_fields')" icon="search" center>
 				{{ t('no_visible_fields_copy') }}
@@ -456,7 +462,7 @@ function useActions() {
 	padding-bottom: var(--content-padding-bottom);
 
 	.preview {
-		margin-bottom: var(--form-vertical-gap);
+		margin-bottom: var(--theme--form--row-gap);
 	}
 
 	.drawer-item-order {

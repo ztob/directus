@@ -33,32 +33,33 @@ ARG TARGETPLATFORM
 
 ENV NODE_OPTIONS=--max-old-space-size=8192
 
-RUN \
-  if [ "$TARGETPLATFORM" = 'linux/arm64' ]; then \
-  apk --no-cache add \
-  python3 \
-  build-base \
-  && ln -sf /usr/bin/python3 /usr/bin/python \
-  ; fi
+RUN <<EOF
+  if [ "$TARGETPLATFORM" = 'linux/arm64' ]; then
+  	apk --no-cache add python3 build-base
+  	ln -sf /usr/bin/python3 /usr/bin/python
+  fi
+EOF
 
 COPY package.json .
 RUN corepack enable && corepack prepare
 
 COPY pnpm-lock.yaml .
 RUN pnpm fetch
-COPY . .
-RUN pnpm install --recursive --offline --no-frozen-lockfile
 
-RUN : \
-	&& npm_config_workspace_concurrency=1 pnpm run build \
-	&& pnpm --filter directus deploy --prod dist \
-	&& cd dist \
-	&& pnpm pack \
-	&& tar -zxvf *.tgz package/package.json \
-	&& mv package/package.json package.json \
-	&& rm -r *.tgz package \
-	&& mkdir -p database extensions uploads \
-	;
+COPY . .
+RUN <<EOF
+	pnpm install --recursive --offline --frozen-lockfile
+	npm_config_workspace_concurrency=1 pnpm run build
+	pnpm --filter directus deploy --prod dist
+	cd dist
+	# Regenerate package.json file with essential fields only
+	# (see https://github.com/directus/directus/issues/20338)
+	node -e '
+		const f = "package.json", {name, version, type, exports, bin} = require(`./${f}`), {packageManager} = require(`../${f}`);
+		fs.writeFileSync(f, JSON.stringify({name, version, type, exports, bin, packageManager}, null, 2));
+	'
+	mkdir -p database extensions uploads
+EOF
 
 ####################################################################################################
 ## Create Production Image
@@ -83,6 +84,7 @@ RUN export CI_API_V4_URL=${CI_API_V4_URL}
 RUN apk update
 RUN apk --no-cache add --virtual builds-deps build-base python3 openssh-client bash git openssh curl wget
 RUN apk add nano
+RUN npm install --global pm2@5
 
 USER node
 
@@ -93,14 +95,13 @@ EXPOSE 8055
 ENV \
 	DB_CLIENT="sqlite3" \
 	DB_FILENAME="/directus/database/database.sqlite" \
-	EXTENSIONS_PATH="/directus/extensions" \
-	STORAGE_LOCAL_ROOT="/directus/uploads" \
 	NODE_ENV="production" \
 	NPM_CONFIG_UPDATE_NOTIFIER="false"
 
 # Not sure why we have this folder here
 RUN rm -rf /directus/api/extensions/modules/__MACOSX || true
 
+COPY --from=builder --chown=node:node /directus/ecosystem.config.cjs .
 COPY --from=builder --chown=node:node /directus/dist .
 COPY ./*_extensions.sh .
 
@@ -126,6 +127,6 @@ RUN mkdir -p ./uploads
 RUN mkdir -p ./snapshots
 
 CMD : \
-	&& node --trace-warnings /directus/cli.js bootstrap \
-	&& node --trace-warnings /directus/cli.js start \
+	&& node cli.js bootstrap \
+	&& pm2-runtime start ecosystem.config.cjs \
 	;

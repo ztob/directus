@@ -1,6 +1,7 @@
 import { isDirectusError } from '@directus/errors';
 import formatTitle from '@directus/format-title';
 import { toArray, getFieldsFromTemplate } from '@directus/utils';
+import type { BusboyFileStream } from '@directus/types';
 import Busboy from 'busboy';
 import bytes from 'bytes';
 import type { RequestHandler } from 'express';
@@ -9,7 +10,7 @@ import Joi from 'joi';
 import { minimatch } from 'minimatch';
 import path from 'path';
 import env from '../env.js';
-import { ContentTooLargeError, ErrorCode, InvalidPayloadError, ServiceUnavailableError } from '../errors/index.js';
+import { ErrorCode, InvalidPayloadError, ServiceUnavailableError } from '@directus/errors';
 import { respond } from '../middleware/respond.js';
 import useCollection from '../middleware/use-collection.js';
 import { validateBatch } from '../middleware/validate-batch.js';
@@ -77,7 +78,7 @@ export const multipartHandler: RequestHandler = (req, res, next) => {
 		payload[fieldname] = fieldValue;
 	});
 
-	busboy.on('file', async (_fieldname, fileStream, { filename, mimeType }) => {
+	busboy.on('file', async (_fieldname, fileStream: BusboyFileStream, { filename, mimeType }) => {
 		if (!filename) {
 			return busboy.emit('error', new InvalidPayloadError({ reason: `File is missing filename` }));
 		}
@@ -107,11 +108,6 @@ export const multipartHandler: RequestHandler = (req, res, next) => {
 
 		// Clear the payload for the next to-be-uploaded file
 		payload = {};
-
-		fileStream.on('limit', () => {
-			const error = new ContentTooLargeError();
-			next(error);
-		});
 
 		try {
 			const primaryKey = await service.uploadOne(fileStream, payloadWithRequiredFields, existingPrimaryKey);
@@ -188,7 +184,7 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const importSchema = Joi.object({
@@ -225,7 +221,7 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const sendSchema = Joi.object({
@@ -260,9 +256,13 @@ router.post(
 			schema: req.schema,
 		});
 
-		const values: Record<string, any> = await filesService.readOne(req.body.key, {
-			fields: Array.from(fields),
-		}, { emitEvents: false });
+		const values: Record<string, any> = await filesService.readOne(
+			req.body.key,
+			{
+				fields: Array.from(fields),
+			},
+			{ emitEvents: false }
+		);
 
 		// Use micromustache to render the template strings
 		const subject = req.body.subject ? render(req.body.subject, values) : '';
@@ -276,7 +276,7 @@ router.post(
 		const exists = await storage.location(values['storage']).exists(values['filename_disk']);
 
 		if (!exists) {
-			throw new InvalidPayloadError({reason: `File does not exist`});
+			throw new InvalidPayloadError({ reason: `File does not exist` });
 		}
 
 		const fileStream = await storage.location(values['storage']).read(values['filename_disk']);
@@ -291,19 +291,21 @@ router.post(
 				to: req.body.emails,
 				subject,
 				text: body,
-				attachments: [{
-					filename: values['filename_download'],
-					content: fileStream,
-				}]
+				attachments: [
+					{
+						filename: values['filename_download'],
+						content: fileStream,
+					},
+				],
 			});
 
 			res.json({
 				success: true,
 				accepted: result.accepted?.length ?? 0,
-				rejected: result.rejected?.length ?? (req.body.emails.length - (result.accepted?.length ?? 0)),
+				rejected: result.rejected?.length ?? req.body.emails.length - (result.accepted?.length ?? 0),
 			});
 		} catch (error: any) {
-			throw new ServiceUnavailableError({reason: 'Error sending email', service: 'files' });
+			throw new ServiceUnavailableError({ reason: 'Error sending email', service: 'files' });
 		}
 	})
 );
@@ -350,7 +352,7 @@ router.get(
 		res.locals['payload'] = { data: record || null };
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -386,7 +388,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -413,7 +415,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -436,7 +438,7 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -451,7 +453,7 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 export default router;

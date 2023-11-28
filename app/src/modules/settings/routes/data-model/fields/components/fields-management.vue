@@ -25,7 +25,7 @@ const fieldSortPosition = ref<number | null>(null)
 
 const parsedFields = computed(() => {
 	return orderBy(fields.value, [(o) => (o.meta?.sort ? Number(o.meta?.sort) : null), (o) => o.meta?.id]).filter(
-		(field) => field.field.startsWith('$') === false
+		(field) => field.field.startsWith('$') === false,
 	);
 });
 
@@ -187,14 +187,14 @@ async function updateFieldsSorts(newFields: Field[]) {
 		<draggable
 			class="field-grid"
 			:model-value="usableFields.filter((field) => isNil(field?.meta?.group))"
-			:force-fallback="true"
+			force-fallback
 			handle=".drag-handle"
 			:group="{ name: 'fields' }"
 			:set-data="hideDragImage"
 			item-key="field"
 			:animation="150"
-			:fallback-on-body="true"
-			:invert-swap="true"
+			fallback-on-body
+			invert-swap
 			@update:model-value="setSort"
 		>
 			<template #item="{ element }">
@@ -268,8 +268,8 @@ async function updateFieldsSorts(newFields: Field[]) {
 
 .add-field {
 	--v-button-font-size: 14px;
-	--v-button-background-color: var(--primary);
-	--v-button-background-color-hover: var(--primary-125);
+	--v-button-background-color: var(--theme--primary);
+	--v-button-background-color-hover: var(--theme--primary-accent);
 
 	margin-top: -12px;
 }
@@ -279,11 +279,11 @@ async function updateFieldsSorts(newFields: Field[]) {
 	width: max-content;
 	margin: 0 auto;
 	margin-top: 8px;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 	transition: color var(--fast) var(--transition);
 
 	&:hover {
-		color: var(--foreground-normal);
+		color: var(--theme--foreground);
 	}
 }
 

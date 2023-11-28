@@ -14,9 +14,9 @@ import { getHelpers } from '../database/helpers/index.js';
 import getDatabase, { getSchemaInspector } from '../database/index.js';
 import { systemFieldRows } from '../database/system-data/fields/index.js';
 import emitter from '../emitter.js';
-import { ForbiddenError, InvalidPayloadError } from '../errors/index.js';
-import { ItemsService } from '../services/items.js';
-import { PayloadService } from '../services/payload.js';
+import { ForbiddenError, InvalidPayloadError } from '@directus/errors';
+import { ItemsService } from './items.js';
+import { PayloadService } from './payload.js';
 import type { AbstractServiceOptions, ActionEventParams, MutationOptions } from '../types/index.js';
 import getDefaultValue from '../utils/get-default-value.js';
 import getLocalType from '../utils/get-local-type.js';
@@ -86,7 +86,7 @@ export class FieldsService {
 			...column,
 			default_value: getDefaultValue(
 				column,
-				fields.find((field) => field.collection === column.table && field.field === column.name)
+				fields.find((field) => field.collection === column.table && field.field === column.name),
 			),
 		}));
 
@@ -149,7 +149,7 @@ export class FieldsService {
 		const knownCollections = Object.keys(this.schema.collections);
 
 		const result = [...columnsWithSystem, ...aliasFieldsAsField].filter((field) =>
-			knownCollections.includes(field.collection)
+			knownCollections.includes(field.collection),
 		);
 
 		// Filter the result so we only return the fields you have read access to
@@ -251,7 +251,7 @@ export class FieldsService {
 		collection: string,
 		field: Partial<Field> & { field: string; type: Type | null },
 		table?: Knex.CreateTableBuilder, // allows collection creation to
-		opts?: MutationOptions
+		opts?: MutationOptions,
 	): Promise<void> {
 		if (this.accountability && this.accountability.admin !== true) {
 			throw new ForbiddenError();
@@ -264,7 +264,7 @@ export class FieldsService {
 			const exists =
 				field.field in this.schema.collections[collection]!.fields ||
 				isNil(
-					await this.knex.select('id').from('directus_fields').where({ collection, field: field.field }).first()
+					await this.knex.select('id').from('directus_fields').where({ collection, field: field.field }).first(),
 				) === false;
 
 			// Check if field already exists, either as a column, or as a row in directus_fields
@@ -298,7 +298,7 @@ export class FieldsService {
 						database: trx,
 						schema: this.schema,
 						accountability: this.accountability,
-					}
+					},
 				);
 
 				if (hookAdjustedField.type && ALIAS_TYPES.includes(hookAdjustedField.type) === false) {
@@ -326,7 +326,7 @@ export class FieldsService {
 							collection: collection,
 							field: hookAdjustedField.field,
 						},
-						{ emitEvents: false }
+						{ emitEvents: false },
 					);
 				}
 
@@ -397,7 +397,7 @@ export class FieldsService {
 					database: this.knex,
 					schema: this.schema,
 					accountability: this.accountability,
-				}
+				},
 			);
 
 			const record = field.meta
@@ -445,7 +445,7 @@ export class FieldsService {
 							collection: collection,
 							field: hookAdjustedField.field,
 						},
-						{ emitEvents: false }
+						{ emitEvents: false },
 					);
 				} else {
 					await this.itemsService.createOne(
@@ -454,7 +454,7 @@ export class FieldsService {
 							collection: collection,
 							field: hookAdjustedField.field,
 						},
-						{ emitEvents: false }
+						{ emitEvents: false },
 					);
 				}
 			}
@@ -530,7 +530,7 @@ export class FieldsService {
 					database: this.knex,
 					schema: this.schema,
 					accountability: this.accountability,
-				}
+				},
 			);
 
 			await this.knex.transaction(async (trx) => {
@@ -695,7 +695,7 @@ export class FieldsService {
 			const type = field.type as 'float' | 'decimal';
 			column = table[type](field.field, field.schema?.numeric_precision ?? 10, field.schema?.numeric_scale ?? 5);
 		} else if (field.type === 'csv') {
-			column = table.string(field.field);
+			column = table.text(field.field);
 		} else if (field.type === 'hash') {
 			column = table.string(field.field, 255);
 		} else if (field.type === 'dateTime') {

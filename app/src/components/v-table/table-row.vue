@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { ShowSelect } from '@directus/types';
-import { Header, Item } from './types';
 import { useI18n } from 'vue-i18n';
+import type { ShowSelect } from '@directus/extensions';
+import { computed, ref } from 'vue';
+import type { Header, Item } from './types';
 
 interface Props {
 	headers: Header[];
@@ -131,8 +131,8 @@ const { t } = useI18n();
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-		background-color: var(--v-table-background-color);
-		border-bottom: var(--border-width) solid var(--border-subdued);
+		background-color: var(--v-table-background-color, transparent);
+		border-bottom: var(--theme--border-width) solid var(--theme--border-color-subdued);
 
 		&:last-child {
 			padding: 0 12px;
@@ -169,15 +169,15 @@ const { t } = useI18n();
 	}
 
 	&.clickable:not(.subdued):hover .cell {
-		background-color: var(--background-subdued);
+		background-color: var(--theme--background-subdued);
 		cursor: pointer;
 	}
 
 	.drag-handle {
-		--v-icon-color: var(--foreground-subdued);
+		--v-icon-color: var(--theme--foreground-subdued);
 
 		&.sorted-manually {
-			--v-icon-color: var(--foreground-normal);
+			--v-icon-color: var(--theme--foreground);
 
 			&:hover {
 				cursor: ns-resize;

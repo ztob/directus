@@ -1,9 +1,3 @@
-<script lang="ts">
-export default {
-	inheritAttrs: false,
-};
-</script>
-
 <script setup lang="ts">
 import { HeaderRaw } from '@/components/v-table/types';
 import { AliasFields, useAliasFields } from '@/composables/use-alias-fields';
@@ -14,7 +8,7 @@ import { useUserStore } from '@/stores/user';
 import { Collection } from '@/types/collections';
 import { useSync } from '@directus/composables';
 import { get, getEndpoint } from '@directus/utils';
-import { Field, Filter, Item, ShowSelect } from '@directus/types';
+import type { Field, Filter, Item, ShowSelect } from '@directus/types';
 import { ComponentPublicInstance, Ref, computed, inject, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
@@ -24,7 +18,9 @@ import { notify } from '@/utils/notify';
 import api from '@/api';
 import { nextTick } from 'vue';
 
-type Props = {
+defineOptions({ inheritAttrs: false });
+
+interface Props {
 	collection: string;
 	selection?: Item[];
 	readonly: boolean;
@@ -178,7 +174,7 @@ const table = ref<ComponentPublicInstance>();
 
 watch(
 	() => props.page,
-	() => mainElement?.value?.scrollTo({ top: 0, behavior: 'smooth' })
+	() => mainElement?.value?.scrollTo({ top: 0, behavior: 'smooth' }),
 );
 
 watch(
@@ -207,7 +203,7 @@ useShortcut(
 	() => {
 		props.selectAll();
 	},
-	table
+	table,
 );
 
 useShortcut(
@@ -228,10 +224,12 @@ const userStore = useUserStore();
 const { sizes: pageSizes, selected: selectedSize } = usePageSize<string>(
 	[25, 50, 100, 250, 500, 1000],
 	(value) => String(value),
-	props.limit
+	props.limit,
 );
 
-limitWritable.value = selectedSize;
+if (limitWritable.value !== selectedSize) {
+	limitWritable.value = selectedSize;
+}
 
 const showManualSort = computed(() => {
 	if (!props.sortField) return false;
@@ -584,7 +582,7 @@ function onActivator(toggle: () => void, id: string) {
 		align-items: center;
 		justify-content: flex-end;
 		width: 240px;
-		color: var(--foreground-subdued);
+		color: var(--theme--foreground-subdued);
 
 		span {
 			width: auto;
@@ -592,7 +590,7 @@ function onActivator(toggle: () => void, id: string) {
 		}
 
 		.v-select {
-			color: var(--foreground-normal);
+			color: var(--theme--foreground);
 		}
 	}
 }
@@ -602,10 +600,10 @@ function onActivator(toggle: () => void, id: string) {
 }
 
 .add-field {
-	--v-icon-color-hover: var(--foreground-normal);
+	--v-icon-color-hover: var(--theme--foreground);
 
 	&.active {
-		--v-icon-color: var(--foreground-normal);
+		--v-icon-color: var(--theme--foreground);
 	}
 }
 

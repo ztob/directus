@@ -17,7 +17,7 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const { collection, role, permissions } = toRefs(props);
-const { setFullAccessAll, setUserAccessAll, setNoAccessAll, getPermission } = useUpdatePermissions(collection, permissions, role);
+const { setFullAccessAll, setUserAccessAll, setNoAccessAll, getPermission, getUserCreatedField } = useUpdatePermissions(collection, permissions, role);
 
 function isLoading(action: string) {
 	const permission = getPermission(action);
@@ -33,7 +33,7 @@ function isLoading(action: string) {
 			<span class="actions">
 				<span class="all" @click="setFullAccessAll">{{ t('all') }}</span>
 				<span class="divider">/</span>
-				<span class="all" @click="setUserAccessAll">{{ t('users') }}</span>
+				<span class="all" :class="{'setCurrentUserAccessDisabled': !(!!getUserCreatedField())}" @click="setUserAccessAll">{{ t('users') }}</span>
 				<span class="divider">/</span>
 				<span class="none" @click="setNoAccessAll">{{ t('none') }}</span>
 			</span>
@@ -88,15 +88,14 @@ function isLoading(action: string) {
 	align-items: center;
 	height: 48px;
 	padding: 0 12px;
-	background-color: var(--background-input);
 
 	.name {
 		flex-grow: 1;
-		font-family: var(--family-monospace);
+		font-family: var(--theme--fonts--monospace--font-family);
 
 		.actions {
 			margin-left: 8px;
-			color: var(--foreground-subdued);
+			color: var(--theme--foreground-subdued);
 			font-size: 12px;
 			opacity: 0;
 			transition: opacity var(--fast) var(--transition);
@@ -106,12 +105,16 @@ function isLoading(action: string) {
 
 				&:hover {
 					&.all {
-						color: var(--success);
+						color: var(--theme--success);
 					}
 
 					&.none {
-						color: var(--danger);
+						color: var(--theme--danger);
 					}
+				}
+				&.setCurrentUserAccessDisabled {
+					pointer-events: none;
+					color: var(--foreground-subdued);
 				}
 			}
 
@@ -131,7 +134,7 @@ function isLoading(action: string) {
 	}
 
 	& + .permissions-overview-row {
-		border-top: var(--border-width) solid var(--border-subdued);
+		border-top: var(--theme--border-width) solid var(--theme--border-color-subdued);
 	}
 }
 </style>

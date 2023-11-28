@@ -151,8 +151,8 @@ async function copyValues() {
 		z-index: 1;
 		width: calc(100% + 12px);
 		height: calc(100% + 12px);
-		background-color: var(--background-normal);
-		border-radius: var(--border-radius);
+		background-color: var(--theme--background-normal);
+		border-radius: var(--theme--border-radius);
 		opacity: 0;
 		transition: opacity var(--fast) var(--transition);
 		content: '';
@@ -168,17 +168,17 @@ async function copyValues() {
 	}
 
 	&:not(.subdued):active::before {
-		background-color: var(--background-normal-alt);
+		background-color: var(--theme--background-accent);
 	}
 }
 
 .subdued {
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 }
 
 .links {
 	.v-list-item-content {
-		height: var(--v-list-item-min-height);
+		height: var(--v-list-item-min-height, 32px);
 	}
 }
 </style>

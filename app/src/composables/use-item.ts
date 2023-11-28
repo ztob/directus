@@ -16,6 +16,7 @@ import { AxiosResponse } from 'axios';
 import { mergeWith } from 'lodash';
 import { ComputedRef, Ref, computed, isRef, ref, unref, watch } from 'vue';
 import { usePermissions } from './use-permissions';
+import { pushGroupOptionsDown } from '@/utils/push-group-options-down';
 
 type UsableItem<T extends Record<string, any>> = {
 	edits: Ref<Record<string, any>>;
@@ -127,9 +128,11 @@ export function useItem<T extends Record<string, any>>(
 					return to;
 				}
 			}
-			);
+		);
 
-		const errors = validateItem(payloadToValidate, fieldsWithPermissions.value, isNew.value);
+		const fields = pushGroupOptionsDown(fieldsWithPermissions.value);
+
+		const errors = validateItem(payloadToValidate, fields, isNew.value);
 
 		if (errors.length > 0) {
 			validationErrors.value = errors;
@@ -349,15 +352,15 @@ export function useItem<T extends Record<string, any>>(
 		}
 	}
 
-	function saveErrorHandler(err: any) {
-		if (err?.response?.data?.errors) {
-			validationErrors.value = err.response.data.errors
+	function saveErrorHandler(error: any) {
+		if (error?.response?.data?.errors) {
+			validationErrors.value = error.response.data.errors
 				.filter((err: APIError) => VALIDATION_TYPES.includes(err?.extensions?.code))
 				.map((err: APIError) => {
 					return err.extensions;
 				});
 
-			const otherErrors = err.response.data.errors.filter(
+			const otherErrors = error.response.data.errors.filter(
 				(err: APIError) => VALIDATION_TYPES.includes(err?.extensions?.code) === false
 			);
 
@@ -365,10 +368,10 @@ export function useItem<T extends Record<string, any>>(
 				otherErrors.forEach(unexpectedError);
 			}
 		} else {
-			unexpectedError(err);
+			unexpectedError(error);
 		}
 
-		throw err;
+		throw error;
 	}
 
 	async function archive() {
@@ -405,9 +408,9 @@ export function useItem<T extends Record<string, any>>(
 				title:
 					value === archiveValue ? i18n.global.t('item_delete_success', 1) : i18n.global.t('item_update_success', 1),
 			});
-		} catch (err: any) {
-			unexpectedError(err);
-			throw err;
+		} catch (error) {
+			unexpectedError(error);
+			throw error;
 		} finally {
 			archiving.value = false;
 		}
@@ -424,9 +427,9 @@ export function useItem<T extends Record<string, any>>(
 			notify({
 				title: i18n.global.t('item_delete_success', 1),
 			});
-		} catch (err: any) {
-			unexpectedError(err);
-			throw err;
+		} catch (error) {
+			unexpectedError(error);
+			throw error;
 		} finally {
 			deleting.value = false;
 		}

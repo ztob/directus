@@ -20,7 +20,7 @@ const { t } = useI18n();
 const router = useRouter();
 
 const { collection, role, permissions } = toRefs(props);
-const { setFullAccess, setNoAccess, getPermission } = useUpdatePermissions(collection, permissions, role);
+const { setFullAccess, setNoAccess, setUserAccess, getPermission, getUserCreatedField } = useUpdatePermissions(collection, permissions, role);
 
 const permission = computed(() => getPermission(props.action));
 
@@ -123,6 +123,20 @@ async function openPermissions() {
 					</v-list-item-content>
 				</v-list-item>
 
+				<v-list-item
+					v-if="action !== 'create'"
+					:disabled="permissionLevel === 'custom' || !(!!getUserCreatedField())"
+					clickable
+					@click="setUserAccess(action)"
+				>
+					<v-list-item-icon>
+						<v-icon name="manage_accounts" />
+					</v-list-item-icon>
+					<v-list-item-content>
+						{{ t('Current User') }}
+					</v-list-item-content>
+				</v-list-item>
+
 				<v-divider />
 
 				<v-list-item clickable @click="openPermissions">
@@ -165,8 +179,8 @@ async function openPermissions() {
 }
 
 .none {
-	--v-icon-color: var(--danger);
-	--v-icon-color-hover: var(--danger);
+	--v-icon-color: var(--theme--danger);
+	--v-icon-color-hover: var(--theme--danger);
 
 	&::before {
 		background-color: var(--danger-10);
@@ -175,8 +189,8 @@ async function openPermissions() {
 
 .partial,
 .custom {
-	--v-icon-color: var(--warning);
-	--v-icon-color-hover: var(--warning);
+	--v-icon-color: var(--theme--warning);
+	--v-icon-color-hover: var(--theme--warning);
 
 	&::before {
 		background-color: var(--warning-10);
@@ -184,8 +198,8 @@ async function openPermissions() {
 }
 
 .all {
-	--v-icon-color: var(--success);
-	--v-icon-color-hover: var(--success);
+	--v-icon-color: var(--theme--success);
+	--v-icon-color-hover: var(--theme--success);
 
 	&::before {
 		background-color: var(--success-10);

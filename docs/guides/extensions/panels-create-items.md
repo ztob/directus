@@ -164,7 +164,7 @@ the final POST request.
 
 You will also need to capture a response to present to the user. The `responseFormat` contains a string where the user
 can create their own response with data from the API. A `v-dialog` can show an important message to the user. This
-requires a boolean value (here `responseDialoge`) to control the visibility of the dialog box.
+requires a boolean value (here `responseDialog`) to control the visibility of the dialog box.
 
 Create a `getFields` function to fetch the detailed information for each selected field then call the function
 afterwards so it populates the variable when the panel loads:
@@ -321,18 +321,18 @@ Lastly, replace the CSS at the bottom with this:
 	grid-column: start/fill;
 }
 .panel-internal-form :deep(.v-form) {
-	margin-bottom: var(--form-vertical-gap);
+	margin-bottom: var(--theme--form--row-gap);
 }
 .form-response {
-	border-radius: var(--border-radius);
-	border: var(--border-width) solid var(--border-normal);
+	border-radius: var(--theme--border-radius);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
 	margin: 1em 0;
 	min-width: 300px;
 }
 .form-response a {
 	position: relative;
 	display: block;
-	padding: var(--input-padding);
+	padding: var(--theme--form--field--input--padding);
 }
 .form-response a:hover {
 	cursor: pointer;
@@ -340,8 +340,8 @@ Lastly, replace the CSS at the bottom with this:
 }
 .form-response a :deep(.v-icon) {
 	position: absolute;
-	right: var(--input-padding);
-	top: var(--input-padding);
+	right: var(--theme--form--field--input--padding);
+	top: var(--theme--form--field--input--padding);
 }
 </style>
 ```
@@ -588,18 +588,18 @@ export default {
 	grid-column: start/fill;
 }
 .panel-internal-form :deep(.v-form) {
-	margin-bottom: var(--form-vertical-gap);
+	margin-bottom: var(--theme--form--row-gap);
 }
 .form-response {
-	border-radius: var(--border-radius);
-	border: var(--border-width) solid var(--border-normal);
+	border-radius: var(--theme--border-radius);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
 	margin: 1em 0;
 	min-width: 300px;
 }
 .form-response a {
 	position: relative;
 	display: block;
-	padding: var(--input-padding);
+	padding: var(--theme--form--field--input--padding);
 }
 .form-response a:hover {
 	cursor: pointer;
@@ -607,8 +607,8 @@ export default {
 }
 .form-response a :deep(.v-icon) {
 	position: absolute;
-	right: var(--input-padding);
-	top: var(--input-padding);
+	right: var(--theme--form--field--input--padding);
+	top: var(--theme--form--field--input--padding);
 }
 </style>
 ```

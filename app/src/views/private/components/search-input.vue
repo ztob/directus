@@ -36,14 +36,6 @@ watch(
 
 		const searchElement = filterElement.value.parentElement!;
 		const minWidth = searchElement.offsetWidth - 4;
-
-		if (filterElementWidth.value > minWidth) {
-			filterElement.value.style.borderTopLeftRadius =
-				filterElementWidth.value > minWidth + 22 ? 22 + 'px' : filterElementWidth.value - minWidth + 'px';
-		} else {
-			filterElement.value.style.borderTopLeftRadius = '0px';
-		}
-
 		const headerElement = mainElement?.value?.firstElementChild;
 
 		if (!headerElement) return;
@@ -55,7 +47,7 @@ watch(
 
 		filterElement.value.style.maxWidth = maxWidth > minWidth ? `${String(maxWidth)}px` : '0px';
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
 watch(active, (newActive: boolean) => {
@@ -161,7 +153,7 @@ function clearAllFilters() {
 
 <style lang="scss" scoped>
 .search-badge {
-	--v-badge-background-color: var(--primary);
+	--v-badge-background-color: var(--theme--primary);
 	--v-badge-offset-y: 8px;
 	--v-badge-offset-x: 8px;
 }
@@ -169,32 +161,34 @@ function clearAllFilters() {
 .search-input {
 	display: flex;
 	align-items: center;
-	width: 72px;
+	width: 68px;
 	max-width: 100%;
-	height: 44px;
+	box-sizing: content-box;
 	overflow: hidden;
-	border: 2px solid var(--border-normal);
-	border-radius: calc(44px / 2);
-	transition: width var(--slow) var(--transition), border-bottom-left-radius var(--fast) var(--transition),
-	border-bottom-right-radius var(--fast) var(--transition);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+	border-radius: calc((40px + var(--theme--border-width) * 2) / 2);
 	&-filled {
 		width: 95px;
 	}
+	transition:
+		width var(--slow) var(--transition),
+		border-bottom-left-radius var(--fast) var(--transition),
+		border-bottom-right-radius var(--fast) var(--transition);
 
 	.icon-empty {
-		--v-icon-color: var(--foreground-subdued);
+		--v-icon-color: var(--theme--foreground-subdued);
 
 		display: none;
 		margin-left: 8px;
 
 		&:hover {
-			--v-icon-color: var(--danger);
+			--v-icon-color: var(--theme--danger);
 		}
 	}
 
 	.icon-search,
 	.icon-filter {
-		--v-icon-color-hover: var(--primary);
+		--v-icon-color-hover: var(--theme--primary);
 	}
 
 	.icon-search {
@@ -208,7 +202,7 @@ function clearAllFilters() {
 	}
 
 	&:hover {
-		border-color: var(--border-normal-alt);
+		border-color: var(--theme--form--field--input--border-color-hover);
 	}
 
 	&.has-content {
@@ -223,9 +217,27 @@ function clearAllFilters() {
 		}
 	}
 
+	input {
+		width: 0px;
+		height: 100%;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		color: var(--theme--foreground);
+		text-overflow: ellipsis;
+		background-color: var(--theme--form--field--input--background);
+		border: none;
+		border-radius: 0;
+		flex-grow: 1;
+
+		&::placeholder {
+			color: var(--theme--foreground-subdued);
+		}
+	}
+
 	&.active {
 		width: 300px;
-		border-color: var(--border-normal);
+		border-color: var(--theme--form--field--input--border-color);
 
 		.icon-empty {
 			display: block;
@@ -236,7 +248,7 @@ function clearAllFilters() {
 		width: 200px;
 
 		.icon-filter {
-			--v-icon-color: var(--primary);
+			--v-icon-color: var(--theme--primary);
 		}
 
 		@media (min-width: 600px) {
@@ -254,40 +266,24 @@ function clearAllFilters() {
 	}
 
 	&.filter-border {
-		padding-bottom: 2px;
+		padding-bottom: var(--theme--border-width);
 		border-bottom: none;
 		border-bottom-right-radius: 0;
 		border-bottom-left-radius: 0;
-		transition: border-bottom-left-radius none, border-bottom-right-radius none;
+		transition:
+			border-bottom-left-radius 0,
+			border-bottom-right-radius 0;
 
 		&::after {
 			position: absolute;
-			right: 2px;
-			bottom: -2px;
-			left: 2px;
+			right: var(--theme--border-width);
+			bottom: calc(-1 * var(--theme--border-width));
+			left: var(--theme--border-width);
 			width: auto;
-			height: 2px;
-			background-color: var(--border-subdued);
+			height: var(--theme--border-width);
+			background-color: var(--theme--border-color-subdued);
 			content: '';
 			pointer-events: none;
-		}
-	}
-
-	input {
-		flex-grow: 1;
-		width: 0px;
-		height: 100%;
-		margin: 0;
-		padding: 0;
-		overflow: hidden;
-		color: var(--foreground-normal);
-		text-overflow: ellipsis;
-		background-color: var(--background-page);
-		border: none;
-		border-radius: 0;
-
-		&::placeholder {
-			color: var(--foreground-subdued);
 		}
 	}
 }
@@ -305,8 +301,9 @@ function clearAllFilters() {
 	width: auto;
 	min-width: 100%;
 	padding: 0;
-	background-color: var(--background-subdued);
-	border: 2px solid var(--border-normal);
+	background-color: var(--theme--background-subdued);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+	border-top-right-radius: 0;
 	border-bottom-right-radius: 22px;
 	border-bottom-left-radius: 22px;
 }
