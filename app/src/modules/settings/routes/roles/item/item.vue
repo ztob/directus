@@ -7,7 +7,7 @@ import { useServerStore } from '@/stores/server';
 import { useUserStore } from '@/stores/user';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
 import UsersInvite from '@/views/private/components/users-invite.vue';
-import { computed, ref, toRefs } from 'vue';
+import { computed, onMounted, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
@@ -33,6 +33,7 @@ const router = useRouter();
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
+
 const permissionsStore = usePermissionsStore();
 const serverStore = useServerStore();
 const userInviteModalActive = ref(false);
@@ -119,7 +120,7 @@ function discardAndLeave() {
 	router.push(leaveTo.value);
 }
 
-// CHANGED
+// LOGIC TO CREATE ROLE COPY
 const disabledOptions = ['save-and-stay', 'save-and-add-new', 'discard-and-stay'];
 
 interface ModuleSettings extends ModuleBarItem, PreviewExtra {
@@ -198,6 +199,41 @@ async function saveAsCopy() {
 	}
 }
 
+// LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
+
+const isUnusedCollsHidden = ref(false)
+const searchCollections = ref<string | null>(null)
+
+const isCollsLoading = ref(false)
+
+async function hideUnusedCollections() {
+	isUnusedCollsHidden.value = !isUnusedCollsHidden.value
+
+	try {
+		const { data } = await api.patch(`roles/${primaryKey.value}`, {
+			hide_unused_colls: isUnusedCollsHidden.value
+		})
+
+		// set isUnusedCollsHidden to make sure the value is the same as it is in DB
+		isUnusedCollsHidden.value = data.data.hide_unused_colls
+	} catch (error) {
+		console.log(error);
+	}
+}
+
+// set isUnusedCollsHidden when the role loads
+onMounted(async () => {
+	try {
+		isCollsLoading.value = true
+		const { data } = await api.get(`roles/${primaryKey.value}`)
+
+		isUnusedCollsHidden.value = data.data.hide_unused_colls
+	} catch (error) {
+		console.log(error);
+	} finally {
+		isCollsLoading.value = false
+	}
+})
 </script>
 
 <template>
@@ -212,6 +248,36 @@ async function saveAsCopy() {
 			</v-button>
 		</template>
 		<template #actions>
+
+			<!-- LOGIC TO HIDE UNUSED COLLECTIONS  -->
+			<v-input
+				v-model="searchCollections"
+				class="search"
+				type="search"
+				:placeholder="t('search_collection')"
+				:full-width="false"
+				:disabled="isCollsLoading"
+			>
+				<template #prepend>
+					<v-icon name="search" outline />
+				</template>
+				<template #append>
+					<v-icon v-if="searchCollections" clickable class="clear" name="close" @click.stop="searchCollections = null" />
+				</template>
+			</v-input>
+
+			<v-button
+				v-tooltip.bottom="t('Hide Unused Collections')"
+				rounded
+				icon
+				secondary
+				:kind="!isUnusedCollsHidden ? 'normal' : 'success'"
+				:loading="isCollsLoading"
+				@click="hideUnusedCollections">
+				<v-icon name="visibility_off" />
+			</v-button>
+			<!-- ----------------------------------------- -->
+
 			<v-dialog v-if="[1, 2].includes(+primaryKey) === false" v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
 					<v-button v-if="primaryKey !== lastAdminRoleId" v-tooltip.bottom="t('delete_label')" rounded icon
@@ -260,8 +326,19 @@ async function saveAsCopy() {
 				{{ t('admins_have_all_permissions') }}
 			</v-notice>
 
-			<permissions-overview v-else :role="primaryKey" :permission="permissionKey" :app-access="appAccess"
-				@permission-change="permissions = $event" />
+			<!-- permissions for collections -->
+			<div v-else>
+				<v-progress-linear v-if="isCollsLoading" colorful indeterminate value="70"/>
+				<permissions-overview
+					v-else
+					:role="primaryKey"
+					:permission="permissionKey"
+					:app-access="appAccess"
+					:is-unused-colls-hidden="isUnusedCollsHidden"
+					:search-collections="searchCollections"
+					@permission-change="permissions = $event"
+				/>
+			</div>
 
 			<v-form v-model="edits" collection="directus_roles" :primary-key="primaryKey" :loading="loading"
 				:initial-values="item" />
@@ -317,4 +394,17 @@ async function saveAsCopy() {
 .roles .v-notice {
 	margin-bottom: 48px;
 }
+
+.v-input.search {
+	height: var(--v-button-height);
+	--border-radius: calc(44px / 2);
+	width: 200px;
+	margin-left: auto;
+
+	@media (min-width: 600px) {
+		width: 300px;
+		margin-top: 0px;
+	}
+}
+
 </style>

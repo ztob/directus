@@ -102,7 +102,11 @@ export default function useUpdatePermissions(
 			"directus_sessions": "user",
 			"directus_users": "id"
 		};
-		let userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+
+		let userCreatedField = allFields.find(
+			(field) => field.field === 'user_created' || field.meta?.special?.includes('user-created')
+		)?.field;
+
 		if (!userCreatedField && specialFields[collection.value.collection]) {
 			userCreatedField = specialFields[collection.value.collection];
 		}
@@ -112,14 +116,22 @@ export default function useUpdatePermissions(
 			return;
 		}
 
+		const allowedActions = ACTIONS.filter((a) => a !== 'create');
+
+		// allow for all except 'create'
+		if (!allowedActions.includes(action)) {
+			saving.value = false;
+			return;
+		}
+
 		const permission = getPermission(action);
-		const permissionsValue = ['create', 'share'].includes(action) ? {} : { _and: [{ [userCreatedField]: { _eq: '$CURRENT_USER' } }] };
+		const permissionValue = { _and: [{ [userCreatedField]: { _eq: '$CURRENT_USER' } }] };
 
 		if (permission) {
 			try {
 				await api.patch(`/permissions/${permission.id}`, {
 					fields: '*',
-					permissions: permissionsValue,
+					permissions: permissionValue,
 					validation: {},
 				});
 			} catch (err: any) {
@@ -133,9 +145,9 @@ export default function useUpdatePermissions(
 				await api.post('/permissions/', {
 					role: role.value,
 					collection: collection.value.collection,
-					action: action,
+					action,
 					fields: '*',
-					permissions: permissionsValue,
+					permissions: permissionValue,
 					validation: {},
 				});
 			} catch (err: any) {
@@ -238,7 +250,9 @@ export default function useUpdatePermissions(
 			"directus_sessions": "user",
 			"directus_users": "id"
 		};
+
 		let userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
+
 		if (!userCreatedField && specialFields[collection.value.collection]) {
 			userCreatedField = specialFields[collection.value.collection];
 		}

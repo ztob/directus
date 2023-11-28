@@ -4,10 +4,11 @@ import { hideDragImage } from '@/utils/hide-drag-image';
 import { useCollection } from '@directus/composables';
 import { Field, LocalType } from '@directus/types';
 import { isNil, orderBy } from 'lodash';
-import { computed, toRefs } from 'vue';
+import { computed, toRefs, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
 import FieldSelect from './field-select.vue';
+import { useRouter } from 'vue-router';
 
 const props = defineProps<{
 	collection: string;
@@ -18,6 +19,9 @@ const { t } = useI18n();
 const { collection } = toRefs(props);
 const { fields } = useCollection(collection);
 const fieldsStore = useFieldsStore();
+const router = useRouter();
+
+const fieldSortPosition = ref<number | null>(null)
 
 const parsedFields = computed(() => {
 	return orderBy(fields.value, [(o) => (o.meta?.sort ? Number(o.meta?.sort) : null), (o) => o.meta?.id]).filter(
@@ -114,14 +118,72 @@ async function setNestedSort(updates?: Field[]) {
 		await fieldsStore.updateFields(collection.value, updates);
 	}
 }
+
+// ADD FIELD AT SPECIFIC POSITION LOGIC
+function addFieldAtPosition(fieldSort: number) {
+	fieldSortPosition.value = fieldSort
+	router.push(`/settings/data-model/${collection.value}/+`)
+}
+
+watch(fields, (newFields, oldFields) => {
+	if (!newFields.length) return
+
+	if(newFields.length === oldFields.length) {
+		fieldSortPosition.value = null
+		return
+	}
+
+	if (fieldSortPosition.value === null) return
+
+	updateFieldsSorts(newFields)
+
+	fieldSortPosition.value = null
+})
+
+// set fieldSortPosition.value to null when user canceled new field creation at a specific position
+watch(() => router, (newRouter) => {
+	if(newRouter.currentRoute.value?.params?.field !== '+') {
+		fieldSortPosition.value = null
+	}
+}, { deep: true })
+
+async function updateFieldsSorts(newFields: Field[]) {
+	const lastNewFieldInd = newFields.length - 1
+
+	const newOrderedFields = newFields.map((field, ind) => {
+
+		// grab last added field and change its sort
+		if (lastNewFieldInd === ind) {
+			return updateFieldSort(field, fieldSortPosition.value! + 1)
+		}
+
+		// grab all fields that are sort-bigger than the chosen field to add a new field after and increase their sort by one
+		if (field.meta!.sort! > fieldSortPosition.value!) {
+			return updateFieldSort(field, field.meta!.sort! + 1)
+		}
+
+		return field
+	})
+
+	await fieldsStore.updateFields(collection.value, newOrderedFields);
+
+	function updateFieldSort(field: Field, sort: number) {
+		return {
+			...field,
+			meta: {
+				...field.meta,
+				sort
+			}
+		}
+	}
+}
 </script>
 
 <template>
 	<div class="fields-management">
 		<div v-if="lockedFields.length > 0" class="field-grid">
-			<field-select v-for="field in lockedFields" :key="field.field" disabled :field="field" />
+			<field-select v-for="field in lockedFields" :key="field.field" disabled :field="field"/>
 		</div>
-
 		<draggable
 			class="field-grid"
 			:model-value="usableFields.filter((field) => isNil(field?.meta?.group))"
@@ -136,8 +198,13 @@ async function setNestedSort(updates?: Field[]) {
 			@update:model-value="setSort"
 		>
 			<template #item="{ element }">
-				<field-select :field="element" :fields="usableFields" @set-nested-sort="setNestedSort" />
-			</template>
+					<field-select
+						:field="element"
+						:fields="usableFields"
+						@set-nested-sort="setNestedSort"
+						@field-at-position="addFieldAtPosition"
+					/>
+				</template>
 		</draggable>
 
 		<v-button full-width :to="`/settings/data-model/${collection}/+`">

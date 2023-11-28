@@ -30,6 +30,7 @@ export type QueryOptions = {
 	stripNonRequested?: boolean;
 	permissionsAction?: PermissionsAction;
 	emitEvents?: boolean;
+	beforeQuery?: (query: Knex.QueryBuilder) => void;
 };
 
 interface FilterField {
@@ -507,6 +508,8 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 			knex: this.knex,
 			// GraphQL requires relational keys to be returned regardless
 			stripNonRequested: opts?.stripNonRequested !== undefined ? opts.stripNonRequested : true,
+			// Custom injected function for query manipulation
+			beforeQuery: opts?.beforeQuery,
 		});
 
 		if (records === null) {

@@ -1,6 +1,6 @@
 import { TYPES } from '@directus/constants';
 import { isDirectusError } from '@directus/errors';
-import type { Field, Type } from '@directus/types';
+import type { Field, FieldRaw, Type } from '@directus/types';
 import { Router } from 'express';
 import Joi from 'joi';
 import { ALIAS_TYPES } from '../constants.js';
@@ -11,6 +11,9 @@ import useCollection from '../middleware/use-collection.js';
 import { FieldsService } from '../services/fields.js';
 import asyncHandler from '../utils/async-handler.js';
 import logger from '../logger.js';
+import { isEqual } from 'lodash-es';
+import getDatabase from '../database/index.js';
+import { inspect } from 'node:util';
 
 const router = Router();
 
@@ -132,14 +135,65 @@ router.patch(
 		}
 
 		let start = Date.now();
-		logger.trace('Starting batch update of fields');
-		for (const field of req.body) {
-			await service.updateField(req.params['collection']!, field);
+		logger.trace('[fields-benchmark] Starting batch update of fields');
+
+		// Compare the fields to update with the fields in the database
+		let onlyUpdatingSort = true;
+
+		try {
+			const fieldsToUpdate = [... new Set(req.body.map((field: FieldRaw) => field.field))];
+			const currentFields = await Promise.all(fieldsToUpdate.map((field) => service.readOne(req.params['collection']!, field as string)));
+
+			for (const currentField of currentFields) {
+				const fieldToUpdate = req.body.find((f: FieldRaw) => f.field === currentField['field']);
+				
+				const attributesChanged = getChangedAttributes(fieldToUpdate, currentField as Field);
+
+				if ((attributesChanged.length === 1 && attributesChanged[0] !== 'meta.sort') || attributesChanged.length > 1) {
+					logger.debug(`[fields-benchmark] Field ${currentField['field']} has changed attributes ${attributesChanged.join(', ')}`);
+					logger.trace(`[fields-benchmark] lhs = ${inspect(fieldToUpdate)}, rhs = ${inspect(currentField)}`);
+					onlyUpdatingSort = false;
+					break;
+				}
+			}
+		} catch (error: any) {
+			logger.error("[fields-benchmark] Error in fasttracking logic, falling back to normal update");
+			logger.error(error);
+			onlyUpdatingSort = false;
 		}
-		logger.trace(`Batch update of fields took ${Date.now() - start}ms`);
+
+		logger.debug(`[fields-benchmark] Preliminary read of fields took ${Date.now() - start}ms`);
+		start = Date.now();
+
+		// If we are only updating sort, we can fasttrack the update
+		if (onlyUpdatingSort && req.accountability?.admin) {
+			logger.debug("[fields-benchmark] Only updating sort, fasttracking update");
+			// For each field, set the sort column to its new value
+			const knex = getDatabase();
+
+			await knex.transaction(async (trx) => {
+				for (const field of req.body) {
+					await trx('directus_fields')
+						.where({
+							collection: req.params['collection'],
+							field: field.field,
+						})
+						.update({ sort: field.meta.sort });
+				}
+			});
+		} else {
+			logger.debug("[fields-benchmark] Updating fields normally");
+
+			for (const field of req.body) {
+				await service.updateField(req.params['collection']!, field);
+			}
+		}
+
+		logger.trace(`[fields-benchmark] Batch update of fields took ${Date.now() - start}ms`);
 
 		start = Date.now();
-		logger.trace('Starting batch read of fields');
+		logger.trace('[fields-benchmark] Starting batch read of fields');
+
 		try {
 			const results: any = [];
 
@@ -155,7 +209,8 @@ router.patch(
 
 			throw error;
 		}
-		logger.trace(`Batch read of fields took ${Date.now() - start}ms`);
+
+		logger.trace(`[fields-benchmark] Batch read of fields took ${Date.now() - start}ms`);
 
 		return next();
 	}),
@@ -231,5 +286,35 @@ router.delete(
 	}),
 	respond
 );
+
+// Logic for getting the changed attributes of fields
+function getChangedAttributes(fieldFromBody: FieldRaw, currentField: Field) {
+	const changedFields = [];
+
+	// Top-level attributes other than schema and meta must match
+	for (const attr in fieldFromBody) {
+		if (Object.prototype.hasOwnProperty.call(fieldFromBody, attr)) {
+			if (attr !== 'schema' && attr !== 'meta' && !isEqual((fieldFromBody as any)[attr], (currentField as any)[attr])) {
+				changedFields.push(attr);
+			}
+		}
+	}
+
+	// All attributes in schema must match (if schema is present)
+	if (fieldFromBody.schema) {
+		if (!isEqual(fieldFromBody.schema, currentField.schema)) changedFields.push('schema');
+	}
+
+	// All attributes in meta must match (but some may be missing)
+	for (const attr in fieldFromBody.meta) {
+		if (Object.prototype.hasOwnProperty.call(fieldFromBody, attr)) {
+			if (!isEqual((fieldFromBody.meta as any)[attr], (currentField.meta as any)[attr])) {
+				changedFields.push(`meta.${attr}`);
+			}
+		}
+	}
+
+	return changedFields;
+}
 
 export default router;

@@ -8,6 +8,7 @@ import { useInsightsStore } from '@/stores/insights';
 import { usePermissionsStore } from '@/stores/permissions';
 import { pointOnLine } from '@/utils/point-on-line';
 import RefreshSidebarDetail from '@/views/private/components/refresh-sidebar-detail.vue';
+import CommentsSidebarDetail from '@/views/private/components/comments-sidebar-detail.vue';
 import { useAppStore } from '@directus/stores';
 import { applyOptionsData } from '@directus/utils';
 import { assign, isEmpty } from 'lodash';
@@ -15,7 +16,6 @@ import { computed, ref, toRefs, unref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import InsightsNavigation from '../components/navigation.vue';
 import InsightsNotFound from './not-found.vue';
-import CommentsSidebarDetail from '@/views/private/components/comments-sidebar-detail.vue';
 
 const props = withDefaults(
 	defineProps<{
@@ -186,6 +186,10 @@ const discardAndLeave = () => {
 const toggleFullScreen = () => (fullScreen.value = !fullScreen.value);
 const toggleZoomToFit = () => (zoomToFit.value = !zoomToFit.value);
 
+async function refresh() {
+	await insightsStore.refresh(props.primaryKey);
+}
+
 const refreshInterval = computed({
 	get() {
 		return unref(refreshIntervals)[props.primaryKey] ?? null;
@@ -261,6 +265,10 @@ const refreshInterval = computed({
 					@click="toggleFullScreen"
 				>
 					<v-icon name="fullscreen" />
+				</v-button>
+
+				<v-button v-tooltip.bottom="t('refresh')" rounded icon @click="refresh">
+					<v-icon name="refresh" />
 				</v-button>
 
 				<v-button

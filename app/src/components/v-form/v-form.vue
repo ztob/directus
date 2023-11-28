@@ -40,7 +40,7 @@ interface Props {
 	direction?: string;
 	showDivider?: boolean;
 	inline?: boolean;
-	isFilterLoading: string
+	isFilterLoading: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -59,7 +59,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n();
 
-const emit = defineEmits(['update:modelValue', 'add-filter']);
+const emit = defineEmits(['update:modelValue', 'add-filter', 'copy-to-clipboard']);
 
 const values = computed(() => {
 	return Object.assign({}, props.initialValues, props.modelValue);
@@ -186,7 +186,9 @@ function useForm() {
 
 	function isDisabled(field: TFormField | undefined) {
 		if (!field) return true;
+
 		const meta = fieldsMap.value?.[field.field]?.meta;
+
 		return (
 			props.loading ||
 			props.disabled === true ||
@@ -348,6 +350,7 @@ function useRawEditor() {
 		>
 			{{ t('no_visible_fields_copy') }}
 		</v-info>
+
 		<template v-for="(fieldName, index) in fieldNames" :key="fieldName">
 			<template v-if="fieldsMap[fieldName]">
 				<component
@@ -409,16 +412,18 @@ function useRawEditor() {
 					:raw-editor-active="rawActiveFields.has(fieldName)"
 					:disabled-menu-options="disabledMenuOptions"
 					:direction="direction"
+					:is-filter-loading="isFilterLoading"
 					@update:model-value="setValue(fieldName, $event)"
 					@set-field-value="setValue($event.field, $event.value, { force: true })"
 					@unset="unsetValue(fieldsMap[fieldName]!)"
 					@toggle-batch="toggleBatchField(fieldsMap[fieldName]!)"
 					@toggle-raw="toggleRawField(fieldsMap[fieldName]!)"
-					:isFilterLoading="isFilterLoading"
 					@add-filter="$emit('add-filter', $event)"
+					@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
 				/>
 			</template>
 		</template>
+
 		<v-divider v-if="showDivider && !noVisibleFields" />
 	</div>
 </template>

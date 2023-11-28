@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
 	height: 48,
 });
 
-defineEmits(['click', 'item-selected', 'add-filter']);
+defineEmits(['click', 'item-selected', 'add-filter', 'copy-to-clipboard']);
 
 const cssHeight = computed(() => {
 	return {
@@ -35,13 +35,19 @@ const cssHeight = computed(() => {
 	};
 });
 
-// CHANGED
-function isAddFilterIcon(header: Header) {
-	if(header.field?.display === 'add-filter-ext-from-displays') return false
-	return Boolean(header.field?.interfaceOptions?._is_add_filter)
+function isAddFilter(header: Header) {
+	if (header.field?.display === 'add-filter-ext-from-displays') return false;
+
+	return Boolean(header.field?.interfaceOptions?._is_add_filter);
 }
 
-const displayHovered = ref('')
+function isMakeCopyable(header: Header) {
+	if (header.field?.display === 'make-copyable-ext-from-displays') return false;
+
+	return Boolean(header.field?.interfaceOptions?._is_make_copyable);
+}
+
+const displayHovered = ref('');
 
 const { t } = useI18n();
 </script>
@@ -62,26 +68,14 @@ const { t } = useI18n();
 		</td>
 
 		<td
-		v-for="header in headers"
-		:key="header.value"
-		class="cell"
-		:class="`align-${header.align}`"
-		@mouseover="displayHovered = header.value"
-		@mouseleave="displayHovered = ''"
+			v-for="header in headers"
+			:key="header.value"
+			class="cell"
+			:class="`align-${header.align}`"
+			@mouseover="displayHovered = header.value"
+			@mouseleave="displayHovered = ''"
 		>
-
-			<v-icon
-			v-if="isAddFilterIcon(header)"
-			name="add"
-			@click.stop="$emit('add-filter', header.value, item[header.value])"
-			:class="{ 'add-icon': true, 'add-icon-visible': displayHovered === header.value }"
-			v-tooltip="t('Add to filters')"
-			/>
-
-			<slot
-			:name="`item.${header.value}`"
-			:item="item"
-			>
+			<slot :name="`item.${header.value}`" :item="item">
 				<v-text-overflow
 					v-if="
 						header.value.split('.').reduce((acc, val) => {
@@ -96,6 +90,26 @@ const { t } = useI18n();
 				/>
 				<value-null v-else />
 			</slot>
+
+			<div class="actions">
+				<v-icon
+					v-if="isMakeCopyable(header)"
+					v-tooltip="t('Copy to clipboard')"
+					name="copy"
+					class="copy-icon"
+					:class="{ visible: displayHovered === header.value }"
+					@click.stop="$emit('copy-to-clipboard', item[header.value])"
+				/>
+
+				<v-icon
+					v-if="isAddFilter(header)"
+					v-tooltip="t('Add to filters')"
+					name="add"
+					class="add-icon"
+					:class="{ visible: displayHovered === header.value }"
+					@click.stop="$emit('add-filter', header.value, item[header.value])"
+				/>
+			</div>
 		</td>
 
 		<td class="spacer cell" />
@@ -112,6 +126,7 @@ const { t } = useI18n();
 	.cell {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		padding: 8px 12px;
 		overflow: hidden;
 		white-space: nowrap;
@@ -126,6 +141,26 @@ const { t } = useI18n();
 		&.select {
 			display: flex;
 			align-items: center;
+		}
+
+		.actions {
+			display: inline-flex;
+			gap: 5px;
+
+			.add-icon,
+			.copy-icon {
+				--v-icon-color: var(--foreground-subdued);
+
+				opacity: 0;
+
+				&:hover {
+					--v-icon-color: var(--foreground-normal);
+				}
+
+				&.visible {
+					opacity: 1;
+				}
+			}
 		}
 	}
 
@@ -163,17 +198,5 @@ const { t } = useI18n();
 			height: v-bind('cssHeight.renderTemplateImage');
 		}
 	}
-}
-
-// CHANGED
-.add-icon {
-	opacity: 0;
-	--v-icon-color: var(--foreground-subdued);
-}
-.add-icon:hover {
-	--v-icon-color: var(--foreground-normal);
-}
-.add-icon-visible {
-	opacity: 1;
 }
 </style>

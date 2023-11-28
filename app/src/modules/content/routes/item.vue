@@ -25,7 +25,7 @@ import LivePreview from '../components/live-preview.vue';
 import ContentNavigation from '../components/navigation.vue';
 import VersionMenu from '../components/version-menu.vue';
 import ContentNotFound from './not-found.vue';
-
+import { useClipboard } from '@/composables/use-clipboard';
 
 interface Props {
 	collection: string;
@@ -41,6 +41,8 @@ const props = withDefaults(defineProps<Props>(), {
 const { t, te } = useI18n();
 
 const router = useRouter();
+
+const { copyToClipboard } = useClipboard();
 
 const form = ref<HTMLElement>();
 
@@ -439,59 +441,62 @@ function revert(values: Record<string, any>) {
 }
 
 // CHANGED
-const isFilterLoading = ref('')
+const isFilterLoading = ref('');
 
-watch(() => filter.value, () => {
-	setTimeout(() => {
-		isFilterLoading.value = ''
-		router.push(`/content/${collection.value}`)
-	}, 900)
-}, { deep: true })
+watch(
+	() => filter.value,
+	() => {
+		setTimeout(() => {
+			isFilterLoading.value = '';
+			router.push(`/content/${collection.value}`);
+		}, 900);
+	},
+	{ deep: true }
+);
 
 // UPDATE FILTER VALUE
 window.addFilterFromInterface = (newFilter: any) => {
 	if (!filter.value) {
 		filter.value = {
-			_and: [newFilter]
-		}
+			_and: [newFilter],
+		};
 	} else {
-		const isFilterExists = filter.value._and.find(filter => {
-		for(const key in filter) {
-			if(key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true
-		}
+		const isFilterExists = filter.value._and.find((filter) => {
+			for (const key in filter) {
+				if (key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true;
+			}
 
-		return false
-	})
+			return false;
+		});
 
 		if (isFilterExists) {
-			router.push(`/content/${collection.value}`)
-			isFilterLoading.value = ''
-			return
+			router.push(`/content/${collection.value}`);
+			isFilterLoading.value = '';
+			return;
 		}
 
 		filter.value = {
-			_and: [ ...filter.value._and, newFilter ]
-		}
-
+			_and: [...filter.value._and, newFilter],
+		};
 	}
-}
+};
 
-interface AddFilterFieldVal {
+interface AddFilterArgs {
 	field: string;
-	value: string | number | boolean
+	value: string | number | boolean;
 }
 
-function onAddFilterHandle(filter_field: AddFilterFieldVal) {
-	const { field, value } = filter_field
-	isFilterLoading.value = field
+function onAddFilter(args: AddFilterArgs) {
+	const { field, value } = args;
+
+	isFilterLoading.value = field;
 
 	const newFilter = {
-		[field]: value !== null ? { '_eq': value } : { '_null': '' }
+		[field]: value !== null ? { _eq: value } : { _null: '' },
 	};
 
 	window.addFilterFromInterface(newFilter);
 }
-
 </script>
 
 <template>
@@ -615,6 +620,7 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 						<v-button secondary @click="confirmDelete = false">
 							{{ t('cancel') }}
 						</v-button>
+
 						<v-button kind="danger" :loading="deleting" @click="deleteAndQuit">
 							{{ t('delete_label') }}
 						</v-button>
@@ -656,13 +662,7 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 				</v-card>
 			</v-dialog>
 
-			<v-button
-				v-tooltip.bottom="t('refresh')"
-				rounded
-				icon
-				:loading="loading"
-				@click="refresh"
-			>
+			<v-button v-tooltip.bottom="t('refresh')" rounded icon :loading="loading" @click="refresh">
 				<v-icon name="refresh" />
 			</v-button>
 
@@ -741,8 +741,9 @@ function onAddFilterHandle(filter_field: AddFilterFieldVal) {
 			:fields="fields"
 			:primary-key="internalPrimaryKey"
 			:validation-errors="validationErrors"
-			:isFilterLoading="isFilterLoading"
-			@add-filter="onAddFilterHandle"
+			:is-filter-loading="isFilterLoading"
+			@add-filter="onAddFilter"
+			@copy-to-clipboard="copyToClipboard"
 		/>
 
 		<v-dialog v-model="confirmLeave" @esc="confirmLeave = false">

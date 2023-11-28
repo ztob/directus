@@ -9,7 +9,6 @@ import { VersionsService } from '../services/versions.js';
 import asyncHandler from '../utils/async-handler.js';
 import { getCacheControlHeader } from '../utils/get-cache-headers.js';
 import { getCacheKey } from '../utils/get-cache-key.js';
-import { getDateFormatted } from '../utils/get-date-formatted.js';
 import { getMilliseconds } from '../utils/get-milliseconds.js';
 import { stringByteSize } from '../utils/get-string-byte-size.js';
 
@@ -21,6 +20,7 @@ export const respond: RequestHandler = asyncHandler(async (req, res) => {
 	if (env['CACHE_VALUE_MAX_SIZE'] !== false) {
 		const valueSize = res.locals['payload'] ? stringByteSize(JSON.stringify(res.locals['payload'])) : 0;
 		const maxSize = parseBytesConfiguration(env['CACHE_VALUE_MAX_SIZE']);
+
 		exceedsMaxSize = valueSize > maxSize;
 	}
 
@@ -65,39 +65,42 @@ export const respond: RequestHandler = asyncHandler(async (req, res) => {
 	}
 
 	if (req.sanitizedQuery.export) {
-		const exportService = new ExportService({ accountability: req.accountability ?? null, schema: req.schema });
+		const exportService = new ExportService({
+			accountability: req.accountability ?? null,
+			schema: req.schema,
+		});
 
-		let filename = '';
-
-		if (req.collection) {
-			filename += req.collection;
-		} else {
-			filename += 'Export';
-		}
-
-		filename += ' ' + getDateFormatted();
+		const title = exportService.generateTitle(
+			req.query['prefix']?.toString(),
+			req.collection,
+			req.query['suffix']?.toString()
+		);
 
 		if (req.sanitizedQuery.export === 'json') {
-			res.attachment(`${filename}.json`);
+			res.attachment(`${title}.json`);
 			res.set('Content-Type', 'application/json');
+
 			return res.status(200).send(exportService.transform(res.locals['payload']?.data, 'json'));
 		}
 
 		if (req.sanitizedQuery.export === 'xml') {
-			res.attachment(`${filename}.xml`);
+			res.attachment(`${title}.xml`);
 			res.set('Content-Type', 'text/xml');
+
 			return res.status(200).send(exportService.transform(res.locals['payload']?.data, 'xml'));
 		}
 
 		if (req.sanitizedQuery.export === 'csv') {
-			res.attachment(`${filename}.csv`);
+			res.attachment(`${title}.csv`);
 			res.set('Content-Type', 'text/csv');
+
 			return res.status(200).send(exportService.transform(res.locals['payload']?.data, 'csv'));
 		}
 
 		if (req.sanitizedQuery.export === 'yaml') {
-			res.attachment(`${filename}.yaml`);
+			res.attachment(`${title}.yaml`);
 			res.set('Content-Type', 'text/yaml');
+
 			return res.status(200).send(exportService.transform(res.locals['payload']?.data, 'yaml'));
 		}
 	}

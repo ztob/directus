@@ -28,7 +28,7 @@ interface Props {
 	rawEditorActive?: boolean;
 	disabledMenuOptions?: MenuOptions[];
 	direction?: string;
-	isFilterLoading: string
+	isFilterLoading: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,7 +40,15 @@ const props = withDefaults(defineProps<Props>(), {
 	direction: undefined,
 });
 
-const emit = defineEmits(['toggle-batch', 'toggle-raw', 'unset', 'update:modelValue', 'setFieldValue', 'add-filter']);
+const emit = defineEmits([
+	'toggle-batch',
+	'toggle-raw',
+	'unset',
+	'update:modelValue',
+	'setFieldValue',
+	'add-filter',
+	'copy-to-clipboard',
+]);
 
 const { t } = useI18n();
 
@@ -193,11 +201,12 @@ function useComputedValues() {
 			:raw-editor-enabled="rawEditorEnabled"
 			:raw-editor-active="rawEditorActive"
 			:direction="direction"
+			:is-filter-loading="isFilterLoading"
 			@update:model-value="emitValue($event)"
 			@set-field-value="$emit('setFieldValue', $event)"
 			@add-filter="$emit('add-filter', $event)"
-			:isFilterLoading="isFilterLoading"
-			/>
+			@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
+		/>
 
 		<form-field-raw-editor
 			:show-modal="showRaw"

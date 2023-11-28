@@ -42,6 +42,7 @@ const userStore = useUserStore();
 const permissionsStore = usePermissionsStore();
 const presetsStore = usePresetsStore();
 const layoutRef = ref();
+const isLayoutRefreshed = ref(false);
 
 const { collection } = toRefs(props);
 const bookmarkID = computed(() => (props.bookmark ? +props.bookmark : null));
@@ -143,6 +144,11 @@ const archiveFilter = computed<Filter | null>(() => {
 		};
 	}
 });
+
+async function onRefreshClick() {
+	await refresh()
+	isLayoutRefreshed.value = true
+}
 
 async function refresh() {
 	await layoutRef.value?.state?.refresh?.();
@@ -504,7 +510,7 @@ function usePermissions() {
 					</v-card>
 				</v-dialog>
 
-				<v-button v-tooltip.bottom="t('refresh')" rounded icon @click="refresh">
+				<v-button v-tooltip.bottom="t('refresh')" rounded icon @click="onRefreshClick">
 					<v-icon name="refresh" />
 				</v-button>
 
@@ -532,7 +538,7 @@ function usePermissions() {
 			</template>
 
 			<template #navigation>
-				<content-navigation :current-collection="collection"/>
+				<content-navigation v-model:is-layout-refreshed="isLayoutRefreshed" :current-collection="collection" />
 			</template>
 
 			<v-info

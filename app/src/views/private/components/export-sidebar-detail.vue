@@ -104,6 +104,9 @@ const format = ref('csv');
 const location = ref('download');
 const folder = ref<string | null>(null);
 
+const prefix = ref('');
+const suffix = ref('');
+
 const lockedToFiles = ref<{ previousLocation: string } | null>(null);
 
 const itemCountTotal = ref<number>();
@@ -306,12 +309,14 @@ function startExport() {
 function exportDataLocal() {
 	const endpoint = getEndpoint(collection.value);
 
-	// usually getEndpoint contains leading slash, but here we need to remove it
+	// Usually getEndpoint contains leading slash, but here we need to remove it
 	const url = getPublicURL() + endpoint.substring(1);
 
 	const params: Record<string, unknown> = {
 		access_token: (api.defaults.headers.common['Authorization'] as string).substring(7),
 		export: format.value,
+		prefix: prefix.value,
+		suffix: suffix.value,
 	};
 
 	if (exportSettings.sort && exportSettings.sort !== '') params.sort = exportSettings.sort;
@@ -343,6 +348,8 @@ async function exportDataFiles() {
 			format: format.value,
 			file: {
 				folder: folder.value,
+				prefix: prefix.value,
+				suffix: suffix.value,
 			},
 		});
 
@@ -455,6 +462,18 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 				</v-button>
 			</template>
 			<div class="export-fields">
+				<div class="field half-left">
+					<p class="type-label">{{ t('prefix') }}</p>
+
+					<v-input v-model="prefix" />
+				</div>
+
+				<div class="field half-right">
+					<p class="type-label">{{ t('suffix') }}</p>
+
+					<v-input v-model="suffix" />
+				</div>
+
 				<div class="field half-left">
 					<p class="type-label">{{ t('format') }}</p>
 					<v-select
@@ -571,11 +590,8 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 				<!-- Use formatted display values instead -->
 				<div class="field half-left">
 					<p class="type-label">Use Display Values</p>
-					<interface-boolean
-						v-model="exportSettings.use_display_values"
-					/>
+					<interface-boolean v-model="exportSettings.use_display_values" />
 				</div>
-
 
 				<div class="field full">
 					<p class="type-label">{{ t('full_text_search') }}</p>
