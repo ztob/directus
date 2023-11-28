@@ -20,7 +20,7 @@ const { t } = useI18n();
 const router = useRouter();
 
 const { collection, role, permissions } = toRefs(props);
-const { setFullAccess, setNoAccess, getPermission } = useUpdatePermissions(collection, permissions, role);
+const { setFullAccess, setNoAccess, setUserAccess, getPermission } = useUpdatePermissions(collection, permissions, role);
 
 const permission = computed(() => getPermission(props.action));
 
@@ -120,6 +120,20 @@ async function openPermissions() {
 					</v-list-item-icon>
 					<v-list-item-content>
 						{{ t('no_access') }}
+					</v-list-item-content>
+				</v-list-item>
+
+				<v-list-item
+					v-if="action !== 'create'"
+					:disabled="permissionLevel === 'custom'"
+					clickable
+					@click="setUserAccess(action)"
+				>
+					<v-list-item-icon>
+						<v-icon name="manage_accounts" />
+					</v-list-item-icon>
+					<v-list-item-content>
+						{{ t('Current User') }}
 					</v-list-item-content>
 				</v-list-item>
 
