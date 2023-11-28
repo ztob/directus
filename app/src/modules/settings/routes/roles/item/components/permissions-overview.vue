@@ -129,6 +129,7 @@ watch(
 
 		const collsHidden =
 			dbCollsLength + systemCollsLength - usedRegularCollections.value.length - usedSystemCollections.value.length;
+
 		const collNum = collsHidden > 1 ? 'Collections' : 'Collection';
 
 		notificationsStore.add({
@@ -146,6 +147,7 @@ watch(
 			const modifiedPerms = filterBy
 				.filter((newP) => !filterFrom.some((oldP) => newP.id === oldP.id))
 				.map((perm) => perm.collection);
+
 			modifiedPermsSearchedCollsNames.value = Array.from(
 				new Set([...modifiedPermsSearchedCollsNames.value, ...modifiedPerms])
 			);
@@ -154,13 +156,12 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	() => props.searchCollections,
-	() => {
-		if (props.searchCollections === null && modifiedPermsSearchedCollsNames.value.length) {
-			modifiedPermsSearchedCollsNames.value.forEach((colName) => {
-				const isPermExist = permissions.value.some((perm) => perm.collection === colName);
-				const isSystem = colName.startsWith('directus_') === true;
+watch(() => props.searchCollections, (newSearch, oldSearch) => {
+	// add or delete collections if some perms were changed when searching
+	if (props.searchCollections === null && modifiedPermsSearchedCollsNames.value.length) {
+		modifiedPermsSearchedCollsNames.value.forEach(colName => {
+			const isPermExist = permissions.value.some(perm => perm.collection === colName)
+			const isSystem = colName.startsWith('directus_') === true
 
 				if (isPermExist) {
 					if (isSystem) {
@@ -192,11 +193,25 @@ watch(
 
 			modifiedPermsSearchedCollsNames.value = [];
 		}
+
+	// handle system colls visibility when searching
+	if(newSearch?.length && oldSearch?.length) return
+
+	if(newSearch !== null) {
+		systemVisible.value = true
+	} else {
+		systemVisible.value = lastSystemVisibleState.value
 	}
-);
+})
 // ---------------------------------------
 
 const systemVisible = ref(false);
+const lastSystemVisibleState = ref(false)
+
+function onSystemColsVisibillityBtn() {
+	systemVisible.value = !systemVisible.value
+	lastSystemVisibleState.value = systemVisible.value
+}
 
 watch(() => props.permission, fetchPermissions, { immediate: true });
 
@@ -317,7 +332,7 @@ function useReset() {
 				:refreshing="refreshing"
 			/>
 
-			<button class="system-toggle" :class="{ active: systemVisible }" @click="systemVisible = !systemVisible">
+			<button class="system-toggle" :class="{ active: systemVisible }" @click="onSystemColsVisibillityBtn">
 				{{ t('system_collections') }}
 				<v-icon :name="systemVisible ? 'expand_less' : 'expand_more'" />
 			</button>
