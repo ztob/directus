@@ -20,7 +20,7 @@ const { t } = useI18n();
 const router = useRouter();
 
 const { collection, role, permissions } = toRefs(props);
-const { setFullAccess, setNoAccess, setUserAccess, getPermission } = useUpdatePermissions(collection, permissions, role);
+const { setFullAccess, setNoAccess, setUserAccess, getPermission, getUserCreatedField } = useUpdatePermissions(collection, permissions, role);
 
 const permission = computed(() => getPermission(props.action));
 
@@ -125,7 +125,7 @@ async function openPermissions() {
 
 				<v-list-item
 					v-if="action !== 'create'"
-					:disabled="permissionLevel === 'custom'"
+					:disabled="permissionLevel === 'custom' || !(!!getUserCreatedField())"
 					clickable
 					@click="setUserAccess(action)"
 				>
