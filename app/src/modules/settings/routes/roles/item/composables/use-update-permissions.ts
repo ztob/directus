@@ -5,7 +5,7 @@ import { Collection, Permission } from '@directus/types';
 import { inject, ref, type Ref } from 'vue';
 
 const ACTIONS = ['create', 'read', 'update', 'delete', 'share'] as const;
-type Action = typeof ACTIONS[number];
+type Action = (typeof ACTIONS)[number];
 
 type UsableUpdatePermissions = {
 	getPermission: (action: string) => Permission | undefined;
@@ -15,6 +15,7 @@ type UsableUpdatePermissions = {
 	setFullAccessAll: () => Promise<void>;
 	setUserAccessAll: () => Promise<void>;
 	setNoAccessAll: () => Promise<void>;
+	getUserCreatedField: () => string;
 };
 
 export default function useUpdatePermissions(
@@ -25,7 +26,16 @@ export default function useUpdatePermissions(
 	const saving = ref(false);
 	const refresh = inject<() => Promise<void>>('refresh-permissions');
 
-	return { getPermission, setFullAccess, setUserAccess, setNoAccess, setFullAccessAll, setUserAccessAll, setNoAccessAll };
+	return {
+		getPermission,
+		setFullAccess,
+		setUserAccess,
+		setNoAccess,
+		setFullAccessAll,
+		setUserAccessAll,
+		setNoAccessAll,
+		getUserCreatedField,
+	};
 
 	function getPermission(action: string) {
 		return permissions.value.find((permission) => permission.action === action);
@@ -92,24 +102,7 @@ export default function useUpdatePermissions(
 		}
 
 		// Find the user_created field or its equivalent
-		const fieldsStore = useFieldsStore();
-		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
-
-		const specialFields: Record<string, string> = {
-			"directus_activity": "user",
-			"directus_notifications": "recipient",
-			"directus_presets": "user",
-			"directus_sessions": "user",
-			"directus_users": "id"
-		};
-
-		let userCreatedField = allFields.find(
-			(field) => field.field === 'user_created' || field.meta?.special?.includes('user-created')
-		)?.field;
-
-		if (!userCreatedField && specialFields[collection.value.collection]) {
-			userCreatedField = specialFields[collection.value.collection];
-		}
+		const userCreatedField = getUserCreatedField();
 
 		if (!userCreatedField) {
 			saving.value = false;
@@ -240,22 +233,7 @@ export default function useUpdatePermissions(
 		}
 
 		// Find the user_created field or its equivalent
-		const fieldsStore = useFieldsStore();
-		const allFields = fieldsStore.getFieldsForCollection(collection.value.collection);
-
-		const specialFields: Record<string, string> = {
-			"directus_activity": "user",
-			"directus_notifications": "recipient",
-			"directus_presets": "user",
-			"directus_sessions": "user",
-			"directus_users": "id"
-		};
-
-		let userCreatedField = allFields.find((field) => field.field === 'user_created' || field.meta?.special?.includes('user-created'))?.field;
-
-		if (!userCreatedField && specialFields[collection.value.collection]) {
-			userCreatedField = specialFields[collection.value.collection];
-		}
+		const userCreatedField = getUserCreatedField();
 
 		if (!userCreatedField) {
 			saving.value = false;
@@ -265,7 +243,10 @@ export default function useUpdatePermissions(
 		await Promise.all(
 			ACTIONS.map(async (action) => {
 				const permission = getPermission(action);
-				const permissionsValue = ['create', 'share'].includes(action) ? {} : { _and: [{ [userCreatedField]: { _eq: '$CURRENT_USER' } }] };
+
+				const permissionsValue = ['create', 'share'].includes(action)
+					? {}
+					: { _and: [{ [userCreatedField]: { _eq: '$CURRENT_USER' } }] };
 
 				if (permission) {
 					try {
@@ -311,5 +292,31 @@ export default function useUpdatePermissions(
 			await refresh?.();
 			saving.value = false;
 		}
+	}
+
+	// serves when:
+	// 1)get the field when the requests are made and
+	// 2) determine whether the buttons for setting the perms to $CURRENT_USER only are enabled/disabled
+	function getUserCreatedField() {
+		const fieldsStore = useFieldsStore();
+		const collectionFields = fieldsStore.getFieldsForCollection(collection.value.collection);
+
+		const specialFields: Record<string, string> = {
+			directus_activity: 'user',
+			directus_notifications: 'recipient',
+			directus_presets: 'user',
+			directus_sessions: 'user',
+			directus_users: 'id',
+		};
+
+		let userCreatedField = collectionFields.find(
+			(field) => field.field === 'user_created' || field.meta?.special?.includes('user-created')
+		)?.field;
+
+		if (!userCreatedField && specialFields[collection.value.collection]) {
+			userCreatedField = specialFields[collection.value.collection];
+		}
+
+		return userCreatedField;
 	}
 }
