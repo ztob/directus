@@ -4,7 +4,7 @@ import { fetchAll } from '@/utils/fetch-all';
 import { translate } from '@/utils/translate-object-values';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Role } from '@directus/types';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../components/navigation.vue';
@@ -126,6 +126,16 @@ function navigateToRole({ item }: { item: Role }) {
 		router.push(`/settings/roles/${item.id}`);
 	}
 }
+
+// LOGIC TO SEARCH FOR ROLES
+const searchRoles = ref<string | null>(null)
+const rolesSearchCopy = ref<RoleItem[]>([])
+
+watch(searchRoles, () => {
+	if (searchRoles.value !== null) {
+		rolesSearchCopy.value = roles.value.filter(role => role.name.toLowerCase().includes(searchRoles.value!.toLowerCase()))
+	}
+})
 </script>
 
 <template>
@@ -139,6 +149,21 @@ function navigateToRole({ item }: { item: Role }) {
 		</template>
 
 		<template #actions>
+			<v-input
+				v-model="searchRoles"
+				class="search"
+				type="search"
+				:placeholder="t('Search Role...')"
+				:full-width="false"
+			>
+				<template #prepend>
+					<v-icon name="search" outline />
+				</template>
+				<template #append>
+					<v-icon v-if="searchRoles" clickable class="clear" name="close" @click.stop="searchRoles = null" />
+				</template>
+			</v-input>
+
 			<v-button v-tooltip.bottom="t('create_role')" rounded icon :to="addNewLink">
 				<v-icon name="add" />
 			</v-button>
@@ -158,7 +183,7 @@ function navigateToRole({ item }: { item: Role }) {
 			<v-table
 				v-model:headers="tableHeaders"
 				show-resize
-				:items="roles"
+				:items="searchRoles ? rolesSearchCopy : roles"
 				fixed-header
 				item-key="id"
 				:loading="loading"
@@ -213,5 +238,17 @@ function navigateToRole({ item }: { item: Role }) {
 	--v-icon-color: var(--theme--primary);
 
 	color: var(--theme--primary);
+}
+
+.v-input.search {
+	height: var(--v-button-height);
+	--border-radius: calc(44px / 2);
+	width: 200px;
+	margin-left: auto;
+
+	@media (min-width: 600px) {
+		width: 300px;
+		margin-top: 0px;
+	}
 }
 </style>
