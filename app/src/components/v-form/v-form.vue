@@ -41,6 +41,8 @@ interface Props {
 	showDivider?: boolean;
 	inline?: boolean;
 	isFilterLoading: string;
+	isUnusedCollsHidden?: boolean | null
+	searchCollections?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -146,6 +148,7 @@ function useForm() {
 	);
 
 	const defaultValues = getDefaultValuesFromFields(fields);
+
 
 	const { formFields } = useFormFields(fields);
 
@@ -413,6 +416,8 @@ function useRawEditor() {
 					:disabled-menu-options="disabledMenuOptions"
 					:direction="direction"
 					:is-filter-loading="isFilterLoading"
+					:is-unused-colls-hidden="isUnusedCollsHidden"
+					:search-collections="searchCollections"
 					@update:model-value="setValue(fieldName, $event)"
 					@set-field-value="setValue($event.field, $event.value, { force: true })"
 					@unset="unsetValue(fieldsMap[fieldName]!)"

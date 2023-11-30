@@ -4,10 +4,11 @@ import { useItem } from '@/composables/use-item';
 import { useShortcut } from '@/composables/use-shortcut';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
 import SaveOptions from '@/views/private/components/save-options.vue';
-import { computed, ref, toRefs } from 'vue';
+import { computed, onMounted, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../components/navigation.vue';
+import api from '@/api';
 
 const props = defineProps<{
 	primaryKey: string;
@@ -81,6 +82,40 @@ function discardAndStay() {
 	edits.value = {};
 	confirmLeave.value = false;
 }
+
+// LOGIC FOR HIDING UNUSED COLLECTIONS (all that are unchecked)
+const isUnusedCollsHidden = ref<boolean | null>(null)
+const searchCollections = ref<string | null>(null)
+
+// set isUnusedCollsHidden when the webhook loads
+onMounted(async () => {
+	try {
+		// if webhook is being created then there is no abillity to hide unused colls
+		if(primaryKey.value === '+') {
+			return
+		}
+
+		const { data } = await api.get(`webhooks/${primaryKey.value}`)
+		isUnusedCollsHidden.value = data.data.hide_unused_colls
+	} catch (error) {
+		console.log(error);
+	}
+})
+
+async function hideUnusedCollsToggle() {
+	isUnusedCollsHidden.value = !isUnusedCollsHidden.value
+
+	try {
+		const { data } = await api.patch(`webhooks/${primaryKey.value}`, {
+			hide_unused_colls: isUnusedCollsHidden.value
+		})
+
+		// set isUnusedCollsHidden to make sure the value is the same as it is in DB
+		isUnusedCollsHidden.value = data.data.hide_unused_colls
+	} catch (error) {
+		console.log(error);
+	}
+}
 </script>
 
 <template>
@@ -96,6 +131,35 @@ function discardAndStay() {
 		</template>
 
 		<template #actions>
+			<!-- LOGIC TO HIDE UNUSED COLLS -->
+			<v-input
+				v-model="searchCollections"
+				class="search"
+				type="search"
+				:placeholder="t('search_collection')"
+				:full-width="false"
+				:disabled="isUnusedCollsHidden === null"
+			>
+				<template #prepend>
+					<v-icon name="search" outline />
+				</template>
+				<template #append>
+					<v-icon v-if="searchCollections" clickable class="clear" name="close" @click.stop="searchCollections = null" />
+				</template>
+			</v-input>
+
+			<v-button
+				v-if="primaryKey !== '+'"
+				v-tooltip.bottom="t('Hide Unused Collections')"
+				rounded
+				icon
+				secondary
+				:kind="!isUnusedCollsHidden ? 'normal' : 'success'"
+				:loading="isUnusedCollsHidden === null"
+				@click="hideUnusedCollsToggle">
+				<v-icon name="visibility_off" />
+			</v-button>
+
 			<v-dialog v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
 					<v-button rounded icon class="action-delete" :disabled="item === null" @click="on">
@@ -143,6 +207,8 @@ function discardAndStay() {
 			collection="directus_webhooks"
 			:primary-key="primaryKey"
 			:validation-errors="validationErrors"
+			:is-unused-colls-hidden="isUnusedCollsHidden"
+			:search-collections="searchCollections"
 		/>
 
 		<template #sidebar>
@@ -190,5 +256,16 @@ function discardAndStay() {
 	--v-button-color: var(--theme--primary);
 	--v-button-background-color-hover: var(--theme--primary-subdued);
 	--v-button-color-hover: var(--theme--primary);
+}
+.v-input.search {
+	height: var(--v-button-height);
+	--border-radius: calc(44px / 2);
+	width: 200px;
+	margin-left: auto;
+
+	@media (min-width: 600px) {
+		width: 300px;
+		margin-top: 0px;
+	}
 }
 </style>
