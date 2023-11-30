@@ -19,6 +19,8 @@ const props = withDefaults(
 		iconOff?: string;
 		color?: string;
 		itemsShown?: number;
+		collection?: string;
+		searchCollections?: string | null
 	}>(),
 	{
 		iconOn: 'check_box',
@@ -35,7 +37,14 @@ const { t } = useI18n();
 const { choices, value } = toRefs(props);
 const showAll = ref(false);
 
-const hideChoices = computed(() => props.choices!.length > props.itemsShown);
+const hideChoices = computed(() => {
+	// this works only for webhooks section. When user types in search, all the collections are showed
+	// path: directus\app\src\modules\settings\routes\webhooks\item.vue =>
+	// v-form => form-field => form-field-interface.vue => system-collections(system interface) => this file
+	if(props.collection === 'directus_webhooks' && props.searchCollections) return false
+
+	return props.choices!.length > props.itemsShown
+});
 
 const choicesDisplayed = computed(() => {
 	if (showAll.value || hideChoices.value === false) {

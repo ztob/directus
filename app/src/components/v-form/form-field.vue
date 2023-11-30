@@ -29,6 +29,8 @@ interface Props {
 	disabledMenuOptions?: MenuOptions[];
 	direction?: string;
 	isFilterLoading: string;
+	isUnusedCollsHidden?: boolean | null
+	searchCollections?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -202,6 +204,8 @@ function useComputedValues() {
 			:raw-editor-active="rawEditorActive"
 			:direction="direction"
 			:is-filter-loading="isFilterLoading"
+			:is-unused-colls-hidden="isUnusedCollsHidden"
+			:search-collections="searchCollections"
 			@update:model-value="emitValue($event)"
 			@set-field-value="$emit('setFieldValue', $event)"
 			@add-filter="$emit('add-filter', $event)"

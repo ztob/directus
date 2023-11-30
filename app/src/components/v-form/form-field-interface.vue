@@ -18,6 +18,8 @@ const props = defineProps<{
 	rawEditorActive?: boolean;
 	direction?: string;
 	isFilterLoading: string;
+	isUnusedCollsHidden?: boolean | null;
+	searchCollections?: string | null
 }>();
 
 defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard']);
@@ -82,6 +84,8 @@ function isAddFilterIcon(field: FormField) {
 					:primary-key="primaryKey"
 					:length="field.schema && field.schema.max_length"
 					:direction="direction"
+					:is-unused-colls-hidden="isUnusedCollsHidden"
+					:search-collections="searchCollections"
 					@input="$emit('update:modelValue', $event)"
 					@set-field-value="$emit('setFieldValue', $event)"
 				/>
