@@ -19,7 +19,7 @@ const props = defineProps<{
 	direction?: string;
 	isFilterLoading: string;
 	isUnusedCollsHidden?: boolean | null;
-	searchCollections?: string | null
+	searchCollections?: string | null;
 }>();
 
 defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard']);
@@ -91,7 +91,7 @@ function isAddFilterIcon(field: FormField) {
 				/>
 
 				<span v-if="isMakeCopyable(field)" class="copy-icon">
-					<v-icon v-tooltip="t('Copy to clipboard')" name="copy" @click="$emit('copy-to-clipboard', value)" />
+					<v-icon v-tooltip="t('Copy to clipboard')" name="copy" small @click="$emit('copy-to-clipboard', value)" />
 				</span>
 
 				<span v-if="isAddFilterIcon(field)" class="add-icon">

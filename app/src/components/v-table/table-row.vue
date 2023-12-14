@@ -98,6 +98,7 @@ const { t } = useI18n();
 					name="copy"
 					class="copy-icon"
 					:class="{ visible: displayHovered === header.value }"
+					small
 					@click.stop="$emit('copy-to-clipboard', item[header.value])"
 				/>
 
@@ -145,6 +146,7 @@ const { t } = useI18n();
 
 		.actions {
 			display: inline-flex;
+			align-items: center;
 			gap: 5px;
 
 			.add-icon,
