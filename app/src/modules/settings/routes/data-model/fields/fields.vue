@@ -5,12 +5,17 @@ import { useShortcut } from '@/composables/use-shortcut';
 import { useCollectionsStore } from '@/stores/collections';
 import { useFieldsStore } from '@/stores/fields';
 import { useCollection } from '@directus/composables';
-import { computed, ref, toRefs } from 'vue';
+import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
 import FieldsManagement from './components/fields-management.vue';
 import formatTitle from '@directus/format-title';
+import api from '@/api';
+import { unexpectedError } from '@/utils/unexpected-error';
+import { notify } from '@/utils/notify';
+import { Relation } from '@directus/types';
+import { useRelationsStore } from '@/stores/relations';
 
 const props = defineProps<{
 	collection: string;
@@ -24,9 +29,10 @@ const { t } = useI18n();
 const router = useRouter();
 
 const { collection } = toRefs(props);
-const { info: collectionInfo } = useCollection(collection);
+const { info: collectionInfo, primaryKeyField } = useCollection(collection);
 const collectionsStore = useCollectionsStore();
 const fieldsStore = useFieldsStore();
+const relationsStore = useRelationsStore();
 
 const { edits, item, saving, loading, save, remove, deleting } = useItem(ref('directus_collections'), collection);
 
@@ -67,10 +73,173 @@ function discardAndLeave() {
 	confirmLeave.value = false;
 	router.push(leaveTo.value);
 }
+
+// LOGIC TO CREATE A COLLECTION COPY
+const confirmCopy = ref(false);
+const copyName = ref<null | string>(null);
+const savingCopy = ref(false)
+const isCopyBtnDisabled = ref(false)
+
+// if a collections contains one of these relations, then copy ability is disabled
+const restrictedRelations = ['m2o', 'm2m', 'm2a', 'translations', 'file', 'files', 'alias', 'o2a']
+
+watch(fieldsStore, () => {
+	const collsFields = fieldsStore.getFieldsForCollection(collectionInfo.value?.collection as string)
+	const isContainRestrictedRelation = collsFields.some(f => f.meta!.special?.some(rel => restrictedRelations.includes(rel)))
+
+	if(isContainRestrictedRelation) {
+		isCopyBtnDisabled.value = true
+	} else {
+		isCopyBtnDisabled.value = false
+	}
+}, { immediate: true })
+
+async function createCopy() {
+	try {
+		savingCopy.value = true
+
+		// get the fields for copy from the parent collection
+		const fieldsForCopy = fieldsStore.getFieldsForCollection(collectionInfo.value?.collection as string);
+
+		// @ts-ignore
+		fieldsForCopy.forEach(f => delete f.meta!.id)
+
+		// create copy collection
+		const { data } = await api.post('collections', {
+			schema: item.value!.schema,
+			meta: {
+				...item.value!.meta,
+				...(edits.value.meta ? edits.value.meta : {})
+			},
+			fields: fieldsForCopy,
+			collection: copyName.value,
+		})
+
+		const copyCollName = data.data.collection
+
+		const storeHydrations: Promise<void>[] = [];
+
+		// set system relations
+		const collCopyFields = fieldsForCopy.map(f => f.field)
+		const relations = getSystemRelations(collCopyFields, copyCollName);
+
+		if (relations.length > 0) {
+			const requests = relations.map((relation) => api.post('/relations', relation));
+			await Promise.all(requests);
+			storeHydrations.push(relationsStore.hydrate());
+		}
+
+		storeHydrations.push(collectionsStore.hydrate(), fieldsStore.hydrate());
+		await Promise.all(storeHydrations);
+
+		notify({
+			title: t('Copy Created'),
+		});
+
+		edits.value = {}
+
+		// do this so that the copy is fetched and refreshed and user can see all data up date
+		router.replace(`/settings/data-model`);
+		let timeout = null;
+
+		timeout = setTimeout(() => {
+			router.replace(`/settings/data-model/${copyCollName}`);
+			timeout = null;
+		})
+	} catch (err) {
+		unexpectedError(err);
+	} finally {
+		confirmCopy.value = false
+		copyName.value = null
+		savingCopy.value = false
+	}
+}
+
+// function getPrimaryFieldForCopy(primaryKeyFieldType: string, primaryKeyFieldName: string) {
+// 	if (primaryKeyFieldType === 'uuid') {
+// 		return {
+// 			field: primaryKeyFieldName,
+// 			type: 'uuid',
+// 			meta: {
+// 				hidden: true,
+// 				readonly: true,
+// 				interface: 'input',
+// 				special: ['uuid'],
+// 			},
+// 			schema: {
+// 				is_primary_key: true,
+// 				length: 36,
+// 				has_auto_increment: false,
+// 			},
+// 		};
+// 	} else if (primaryKeyFieldType === 'string') {
+// 		return {
+// 			field: primaryKeyFieldName,
+// 			type: 'string',
+// 			meta: {
+// 				interface: 'input',
+// 				readonly: false,
+// 				hidden: false,
+// 			},
+// 			schema: {
+// 				is_primary_key: true,
+// 				length: 255,
+// 				has_auto_increment: false,
+// 			},
+// 		};
+// 	} else {
+// 		return {
+// 			field: primaryKeyFieldName,
+// 			type: primaryKeyFieldType,
+// 			meta: {
+// 				hidden: true,
+// 				interface: 'input',
+// 				readonly: true,
+// 			},
+// 			schema: {
+// 				is_primary_key: true,
+// 				has_auto_increment: true,
+// 			},
+// 		};
+// 	}
+// }
+
+function getSystemRelations(fields: string[], copyCollName: string) {
+	const relations: Partial<Relation>[] = [];
+
+	const userCreatedField = fields.find(f => f === 'user_created')
+	const userUpdatedField = fields.find(f => f === 'user_updated')
+
+	if (userCreatedField) {
+		relations.push({
+			collection: copyCollName,
+			field: userCreatedField,
+			related_collection: 'directus_users',
+			schema: {},
+		});
+	}
+
+	if (userUpdatedField) {
+		relations.push({
+			collection: copyCollName,
+			field: fields.find(f => f === 'user_updated'),
+			related_collection: 'directus_users',
+			schema: {},
+		});
+	}
+
+	return relations;
+}
+
+function onCopyCancel() {
+	confirmCopy.value = false
+	copyName.value = null
+}
 </script>
 
 <template>
-	<private-view :title="collectionInfo && formatTitle(collectionInfo.collection)" :is_prevent_main_content_scroll="true" i>
+	<private-view :title="collectionInfo && formatTitle(collectionInfo.collection)" :is_prevent_main_content_scroll="true"
+		i>
 		<template #headline>
 			<v-breadcrumb :items="[{ name: t('settings_data_model'), to: '/settings/data-model' }]" />
 		</template>
@@ -83,16 +252,9 @@ function discardAndLeave() {
 		<template #actions>
 			<v-dialog v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
-					<v-button
-						v-if="item && item.collection.startsWith('directus_') === false"
-						v-tooltip.bottom="t('delete_collection')"
-						rounded
-						icon
-						class="action-delete"
-						secondary
-						:disabled="item === null"
-						@click="on"
-					>
+					<v-button v-if="item && item.collection.startsWith('directus_') === false"
+						v-tooltip.bottom="t('delete_collection')" rounded icon class="action-delete" secondary
+						:disabled="item === null" @click="on">
 						<v-icon name="delete" />
 					</v-button>
 				</template>
@@ -111,16 +273,36 @@ function discardAndLeave() {
 				</v-card>
 			</v-dialog>
 
-			<v-button
-				v-tooltip.bottom="t('save')"
-				rounded
-				icon
-				:loading="saving"
-				:disabled="hasEdits === false"
-				@click="saveAndQuit"
-			>
+			<v-button v-tooltip.bottom="t('save')" rounded icon :loading="saving" :disabled="hasEdits === false"
+				@click="saveAndQuit">
 				<v-icon name="check" />
 			</v-button>
+
+			<!-- COPPY COLLECTION LOGIC -->
+			<v-dialog v-model="confirmCopy" @esc="confirmCopy = false">
+				<template #activator="{ on }">
+					<v-button v-tooltip.bottom="t('Copy Collection')" :disabled="isCopyBtnDisabled" rounded icon @click="on">
+						<v-icon name="content_copy" />
+					</v-button>
+				</template>
+
+				<v-card>
+					<v-card-title>{{ t('Create a copy of this collection') }}</v-card-title>
+
+					<v-card-text>
+						<v-input v-model="copyName" db-safe autofocus full-width :placeholder="t('Collection Name...')" />
+					</v-card-text>
+
+					<v-card-actions>
+						<v-button secondary @click="onCopyCancel">
+							{{ t('cancel') }}
+						</v-button>
+						<v-button :loading="savingCopy" :disabled="!copyName" @click="createCopy">
+							{{ t('copy') }}
+						</v-button>
+					</v-card-actions>
+				</v-card>
+			</v-dialog>
 		</template>
 
 		<template #navigation>
@@ -138,14 +320,9 @@ function discardAndLeave() {
 
 			<router-view name="field" :collection="collection" :field="field" :type="type" />
 
-			<v-form
-				v-model="edits.meta"
-				collection="directus_collections"
-				:loading="loading"
-				:initial-values="item && item.meta"
-				:primary-key="collection"
-				:disabled="item && item.collection.startsWith('directus_')"
-			/>
+			<v-form v-model="edits.meta" collection="directus_collections" :loading="loading"
+				:initial-values="item && item.meta" :primary-key="collection"
+				:disabled="item && item.collection.startsWith('directus_')" />
 		</div>
 
 		<template #sidebar>
