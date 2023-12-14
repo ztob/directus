@@ -25,6 +25,7 @@ import { shouldClearCache } from '../utils/should-clear-cache.js';
 import { validateKeys } from '../utils/validate-keys.js';
 import { AuthorizationService } from './authorization.js';
 import { PayloadService } from './payload.js';
+import { removeFilterDisabledFields } from '../utils/remove-filter-disabled-fields.js';
 
 export type QueryOptions = {
 	stripNonRequested?: boolean;
@@ -32,13 +33,6 @@ export type QueryOptions = {
 	emitEvents?: boolean;
 	beforeQuery?: (query: Knex.QueryBuilder) => void;
 };
-
-interface FilterField {
-	[key: string]: any;
-	$_disabled_$?: {
-		_eq: boolean;
-	};
-}
 
 export type MutationTracker = {
 	trackMutations: (count: number) => void;
@@ -405,67 +399,7 @@ export class ItemsService<Item extends AnyItem = AnyItem> implements AbstractSer
 	 */
 
 	async readByQuery(query: Query, opts?: QueryOptions): Promise<Item[]> {
-
-		// function transformObjectInPlace(inputObject) {
-		// 	function deepTransform(obj) {
-		// 		for (const key in obj) {
-		// 			if (typeof obj[key] === 'object') {
-		// 				if (key.includes('][')) {
-		// 					const [mainKey, operator] = key.split('][').map(part => part.replace(/[\[\]]/g, ''));
-		// 					const value = obj[key];
-		// 					delete obj[key];
-		// 					if (!obj[mainKey]) {
-		// 						obj[mainKey] = {};
-		// 					}
-		// 					obj[mainKey][operator] = value;
-		// 				}
-		// 				deepTransform(obj[key]); // Recursively search for the structure in nested objects.
-		// 			}
-		// 		}
-		// 	}
-
-		// 	deepTransform(inputObject);
-		// }
-
-		// transformObjectInPlace(query.filter)
-
-		// console.log('-----------------------')
-		// console.log('AFTER the handleUglyObjects FUNC')
-		// console.log(query)
-		// console.log(JSON.stringify(query.filter, null, 4))
-		// console.log('-----------------------')
-
-
-		function removeDisabledAnd(obj: FilterField | null | undefined) {
-			if (typeof obj === 'object') {
-				if (Array.isArray(obj)) {
-					for (let i = obj.length - 1; i >= 0; i--) {
-						const element = obj[i];
-						removeDisabledAnd(element);
-
-						if (JSON.stringify(element) === '{}') {
-							// if(!Object.keys(element).length) {
-							// Check if the element is an empty object
-							obj.splice(i, 1);
-						}
-					}
-				} else {
-					for (const key in obj) {
-						if (obj.hasOwnProperty(key)) {
-							const value: any = obj[key];
-							removeDisabledAnd(value);
-
-							if (key === '_and' && value.some((subObj: FilterField) => subObj.$_disabled_$)) {
-								// Delete the entire object
-								delete obj[key];
-							}
-						}
-					}
-				}
-			}
-		}
-
-		removeDisabledAnd(query.filter as FilterField | null | undefined)
+		removeFilterDisabledFields(query.filter);
 
 		const updatedQuery =
 			opts?.emitEvents !== false

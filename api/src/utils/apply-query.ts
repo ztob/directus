@@ -21,6 +21,7 @@ import { getColumnPath } from './get-column-path.js';
 import { getColumn } from './get-column.js';
 import { getRelationInfo } from './get-relation-info.js';
 import { stripFunction } from './strip-function.js';
+import { removeFilterDisabledFields } from './remove-filter-disabled-fields.js';
 
 export const generateAlias = customAlphabet('abcdefghijklmnopqrstuvwxyz', 5);
 
@@ -394,6 +395,8 @@ export function applyFilter(
 	const relations: Relation[] = schema.relations;
 	let hasJoins = false;
 	let hasMultiRelationalFilter = false;
+
+	removeFilterDisabledFields(rootFilter);
 
 	addJoins(rootQuery, rootFilter, collection);
 	addWhereClauses(knex, rootQuery, rootFilter, collection);
