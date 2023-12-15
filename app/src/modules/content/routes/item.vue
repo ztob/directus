@@ -753,8 +753,7 @@ function onAddFilter(args: AddFilterArgs) {
 					layoutOptions,
 					layout,
 					navigateBack
-				)
-			"
+				)"
 		/>
 
 		<v-dialog v-model="confirmLeave" @esc="confirmLeave = false">

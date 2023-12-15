@@ -11,7 +11,7 @@ import FormFieldLabel from './form-field-label.vue';
 import FormFieldMenu, { type MenuOptions } from './form-field-menu.vue';
 import FormFieldRawEditor from './form-field-raw-editor.vue';
 import type { FormField } from './types';
-import CreateDropdownBookmarksBtn from './create-bookmarks-button.vue'
+import CreateBookmarksDialog from './create-bookmarks-dialog.vue'
 
 interface Props {
 	field: FormField;
@@ -216,15 +216,18 @@ function useComputedValues() {
 			@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
 		/>
 
-		<!-- BUTTON FOR CREATING BOOKMARKS FOR SELECT_DROPDOWN -->
-		<CreateDropdownBookmarksBtn
+		<!-- DIALOG FOR CREATING BOOKMARKS FOR SELECT-DROPDOWN COMPONENT-->
+		<CreateBookmarksDialog
 			v-if="field.meta?.interface === 'select-dropdown'"
 			:is-disabled="!field.meta?.options?.choices || isBookmarksDrpdwnBtnDisabled"
-			@click="$emit(
+			:choices="field.meta?.options?.choices"
+			:field-name="field.field"
+			@create-dropdown-bookmarks="(...args) => $emit('create-dropdown-bookmarks', ...args)"
+		/>
+			<!-- @click="$emit(
 				'create-dropdown-bookmarks',
 				field.field, field.meta?.options?.choices ?? null
-			)"
-		/>
+			)" -->
 	</div>
 
 		<form-field-raw-editor
