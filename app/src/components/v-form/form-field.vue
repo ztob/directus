@@ -11,6 +11,7 @@ import FormFieldLabel from './form-field-label.vue';
 import FormFieldMenu, { type MenuOptions } from './form-field-menu.vue';
 import FormFieldRawEditor from './form-field-raw-editor.vue';
 import type { FormField } from './types';
+import CreateDropdownBookmarksBtn from './create-bookmarks-button.vue'
 
 interface Props {
 	field: FormField;
@@ -31,6 +32,7 @@ interface Props {
 	isFilterLoading: string;
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
+	isBookmarksDrpdwnBtnDisabled: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -50,6 +52,7 @@ const emit = defineEmits([
 	'setFieldValue',
 	'add-filter',
 	'copy-to-clipboard',
+	'create-dropdown-bookmarks'
 ]);
 
 const { t } = useI18n();
@@ -191,6 +194,7 @@ function useComputedValues() {
 		</v-menu>
 		<div v-else-if="['full', 'fill'].includes(field.meta?.width ?? '') === false" class="label-spacer" />
 
+	<div>
 		<form-field-interface
 			:autofocus="autofocus"
 			:model-value="internalValue"
@@ -211,6 +215,17 @@ function useComputedValues() {
 			@add-filter="$emit('add-filter', $event)"
 			@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
 		/>
+
+		<!-- BUTTON FOR CREATING BOOKMARKS FOR SELECT_DROPDOWN -->
+		<CreateDropdownBookmarksBtn
+			v-if="field.meta?.interface === 'select-dropdown'"
+			:is-disabled="!field.meta?.options?.choices || isBookmarksDrpdwnBtnDisabled"
+			@click="$emit(
+				'create-dropdown-bookmarks',
+				field.field, field.meta?.options?.choices ?? null
+			)"
+		/>
+	</div>
 
 		<form-field-raw-editor
 			:show-modal="showRaw"

@@ -26,6 +26,7 @@ import ContentNavigation from '../components/navigation.vue';
 import VersionMenu from '../components/version-menu.vue';
 import ContentNotFound from './not-found.vue';
 import { useClipboard } from '@/composables/use-clipboard';
+import { createDropdownBookmarks } from '../composables/create-dropdown-bookmarks';
 
 interface Props {
 	collection: string;
@@ -85,7 +86,7 @@ const {
 	validationErrors,
 } = useItem(collection, primaryKey, query);
 
-const { filter } = usePreset(collection);
+const { filter, layoutOptions, layout, saveCurrentAsBookmark } = usePreset(collection);
 
 const { templateData } = useTemplateData(collectionInfo, primaryKey);
 
@@ -742,8 +743,18 @@ function onAddFilter(args: AddFilterArgs) {
 			:primary-key="internalPrimaryKey"
 			:validation-errors="validationErrors"
 			:is-filter-loading="isFilterLoading"
+			:is-bookmarks-drpdwn-btn-disabled="hasEdits"
 			@add-filter="onAddFilter"
 			@copy-to-clipboard="copyToClipboard"
+			@create-dropdown-bookmarks="(...args) =>
+				createDropdownBookmarks(
+					...args,
+					saveCurrentAsBookmark,
+					layoutOptions,
+					layout,
+					navigateBack
+				)
+			"
 		/>
 
 		<v-dialog v-model="confirmLeave" @esc="confirmLeave = false">
