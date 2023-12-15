@@ -43,6 +43,7 @@ interface Props {
 	isFilterLoading: string;
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
+	isBookmarksDrpdwnBtnDisabled: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -61,7 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n();
 
-const emit = defineEmits(['update:modelValue', 'add-filter', 'copy-to-clipboard']);
+const emit = defineEmits(['update:modelValue', 'add-filter', 'copy-to-clipboard', 'create-dropdown-bookmarks']);
 
 const values = computed(() => {
 	return Object.assign({}, props.initialValues, props.modelValue);
@@ -418,6 +419,7 @@ function useRawEditor() {
 					:is-filter-loading="isFilterLoading"
 					:is-unused-colls-hidden="isUnusedCollsHidden"
 					:search-collections="searchCollections"
+					:is-bookmarks-drpdwn-btn-disabled="isBookmarksDrpdwnBtnDisabled"
 					@update:model-value="setValue(fieldName, $event)"
 					@set-field-value="setValue($event.field, $event.value, { force: true })"
 					@unset="unsetValue(fieldsMap[fieldName]!)"
@@ -425,6 +427,7 @@ function useRawEditor() {
 					@toggle-raw="toggleRawField(fieldsMap[fieldName]!)"
 					@add-filter="$emit('add-filter', $event)"
 					@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
+					@create-dropdown-bookmarks="(...args) => $emit('create-dropdown-bookmarks', ...args)"
 				/>
 			</template>
 		</template>
