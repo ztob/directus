@@ -5,9 +5,11 @@ import { router } from '@/router';
 import { useAppStore } from '@directus/stores';
 import { RouteLocationRaw } from 'vue-router';
 import { idleTracker } from './idle';
+import { useUserStore } from '@/stores/user';
 
 type LoginCredentials = {
 	identifier?: string;
+	id?: string;
 	email?: string;
 	password?: string;
 	otp?: string;
@@ -23,14 +25,17 @@ type LoginParams = {
 function getAuthEndpoint(provider?: string, share?: boolean) {
 	if (share) return '/shares/auth';
 	if (provider === DEFAULT_AUTH_PROVIDER) return '/auth/login';
+
 	return `/auth/login/${provider}`;
 }
 
 export async function login({ credentials, provider, share }: LoginParams): Promise<void> {
 	const appStore = useAppStore();
+	const userStore = useUserStore();
 
 	const response = await api.post<any>(getAuthEndpoint(provider, share), {
 		...credentials,
+
 		mode: 'cookie',
 	});
 
@@ -51,7 +56,15 @@ export async function login({ credentials, provider, share }: LoginParams): Prom
 	appStore.accessTokenExpiry = Date.now() + response.data.data.expires;
 	appStore.authenticated = true;
 
-	await hydrate();
+	const isSwitchingUser = credentials.id != null;
+
+	if (isSwitchingUser) {
+		userStore.saveCurrentUser();
+	}
+
+	await hydrate(isSwitchingUser);
+
+	userStore.unsaveCurrentUser();
 }
 
 let refreshTimeout: any;
@@ -135,14 +148,19 @@ export async function refresh({ navigate }: LogoutOptions = { navigate: true }):
 
 		return accessToken;
 	} catch (error: any) {
-		await logout({ navigate, reason: LogoutReason.SESSION_EXPIRED });
+		await logout({
+			navigate,
+			reason: LogoutReason.SESSION_EXPIRED,
+		});
 	} finally {
 		isRefreshing = false;
+
 		resumeQueue();
 	}
 }
 
 export enum LogoutReason {
+	ADD_USER = 'ADD_USER',
 	SIGN_OUT = 'SIGN_OUT',
 	SESSION_EXPIRED = 'SESSION_EXPIRED',
 }
@@ -157,6 +175,7 @@ export type LogoutOptions = {
  */
 export async function logout(optionsRaw: LogoutOptions = {}): Promise<void> {
 	const appStore = useAppStore();
+	const userStore = useUserStore();
 
 	const defaultOptions: Required<LogoutOptions> = {
 		navigate: true,
@@ -169,16 +188,23 @@ export async function logout(optionsRaw: LogoutOptions = {}): Promise<void> {
 
 	const options = { ...defaultOptions, ...optionsRaw };
 
-	// Only if the user manually signed out should we kill the session by hitting the logout endpoint
-	if (options.reason === LogoutReason.SIGN_OUT) {
+	if (options.reason === LogoutReason.ADD_USER || options.reason === LogoutReason.SIGN_OUT) {
 		try {
-			await api.post(`/auth/logout`);
+			await api.post('/auth/logout', {
+				reason: options.reason,
+			});
 		} catch {
-			// User already signed out
+			/* empty */
 		}
 	}
 
 	appStore.authenticated = false;
+
+	const isAddingUser = options.reason === LogoutReason.ADD_USER;
+
+	if (isAddingUser) {
+		userStore.saveCurrentUser();
+	}
 
 	await dehydrate();
 

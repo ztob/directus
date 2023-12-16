@@ -233,7 +233,7 @@ provide('main-element', contentEl);
 
 router.afterEach(() => {
 	// disable scroll to the top if it is Roles&Permissions administartor page
-	if(!props.is_prevent_main_content_scroll) {
+	if (!props.is_prevent_main_content_scroll) {
 		contentEl.value?.scrollTo({ top: 0 });
 	}
 
@@ -272,6 +272,7 @@ function getWidth(input: unknown, fallback: number): number {
 			:class="{ 'is-open': navOpen, 'has-shadow': sidebarShadow }"
 		>
 			<module-bar />
+
 			<v-resizeable
 				v-model:width="navWidth"
 				:min-width="SIZES.minModuleNavWidth"
@@ -289,6 +290,7 @@ function getWidth(input: unknown, fallback: number): number {
 				</div>
 			</v-resizeable>
 		</aside>
+
 		<div id="main-content" ref="contentEl" class="content">
 			<header-bar
 				ref="headerBarEl"

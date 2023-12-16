@@ -13,6 +13,7 @@ import { i18n } from './lang/';
 import { router } from './router';
 import './styles/main.scss';
 import { registerViews } from './views/register';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
 init();
 
@@ -34,15 +35,20 @@ async function init() {
 	// console.time('🕓 Application Loaded');
 
 	const app = createApp(App);
+	const pinia = createPinia();
 
+	pinia.use(piniaPluginPersistedstate);
+
+	app.use(pinia);
 	app.use(i18n);
-	app.use(createPinia());
 	app.use(createHead());
 
 	app.config.errorHandler = (err, vm, info) => {
 		const source = getVueComponentName(vm);
+
 		console.warn(`[app-${source}-error] ${info}`);
 		console.warn(err);
+
 		return false;
 	};
 

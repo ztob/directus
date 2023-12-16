@@ -15,22 +15,36 @@ type ShareUser = {
 	};
 };
 
+type CurrentUser = User | ShareUser | null;
+
+const initialState = {
+	currentUser: null as CurrentUser,
+	savedUsers: [] as User[],
+	loading: false,
+	error: null,
+};
+
 export const useUserStore = defineStore({
 	id: 'userStore',
-	state: () => ({
-		currentUser: null as User | ShareUser | null,
-		loading: false,
-		error: null,
-	}),
+
+	state: () => initialState,
+
+	persist: {
+		paths: ['savedUsers'],
+	},
+
 	getters: {
 		fullName(): string | null {
 			if (this.currentUser === null || 'share' in this.currentUser) return null;
+
 			return userName(this.currentUser);
 		},
+
 		isAdmin(): boolean {
 			return this.currentUser?.role?.admin_access === true || false;
 		},
 	},
+
 	actions: {
 		async hydrate() {
 			this.loading = true;
@@ -47,18 +61,23 @@ export const useUserStore = defineStore({
 				this.loading = false;
 			}
 		},
+
 		async dehydrate() {
-			this.$reset();
+			this.currentUser = initialState.currentUser;
+			this.loading = initialState.loading;
+			this.error = initialState.error;
 		},
+
 		async hydrateAdditionalFields(fields: string[]) {
 			try {
 				const { data } = await api.get(`/users/me`, { params: { fields } });
 
 				this.currentUser = merge({}, this.currentUser, data.data);
 			} catch (error: any) {
-				// Do nothing
+				/* empty */
 			}
 		},
+
 		async trackPage(to: RouteLocationNormalized) {
 			/**
 			 * We don't want to track the full screen preview from live previews as part of the user's
@@ -86,6 +105,38 @@ export const useUserStore = defineStore({
 
 			if (this.currentUser && !('share' in this.currentUser)) {
 				this.currentUser.last_page = to.fullPath;
+			}
+		},
+
+		saveCurrentUser() {
+			const isAlreadySaved = this.savedUsers.find((savedUser: User) => {
+				if (!savedUser.id) {
+					return undefined;
+				}
+
+				const currentUserId = this.currentUser && 'id' in this.currentUser ? this.currentUser.id : null;
+
+				return savedUser.id === currentUserId;
+			});
+
+			if (!isAlreadySaved) {
+				this.savedUsers.push(this.currentUser);
+			}
+		},
+
+		unsaveCurrentUser() {
+			const alreadySavedIndex = this.savedUsers.findIndex((savedUser: User) => {
+				if (!savedUser.id) {
+					return -1;
+				}
+
+				const currentUserId = this.currentUser && 'id' in this.currentUser ? this.currentUser.id : null;
+
+				return savedUser.id === currentUserId;
+			});
+
+			if (alreadySavedIndex > -1) {
+				this.savedUsers.splice(alreadySavedIndex, 1);
 			}
 		},
 	},

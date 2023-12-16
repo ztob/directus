@@ -77,7 +77,7 @@ async function onSubmit() {
 
 		const redirectQuery = router.currentRoute.value.query.redirect as string;
 
-		let lastPage: string | undefined;
+		let lastPage: string | null | undefined;
 
 		if (userStore.currentUser && 'last_page' in userStore.currentUser) {
 			lastPage = userStore.currentUser.last_page;
@@ -108,8 +108,10 @@ async function onSubmit() {
 		<v-notice v-if="error" type="warning">
 			{{ errorFormatted }}
 		</v-notice>
+
 		<div class="buttons">
 			<v-button type="submit" :loading="loggingIn" large>{{ t('sign_in') }}</v-button>
+
 			<router-link to="/reset-password" class="forgot-password">
 				{{ t('forgot_password') }}
 			</router-link>
