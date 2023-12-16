@@ -49,7 +49,9 @@ async function fetchUser() {
 
 async function hydrateAndLogin() {
 	await hydrate();
+
 	const redirectQuery = router.currentRoute.value.query.redirect as string;
+
 	router.push(redirectQuery || lastPage.value || `/content`);
 }
 </script>
@@ -57,12 +59,14 @@ async function hydrateAndLogin() {
 <template>
 	<div class="continue-as">
 		<v-progress-circular v-if="loading" indeterminate />
+
 		<template v-else>
 			<i18n-t keypath="continue_as" scope="global" tag="p">
 				<template #name>
 					<b>{{ name }}</b>
 				</template>
 			</i18n-t>
+
 			<div class="actions">
 				<router-link to="/logout" class="sign-out">{{ t('sign_out') }}</router-link>
 				<v-button autofocus large @click="hydrateAndLogin">{{ t('continue_label') }}</v-button>

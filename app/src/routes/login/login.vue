@@ -22,6 +22,7 @@ const { t, te } = useI18n();
 
 const appStore = useAppStore();
 const serverStore = useServerStore();
+
 const { auth, providerOptions } = storeToRefs(serverStore);
 
 const driver = ref(unref(auth).disableDefault ? unref(providerOptions)?.[0]?.driver : DEFAULT_AUTH_DRIVER);
@@ -31,37 +32,41 @@ const providerSelect = computed({
 	get() {
 		return provider.value;
 	},
+
 	set(value: string) {
 		provider.value = value;
+
 		driver.value = unref(auth).providers.find((provider) => provider.name === value)?.driver ?? DEFAULT_AUTH_DRIVER;
 	},
 });
 
-const authenticated = computed(() => appStore.authenticated);
+const isAuthenticated = computed(() => appStore.authenticated);
 </script>
 
 <template>
 	<public-view>
 		<div class="header">
 			<h1 class="type-title">{{ t('sign_in') }}</h1>
-			<div v-if="!authenticated && providerOptions.length > 1" class="provider-select">
+
+			<div v-if="!isAuthenticated && providerOptions.length > 1" class="provider-select">
 				<v-select v-model="providerSelect" inline :items="providerOptions" label />
 			</div>
 		</div>
 
-		<continue-as v-if="authenticated" />
+		<continue-as v-if="isAuthenticated" />
 
 		<ldap-form v-else-if="driver === 'ldap'" :provider="provider" />
 
 		<login-form v-else-if="driver === DEFAULT_AUTH_DRIVER || driver === 'local'" :provider="provider" />
 
-		<sso-links v-if="!authenticated" :providers="auth.providers" />
+		<sso-links v-if="!isAuthenticated" :providers="auth.providers" />
 
 		<template #notice>
-			<div v-if="authenticated">
+			<div v-if="isAuthenticated">
 				<v-icon name="lock_open" left />
 				{{ t('authenticated') }}
 			</div>
+
 			<div v-else>
 				{{
 					logoutReason && te(`logoutReason.${logoutReason}`)

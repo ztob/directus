@@ -116,10 +116,16 @@ router.post(
 		};
 
 		const userAgent = req.get('user-agent');
-		if (userAgent) accountability.userAgent = userAgent;
+
+		if (userAgent) {
+			accountability.userAgent = userAgent;
+		}
 
 		const origin = req.get('origin');
-		if (origin) accountability.origin = origin;
+
+		if (origin) {
+			accountability.origin = origin;
+		}
 
 		const authenticationService = new AuthenticationService({
 			accountability: accountability,
@@ -132,7 +138,11 @@ router.post(
 			throw new InvalidPayloadError({ reason: `"refresh_token" is required in either the JSON payload or Cookie` });
 		}
 
-		await authenticationService.logout(currentRefreshToken);
+		const isAddingUser = req.body.reason === 'ADD_USER';
+
+		if (!isAddingUser) {
+			await authenticationService.logout(currentRefreshToken);
+		}
 
 		if (req.cookies[env['REFRESH_TOKEN_COOKIE_NAME']]) {
 			res.clearCookie(env['REFRESH_TOKEN_COOKIE_NAME'], {

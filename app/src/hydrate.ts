@@ -45,7 +45,7 @@ export function useStores(
 	return stores.map((useStore) => useStore()) as GenericStore[];
 }
 
-export async function hydrate(): Promise<void> {
+export async function hydrate(forced = false): Promise<void> {
 	const stores = useStores();
 
 	const appStore = useAppStore();
@@ -53,8 +53,9 @@ export async function hydrate(): Promise<void> {
 	const permissionsStore = usePermissionsStore();
 	const fieldsStore = useFieldsStore();
 
-	if (appStore.hydrated) return;
-	if (appStore.hydrating) return;
+	if (!forced && (appStore.hydrated || appStore.hydrating)) {
+		return;
+	}
 
 	appStore.hydrating = true;
 

@@ -9,7 +9,13 @@ import { DEFAULT_AUTH_PROVIDER } from '../constants.js';
 import getDatabase from '../database/index.js';
 import emitter from '../emitter.js';
 import env from '../env.js';
-import { InvalidCredentialsError, InvalidProviderError, UserSuspendedError } from '@directus/errors';
+import {
+	ForbiddenError,
+	InvalidCredentialsError,
+	InvalidProviderError,
+	TokenExpiredError,
+	UserSuspendedError,
+} from '@directus/errors';
 import { InvalidOtpError } from '@directus/errors';
 import { createRateLimiter } from '../rate-limiter.js';
 import type { AbstractServiceOptions, DirectusTokenPayload, LoginResult, Session, User } from '../types/index.js';
@@ -37,8 +43,8 @@ export class AuthenticationService {
 	/**
 	 * Retrieve the tokens for a given user email.
 	 *
-	 * Password is optional to allow usage of this function within the SSO flow and extensions. Make sure
-	 * to handle password existence checks elsewhere
+	 * Password is optional to allow usage of this function within the SSO flow and extensions,
+	 * make sure to handle password existence checks elsewhere.
 	 */
 	async login(
 		providerName: string = DEFAULT_AUTH_PROVIDER,
@@ -53,12 +59,41 @@ export class AuthenticationService {
 		const provider = getAuthProvider(providerName);
 
 		let userId;
+		let session;
 
-		try {
-			userId = await provider.getUserID(cloneDeep(payload));
-		} catch (err) {
-			await stall(STALL_TIME, timeStart);
-			throw err;
+		const isSwitchingUser = payload['id'] != null;
+
+		if (isSwitchingUser) {
+			userId = payload['id'];
+
+			session = await this.knex('directus_sessions')
+				.where('user', '=', userId)
+				.andWhere('ip', '=', this.accountability?.ip ?? '')
+				.andWhere('user_agent', '=', this.accountability?.userAgent ?? '')
+				.andWhere('origin', '=', this.accountability?.origin ?? '')
+				.first();
+
+			if (!session) {
+				await stall(STALL_TIME, timeStart);
+
+				throw new ForbiddenError();
+			}
+
+			if (session.expires < new Date()) {
+				await this.knex('directus_sessions').delete().where('token', '=', session.token);
+
+				await stall(STALL_TIME, timeStart);
+
+				throw new TokenExpiredError();
+			}
+		} else {
+			try {
+				userId = await provider.getUserID(cloneDeep(payload));
+			} catch (err) {
+				await stall(STALL_TIME, timeStart);
+
+				throw err;
+			}
 		}
 
 		const user = await this.knex
@@ -119,13 +154,16 @@ export class AuthenticationService {
 
 			if (user?.status === 'suspended') {
 				await stall(STALL_TIME, timeStart);
+
 				throw new UserSuspendedError();
 			} else {
 				await stall(STALL_TIME, timeStart);
+
 				throw new InvalidCredentialsError();
 			}
 		} else if (user.provider !== providerName) {
 			await stall(STALL_TIME, timeStart);
+
 			throw new InvalidProviderError();
 		}
 
@@ -152,32 +190,54 @@ export class AuthenticationService {
 			}
 		}
 
-		try {
-			await provider.login(clone(user), cloneDeep(updatedPayload));
-		} catch (e) {
-			emitStatus('fail');
-			await stall(STALL_TIME, timeStart);
-			throw e;
-		}
-
-		if (user.tfa_secret && !otp) {
-			emitStatus('fail');
-			await stall(STALL_TIME, timeStart);
-			throw new InvalidOtpError();
-		}
-
-		if (user.tfa_secret && otp) {
-			const tfaService = new TFAService({ knex: this.knex, schema: this.schema });
-			const otpValid = await tfaService.verifyOTP(user.id, otp);
-
-			if (otpValid === false) {
+		if (!session) {
+			try {
+				await provider.login(clone(user), cloneDeep(updatedPayload));
+			} catch (e) {
 				emitStatus('fail');
+
 				await stall(STALL_TIME, timeStart);
+
+				throw e;
+			}
+
+			if (user.tfa_secret && !otp) {
+				emitStatus('fail');
+
+				await stall(STALL_TIME, timeStart);
+
 				throw new InvalidOtpError();
 			}
+
+			if (user.tfa_secret && otp) {
+				const tfaService = new TFAService({ knex: this.knex, schema: this.schema });
+
+				const otpValid = await tfaService.verifyOTP(user.id, otp);
+
+				if (!otpValid) {
+					emitStatus('fail');
+
+					await stall(STALL_TIME, timeStart);
+
+					throw new InvalidOtpError();
+				}
+			}
+
+			await this.knex('directus_sessions').delete().where('expires', '<', new Date()).orWhere('user', '=', user.id);
+
+			session = await this.knex('directus_sessions')
+				.returning('token')
+				.insert({
+					token: nanoid(64),
+					user: user.id,
+					expires: new Date(Date.now() + getMilliseconds(env['REFRESH_TOKEN_TTL'], 0)),
+					ip: this.accountability?.ip,
+					user_agent: this.accountability?.userAgent,
+					origin: this.accountability?.origin,
+				});
 		}
 
-		const tokenPayload = {
+		const accessTokenPayload = {
 			id: user.id,
 			role: user.role,
 			app_access: user.app_access,
@@ -186,7 +246,7 @@ export class AuthenticationService {
 
 		const customClaims = await emitter.emitFilter(
 			'auth.jwt',
-			tokenPayload,
+			accessTokenPayload,
 			{
 				status: 'pending',
 				user: user?.id,
@@ -205,20 +265,6 @@ export class AuthenticationService {
 			issuer: 'directus',
 		});
 
-		const refreshToken = nanoid(64);
-		const refreshTokenExpiration = new Date(Date.now() + getMilliseconds(env['REFRESH_TOKEN_TTL'], 0));
-
-		await this.knex('directus_sessions').insert({
-			token: refreshToken,
-			user: user.id,
-			expires: refreshTokenExpiration,
-			ip: this.accountability?.ip,
-			user_agent: this.accountability?.userAgent,
-			origin: this.accountability?.origin,
-		});
-
-		await this.knex('directus_sessions').delete().where('expires', '<', new Date());
-
 		if (this.accountability) {
 			await this.activityService.createOne({
 				action: Action.LOGIN,
@@ -231,7 +277,13 @@ export class AuthenticationService {
 			});
 		}
 
-		await this.knex('directus_users').update({ last_access: new Date() }).where({ id: user.id });
+		await this.knex('directus_users')
+			.update({
+				last_access: new Date(),
+			})
+			.where({
+				id: user.id,
+			});
 
 		emitStatus('success');
 
@@ -243,7 +295,7 @@ export class AuthenticationService {
 
 		return {
 			accessToken,
-			refreshToken,
+			refreshToken: Array.isArray(session) ? session[0].token : session.token,
 			expires: getMilliseconds(env['ACCESS_TOKEN_TTL']),
 			id: user.id,
 		};
@@ -421,6 +473,7 @@ export class AuthenticationService {
 			const user = record;
 
 			const provider = getAuthProvider(user.provider);
+
 			await provider.logout(clone(user));
 
 			await this.knex.delete().from('directus_sessions').where('token', refreshToken);
