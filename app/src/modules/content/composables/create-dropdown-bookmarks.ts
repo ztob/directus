@@ -1,30 +1,39 @@
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Preset } from '@directus/types';
+import { usePresetsStore } from '@/stores/presets';
 
 interface DropdownChoice {
 	text: string;
 	value: string;
 }
 
-// LOGIC FOR CREATING BOOKMARKS FOR SELECT_DROPDOWN
-
+// LOGIC FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS
 export async function createDropdownBookmarks(
-	dropdownName: string,
-	dropdownChoices: DropdownChoice[],
+	fieldName: string,
+	fieldChoices: DropdownChoice[],
+	isShowItemsCount: boolean | null,
+	collectionName: string,
 	saveCurrentAsBookmark: (overrides: Partial<Preset>) => Promise<any>,
 	layoutOptions: Record<string, any>,
 	layout: string | null,
 	navigateBack: () => void,
 ) {
+	const allCollsBookmarks = usePresetsStore().bookmarks;
+
+	// get the dropdown options for which there are no bookmarks
+	const filteredChoices = fieldChoices.filter((choice) => {
+		return !allCollsBookmarks.some((b) => b.bookmark === choice.text && b.collection === collectionName);
+	});
+
 	try {
-		const bookmarkPromises = dropdownChoices!.map(async ({ text, value }) => {
+		const bookmarkPromises = filteredChoices.map(async ({ text, value }) => {
 			return await saveCurrentAsBookmark({
 				bookmark: text,
 				layout_options: {
 					...(layoutOptions ? { [layout || 'tabular']: layoutOptions } : {}),
-					show_items_number: true,
+					show_items_number: isShowItemsCount,
 				},
-				filter: { _and: [{ [dropdownName]: { _eq: value } }] },
+				filter: { _and: [{ [fieldName]: { _eq: value } }] },
 			});
 		});
 

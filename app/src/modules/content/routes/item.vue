@@ -744,11 +744,13 @@ function onAddFilter(args: AddFilterArgs) {
 			:validation-errors="validationErrors"
 			:is-filter-loading="isFilterLoading"
 			:is-bookmarks-drpdwn-btn-disabled="hasEdits"
+			is-coll-item
 			@add-filter="onAddFilter"
 			@copy-to-clipboard="copyToClipboard"
-			@create-dropdown-bookmarks="(...args) =>
+			@create-field-bookmarks="(...args) =>
 				createDropdownBookmarks(
 					...args,
+					collection,
 					saveCurrentAsBookmark,
 					layoutOptions,
 					layout,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useClipboard } from '@/composables/use-clipboard';
 import { formatFieldFunction } from '@/utils/format-field-function';
-import { ValidationError } from '@directus/types';
+import { Type, ValidationError } from '@directus/types';
 import { parseJSON } from '@directus/utils';
 import { isEqual } from 'lodash';
 import { computed, ref, watch } from 'vue';
@@ -12,6 +12,7 @@ import FormFieldMenu, { type MenuOptions } from './form-field-menu.vue';
 import FormFieldRawEditor from './form-field-raw-editor.vue';
 import type { FormField } from './types';
 import CreateBookmarksDialog from './create-bookmarks-dialog.vue'
+import { isAllowedBookmarksForField } from './composables/is-allowed-bookmarks-for-field'
 
 interface Props {
 	field: FormField;
@@ -33,6 +34,7 @@ interface Props {
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
 	isBookmarksDrpdwnBtnDisabled: boolean;
+	isCollItem?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -52,7 +54,7 @@ const emit = defineEmits([
 	'setFieldValue',
 	'add-filter',
 	'copy-to-clipboard',
-	'create-dropdown-bookmarks'
+	'create-field-bookmarks'
 ]);
 
 const { t } = useI18n();
@@ -156,88 +158,53 @@ function useComputedValues() {
 		return defaultValue.value;
 	}
 }
+
+// LOGIC FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS
+function isBookmarkCreationAllowed(fieldInterface: string | null | undefined, fieldType: Type) {
+	return isAllowedBookmarksForField(fieldInterface, fieldType)
+}
 </script>
 
 <template>
 	<div class="field" :class="[field.meta?.width || 'full', { invalid: validationError }]">
 		<v-menu v-if="field.hideLabel !== true" placement="bottom-start" show-arrow>
 			<template #activator="{ toggle, active }">
-				<form-field-label
-					:field="field"
-					:toggle="toggle"
-					:active="active"
-					:batch-mode="batchMode"
-					:batch-active="batchActive"
-					:edited="isEdited"
-					:has-error="!!validationError"
-					:badge="badge"
-					:raw-editor-enabled="rawEditorEnabled"
-					:raw-editor-active="rawEditorActive"
-					:loading="loading"
-					@toggle-batch="$emit('toggle-batch', $event)"
-					@toggle-raw="$emit('toggle-raw', $event)"
-				/>
+				<form-field-label :field="field" :toggle="toggle" :active="active" :batch-mode="batchMode"
+					:batch-active="batchActive" :edited="isEdited" :has-error="!!validationError" :badge="badge"
+					:raw-editor-enabled="rawEditorEnabled" :raw-editor-active="rawEditorActive" :loading="loading"
+					@toggle-batch="$emit('toggle-batch', $event)" @toggle-raw="$emit('toggle-raw', $event)" />
 			</template>
 
-			<form-field-menu
-				:field="field"
-				:model-value="internalValue"
-				:initial-value="initialValue"
-				:restricted="isDisabled"
-				:disabled-options="disabledMenuOptions"
-				@update:model-value="emitValue($event)"
-				@unset="$emit('unset', $event)"
-				@edit-raw="showRaw = true"
-				@copy-raw="copyRaw"
-				@paste-raw="pasteRaw"
-			/>
+			<form-field-menu :field="field" :model-value="internalValue" :initial-value="initialValue" :restricted="isDisabled"
+				:disabled-options="disabledMenuOptions" @update:model-value="emitValue($event)" @unset="$emit('unset', $event)"
+				@edit-raw="showRaw = true" @copy-raw="copyRaw" @paste-raw="pasteRaw" />
 		</v-menu>
 		<div v-else-if="['full', 'fill'].includes(field.meta?.width ?? '') === false" class="label-spacer" />
 
-	<div>
-		<form-field-interface
-			:autofocus="autofocus"
-			:model-value="internalValue"
-			:field="field"
-			:loading="loading"
-			:batch-mode="batchMode"
-			:batch-active="batchActive"
-			:disabled="isDisabled"
-			:primary-key="primaryKey"
-			:raw-editor-enabled="rawEditorEnabled"
-			:raw-editor-active="rawEditorActive"
-			:direction="direction"
-			:is-filter-loading="isFilterLoading"
-			:is-unused-colls-hidden="isUnusedCollsHidden"
-			:search-collections="searchCollections"
-			@update:model-value="emitValue($event)"
-			@set-field-value="$emit('setFieldValue', $event)"
-			@add-filter="$emit('add-filter', $event)"
-			@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
-		/>
+		<div>
+			<form-field-interface :autofocus="autofocus" :model-value="internalValue" :field="field" :loading="loading"
+				:batch-mode="batchMode" :batch-active="batchActive" :disabled="isDisabled" :primary-key="primaryKey"
+				:raw-editor-enabled="rawEditorEnabled" :raw-editor-active="rawEditorActive" :direction="direction"
+				:is-filter-loading="isFilterLoading" :is-unused-colls-hidden="isUnusedCollsHidden"
+				:search-collections="searchCollections" @update:model-value="emitValue($event)"
+				@set-field-value="$emit('setFieldValue', $event)" @add-filter="$emit('add-filter', $event)"
+				@copy-to-clipboard="$emit('copy-to-clipboard', $event)">
 
-		<!-- DIALOG FOR CREATING BOOKMARKS FOR SELECT-DROPDOWN COMPONENT-->
-		<CreateBookmarksDialog
-			v-if="field.meta?.interface === 'select-dropdown'"
-			:is-disabled="!field.meta?.options?.choices || isBookmarksDrpdwnBtnDisabled"
-			:choices="field.meta?.options?.choices"
-			:field-name="field.field"
-			@create-dropdown-bookmarks="(...args) => $emit('create-dropdown-bookmarks', ...args)"
-		/>
-			<!-- @click="$emit(
-				'create-dropdown-bookmarks',
-				field.field, field.meta?.options?.choices ?? null
-			)" -->
-	</div>
+				<!-- DIALOG FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS-->
+				<template #add-bookmarks>
+					<CreateBookmarksDialog v-if="isBookmarkCreationAllowed(field.meta?.interface!, field.type!) && isCollItem"
+						:is-disabled="!field.meta?.options?.choices || isBookmarksDrpdwnBtnDisabled"
+						:choices="field.meta?.options?.choices ?? []" :field-name="field.field"
+						:field-interface="field.meta?.interface" :field-model-value="modelValue ?? null"
+						:is-allow-other="field.meta?.options?.allowOther ?? null"
+						@create-field-bookmarks="(...args) => $emit('create-field-bookmarks', ...args)" />
+				</template>
+			</form-field-interface>
 
-		<form-field-raw-editor
-			:show-modal="showRaw"
-			:field="field"
-			:current-value="internalValue"
-			:disabled="isDisabled"
-			@cancel="showRaw = false"
-			@set-raw-value="onRawValueSubmit"
-		/>
+		</div>
+
+		<form-field-raw-editor :show-modal="showRaw" :field="field" :current-value="internalValue" :disabled="isDisabled"
+			@cancel="showRaw = false" @set-raw-value="onRawValueSubmit" />
 
 		<small v-if="field.meta && field.meta.note" v-md="field.meta.note" class="type-note" />
 

@@ -378,9 +378,9 @@ function usePermissions() {
 			:sidebar-shadow="currentLayout?.sidebarShadow"
 		>
 			<template #title-outer:prepend>
-				<!-- <v-button class="header-icon" :class="{ archive }" rounded icon secondary disabled>
+				<v-button class="header-icon" :class="{ archive }" rounded icon secondary disabled>
 					<v-icon :name="archive ? 'archive' : currentCollection.icon" :color="currentCollection.color" />
-				</v-button> -->
+				</v-button>
 			</template>
 
 			<template #headline>

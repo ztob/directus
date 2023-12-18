@@ -40,6 +40,7 @@ const icon = computed<string>(() => {
 function emitValue(): void {
 	emit('update:modelValue', props.value);
 }
+
 </script>
 
 <template>
