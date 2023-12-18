@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useExtension } from '@/composables/use-extension';
 import { getDefaultInterfaceForType } from '@/utils/get-default-interface-for-type';
+import { Type, Width } from '@directus/types';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { FormField } from './types';
+import { isAllowedBookmarksForField } from './composables/is-allowed-bookmarks-for-field'
 
 const props = defineProps<{
 	field: FormField;
@@ -54,56 +56,56 @@ function isAddFilterIcon(field: FormField) {
 
 	return Boolean(field.meta?.options?._is_add_filter);
 }
+
+// LOGIC FOR CREATING BOOKMARKS FROM FIELD IN ITEMS
+function getClassForDropdown(fieldInterface: string | null | undefined, fieldWidth: Width | null | undefined, fieldType: Type) {
+	const classes: Record<string, boolean> = {};
+
+	if (!isAllowedBookmarksForField(fieldInterface, fieldType)) return classes
+
+	if (fieldWidth === 'full') {
+		classes['field-component_item-full'] = true;
+	} else if (fieldWidth?.startsWith('half') || fieldWidth === 'fill') {
+		classes['field-component_item-half'] = true;
+	}
+
+	return classes;
+}
 </script>
 
 <template>
-	<div
-		class="interface"
-		:class="{
-			subdued: batchMode && batchActive === false,
-		}"
-	>
+	<div class="interface" :class="{
+		subdued: batchMode && batchActive === false,
+	}">
 		<v-skeleton-loader v-if="loading && field.hideLoader !== true" />
 
 		<v-error-boundary v-if="interfaceExists && !rawEditorActive" :name="componentName">
-			<div class="field-component">
-				<component
-					:is="componentName"
-					v-bind="(field.meta && field.meta.options) || {}"
-					:autofocus="disabled !== true && autofocus"
-					:disabled="disabled"
-					:loading="loading"
-					:value="value"
-					:batch-mode="batchMode"
-					:batch-active="batchActive"
-					:width="(field.meta && field.meta.width) || 'full'"
-					:type="field.type"
-					:collection="field.collection"
-					:field="field.field"
-					:field-data="field"
-					:primary-key="primaryKey"
-					:length="field.schema && field.schema.max_length"
-					:direction="direction"
-					:is-unused-colls-hidden="isUnusedCollsHidden"
-					:search-collections="searchCollections"
-					@input="$emit('update:modelValue', $event)"
-					@set-field-value="$emit('setFieldValue', $event)"
-				/>
+			<div :class="getClassForDropdown(field.meta?.interface, field.meta?.width, field.type!)">
+				<div class="field-component">
+					<component :is="componentName" v-bind="(field.meta && field.meta.options) || {}"
+						:autofocus="disabled !== true && autofocus" :disabled="disabled" :loading="loading" :value="value"
+						:batch-mode="batchMode" :batch-active="batchActive" :width="(field.meta && field.meta.width) || 'full'"
+						:type="field.type" :collection="field.collection" :field="field.field" :field-data="field"
+						:primary-key="primaryKey" :length="field.schema && field.schema.max_length" :direction="direction"
+						:is-unused-colls-hidden="isUnusedCollsHidden" :search-collections="searchCollections"
+						@input="$emit('update:modelValue', $event)" @set-field-value="$emit('setFieldValue', $event)">
+					</component>
 
-				<span v-if="isMakeCopyable(field)" class="copy-icon">
-					<v-icon v-tooltip="t('Copy to clipboard')" name="copy" small @click="$emit('copy-to-clipboard', value)" />
-				</span>
+					<span v-if="isMakeCopyable(field)" class="copy-icon">
+						<v-icon v-tooltip="t('Copy to clipboard')" name="copy" small @click="$emit('copy-to-clipboard', value)" />
+					</span>
 
-				<span v-if="isAddFilterIcon(field)" class="add-icon">
-					<v-progress-circular v-if="isFilterLoading === field.field" small indeterminate />
+					<span v-if="isAddFilterIcon(field)" class="add-icon">
+						<v-progress-circular v-if="isFilterLoading === field.field" small indeterminate />
 
-					<v-icon
-						v-else
-						v-tooltip="t('Add to filters')"
-						name="add"
-						@click="$emit('add-filter', { field: field.field, value })"
-					/>
-				</span>
+						<v-icon v-else v-tooltip="t('Add to filters')" name="add"
+							@click="$emit('add-filter', { field: field.field, value })" />
+					</span>
+				</div>
+				<div>
+					<!-- SLOT FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS -->
+					<slot name="add-bookmarks" />
+				</div>
 			</div>
 
 			<template #fallback>
@@ -111,12 +113,8 @@ function isAddFilterIcon(field: FormField) {
 			</template>
 		</v-error-boundary>
 
-		<interface-system-raw-editor
-			v-else-if="rawEditorEnabled && rawEditorActive"
-			:value="value"
-			:type="field.type"
-			@input="$emit('update:modelValue', $event)"
-		/>
+		<interface-system-raw-editor v-else-if="rawEditorEnabled && rawEditorActive" :value="value" :type="field.type"
+			@input="$emit('update:modelValue', $event)" />
 
 		<v-notice v-else type="warning">
 			{{ t('interface_not_found', { interface: field.meta && field.meta.interface }) }}
@@ -165,6 +163,23 @@ function isAddFilterIcon(field: FormField) {
 
 	.copy-icon {
 		right: -35px;
+	}
+
+	&_item-full {
+		display: grid;
+		grid-template-columns: 100% auto;
+		align-items: center;
+		gap: 5px;
+	}
+
+	&_item-half {
+		display: grid;
+		grid-template-rows: auto auto;
+		gap: 5px;
+
+		:nth-child(2) {
+			justify-self: end;
+		}
 	}
 }
 </style>
