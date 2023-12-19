@@ -400,7 +400,10 @@ function stepDown() {
 		width: 20px; /* allows flex to grow/shrink to allow for slots */
 		height: 100%;
 		padding: var(--theme--form--field--input--padding);
-		padding-right: 0px;
+
+		// padding-right: 0px; so that if there is filter icon then input value doesnt go under the icon
+		// padding-right: 0px;
+
 		padding-left: 0px;
 		font-family: var(--v-input-font-family, var(--theme--fonts--sans--font-family));
 		background-color: transparent;
