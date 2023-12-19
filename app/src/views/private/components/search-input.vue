@@ -168,7 +168,7 @@ function clearAllFilters() {
 	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
 	border-radius: calc((40px + var(--theme--border-width) * 2) / 2);
 	&-filled {
-		width: 95px;
+		width: 90px;
 	}
 	transition:
 		width var(--slow) var(--transition),

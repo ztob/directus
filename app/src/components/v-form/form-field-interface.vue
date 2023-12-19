@@ -95,7 +95,8 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 						<v-icon v-tooltip="t('Copy to clipboard')" name="copy" small @click="$emit('copy-to-clipboard', value)" />
 					</span>
 
-					<span v-if="isAddFilterIcon(field)" class="add-icon">
+					<span v-if="isAddFilterIcon(field)"
+						:class="{ 'add-filter-with-icon': field.meta?.options?.iconRight, 'add-filter-without-icon': !field.meta?.options?.iconRight }">
 						<v-progress-circular v-if="isFilterLoading === field.field" small indeterminate />
 
 						<v-icon v-else v-tooltip="t('Add to filters')" name="add"
@@ -143,7 +144,8 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 .field-component {
 	position: relative;
 
-	.add-icon,
+	.add-filter-with-icon,
+	.add-filter-without-icon,
 	.copy-icon {
 		--v-icon-color: var(--foreground-subdued);
 
@@ -157,8 +159,16 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 		}
 	}
 
-	.add-icon {
-		right: -65px;
+	.add-filter-with-icon {
+		right: 45px;
+		--v-icon-color: var(--theme--foreground-subdued);
+		z-index: 1;
+	}
+
+	.add-filter-without-icon {
+		right: 17px;
+		--v-icon-color: var(--theme--foreground-subdued);
+		z-index: 1;
 	}
 
 	.copy-icon {
