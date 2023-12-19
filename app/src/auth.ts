@@ -6,6 +6,9 @@ import { useAppStore } from '@directus/stores';
 import { RouteLocationRaw } from 'vue-router';
 import { idleTracker } from './idle';
 import { useUserStore } from '@/stores/user';
+import { notify } from '@/utils/notify';
+import { AxiosError } from 'axios';
+import { translateAPIError } from '@/lang';
 
 type LoginCredentials = {
 	identifier?: string;
@@ -33,11 +36,31 @@ export async function login({ credentials, provider, share }: LoginParams): Prom
 	const appStore = useAppStore();
 	const userStore = useUserStore();
 
-	const response = await api.post<any>(getAuthEndpoint(provider, share), {
-		...credentials,
+	const isSwitchingUser = credentials.id != null;
 
-		mode: 'cookie',
-	});
+	let response;
+
+	try {
+		response = await api.post<any>(getAuthEndpoint(provider, share), {
+			...credentials,
+
+			mode: 'cookie',
+		});
+	} catch (error: AxiosError) {
+		if (isSwitchingUser) {
+			await logout({
+				reason: LogoutReason.ADD_USER,
+			});
+		} else {
+			notify({
+				error,
+				type: 'error',
+				title: translateAPIError(error),
+			});
+		}
+
+		return;
+	}
 
 	const accessToken = response.data.data.access_token;
 
@@ -55,8 +78,6 @@ export async function login({ credentials, provider, share }: LoginParams): Prom
 
 	appStore.accessTokenExpiry = Date.now() + response.data.data.expires;
 	appStore.authenticated = true;
-
-	const isSwitchingUser = credentials.id != null;
 
 	if (isSwitchingUser) {
 		userStore.saveCurrentUser();
