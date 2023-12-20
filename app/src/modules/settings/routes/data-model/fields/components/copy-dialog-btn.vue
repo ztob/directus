@@ -9,7 +9,7 @@ defineProps<{
 	savingCopy: boolean;
 }>();
 
-defineEmits(['confirm-copy', 'copy-name', 'cancel', 'create-copy']);
+defineEmits(['update:confirm-copy', 'update:copy-name', 'cancel', 'create-copy']);
 
 import { useI18n } from 'vue-i18n';
 
@@ -17,11 +17,8 @@ const { t } = useI18n();
 </script>
 
 <template>
-	<v-dialog
-		:model-value="confirmCopy"
-		@update:model-value="$emit('confirm-copy', $event)"
-		@esc="$emit('confirm-copy', $event)"
-	>
+	<v-dialog :model-value="confirmCopy" @update:model-value="$emit('update:confirm-copy', $event)"
+		@esc="$emit('update:confirm-copy', $event)">
 		<template #activator="{ on }">
 			<v-button v-tooltip.bottom="t('Copy Collection')" :disabled="isCopyBtnDisabled" rounded icon @click="on">
 				<v-icon name="content_copy" />
@@ -32,14 +29,8 @@ const { t } = useI18n();
 			<v-card-title>{{ t('Create a copy of this collection') }}</v-card-title>
 
 			<v-card-text>
-				<v-input
-					:model-value="copyName"
-					db-safe
-					autofocus
-					full-width
-					:placeholder="t('Collection Name...')"
-					@update:model-value="$emit('copy-name', $event)"
-				/>
+				<v-input :model-value="copyName" db-safe autofocus full-width :placeholder="t('Collection Name...')"
+					@update:model-value="$emit('update:copy-name', $event)" />
 			</v-card-text>
 
 			<v-card-actions>
