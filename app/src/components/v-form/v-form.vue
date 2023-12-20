@@ -40,10 +40,10 @@ interface Props {
 	direction?: string;
 	showDivider?: boolean;
 	inline?: boolean;
-	isFilterLoading: string;
+	isFilterLoading?: string;
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
-	isBookmarksDrpdwnBtnDisabled: boolean;
+	isBookmarksDrpdwnBtnDisabled?: boolean;
 	isCollItem?: boolean
 }
 

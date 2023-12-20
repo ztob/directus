@@ -30,10 +30,10 @@ interface Props {
 	rawEditorActive?: boolean;
 	disabledMenuOptions?: MenuOptions[];
 	direction?: string;
-	isFilterLoading: string;
+	isFilterLoading?: string;
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
-	isBookmarksDrpdwnBtnDisabled: boolean;
+	isBookmarksDrpdwnBtnDisabled?: boolean;
 	isCollItem?: boolean
 }
 

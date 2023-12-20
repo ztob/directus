@@ -8,7 +8,7 @@ import { useUserStore } from '@/stores/user';
 import { Collection } from '@/types/collections';
 import { useSync } from '@directus/composables';
 import { get, getEndpoint } from '@directus/utils';
-import type { Field, Filter, Item, ShowSelect } from '@directus/types';
+import type { Field, Filter, Item, Preset, ShowSelect } from '@directus/types';
 import { ComponentPublicInstance, Ref, computed, inject, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
@@ -17,6 +17,8 @@ import { copyToClipboard } from '@/utils/copy-to-clipboard';
 import { notify } from '@/utils/notify';
 import api from '@/api';
 import { nextTick } from 'vue';
+import { createDropdownBookmarks } from '@/utils/create-dropdown-bookmarks';
+import { useAddFilterFromInterface } from '@/composables/use-add-filter-from-interface';
 
 defineOptions({ inheritAttrs: false });
 
@@ -54,6 +56,10 @@ interface Props {
 	sideDrawerOpen: boolean;
 	sideDrawerItemKey: string | null;
 	refresh: () => void;
+	filter?: Filter | null
+	layout?: string | null
+	layoutOptions?: Record<string, any>
+	saveCurrentAsBookmark?: (overrides: Partial<Preset>) => Promise<any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -77,6 +83,7 @@ const emit = defineEmits([
 	'update:fields',
 	'update:sideDrawerOpen',
 	'update:sideDrawerItemKey',
+	'update:filter'
 ]);
 
 const { t } = useI18n();
@@ -87,6 +94,7 @@ const tableHeadersWritable = useSync(props, 'tableHeaders', emit);
 const limitWritable = useSync(props, 'limit', emit);
 const sideDrawerOpenWritable = useSync(props, 'sideDrawerOpen', emit);
 const sideDrawerItemKey = useSync(props, 'sideDrawerItemKey', emit);
+
 const itemDrawer = ref();
 const interceptPageLoad = ref<boolean>(false);
 const newItemIndex = ref<number>(0);
@@ -317,7 +325,7 @@ async function copyValues(fieldKey: string) {
 	}
 }
 
-// CHANGED
+// LOGIC FOR ADDING HEADER FOR TABLE AFTER A CERTAIN HEADER
 const addFieldFromHeaderValue = ref(null)
 const openMenuId = ref<string | null>(null)
 
@@ -327,6 +335,34 @@ function onActivator(toggle: () => void, id: string) {
 	toggle()
 }
 
+// LOGIC FOR ADDING FILTER FROM SAME PAGE VIEW SECTION
+const filterHelper = computed({
+	get() {
+		return props.filter
+	},
+	set(filter) {
+		emit('update:filter', filter)
+	}
+})
+
+const { isFilterLoading, onAddFilter } = useAddFilterFromInterface(
+	filterHelper,
+	() => {
+		sideDrawerOpenWritable.value = false
+	},
+)
+
+// LOGIC FOR CREATING BOOKMARKS FROM INTERFACE WHEN SAME PAGE VIEW
+function onAddBookmarks(...bookmarkData: Record<string, any>[]) {
+	createDropdownBookmarks(
+		...bookmarkData,
+		collection.value,
+		props.saveCurrentAsBookmark,
+		props.layoutOptions,
+		props.layout,
+		() => sideDrawerOpenWritable.value = false
+	)
+}
 </script>
 
 <template>
@@ -521,6 +557,10 @@ function onActivator(toggle: () => void, id: string) {
 			v-model:active="sideDrawerOpenWritable"
 			:collection="collection"
 			:primary-key="sideDrawerItemKey"
+			is-coll-item
+			:is-filter-loading="isFilterLoading"
+			@add-filter="onAddFilter"
+			@create-field-bookmarks="onAddBookmarks"
 			@input="saveItem"
 		>
 			<template #actions>

@@ -557,7 +557,15 @@ function usePermissions() {
 				</template>
 			</v-info>
 
-			<component :is="`layout-${layout || 'tabular'}`" v-else v-bind="layoutState">
+			<component
+				:is="`layout-${layout || 'tabular'}`"
+				v-else
+				v-bind="layoutState"
+				v-model:filter="filter"
+				:layout="layout"
+				:layout-options="layoutOptions"
+				:save-current-as-bookmark="saveCurrentAsBookmark"
+			>
 				<template #no-results>
 					<v-info :title="t('no_results')" icon="search" center>
 						{{ t('no_results_copy') }}

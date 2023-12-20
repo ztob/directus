@@ -32,6 +32,8 @@ interface Props {
 	// that relates back to the parent item.
 	circularField?: string | null;
 	junctionFieldLocation?: string;
+	isCollItem?: boolean
+	isFilterLoading?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -45,6 +47,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
 	'update:active': [value: boolean];
 	input: [value: Record<string, any>];
+	'create-field-bookmarks': [value: any];
+	'add-filter': [value: any];
 }>();
 
 const { t, te } = useI18n();
@@ -434,6 +438,10 @@ function useActions() {
 					:primary-key="primaryKey"
 					:fields="fields"
 					:validation-errors="!junctionField ? validationErrors : undefined"
+					is-coll-item
+					:is-filter-loading="isFilterLoading"
+					@add-filter="(...args) => $emit('add-filter', ...args)"
+					@create-field-bookmarks="(...args) => $emit('create-field-bookmarks', ...args)"
 				/>
 			</div>
 		</div>
