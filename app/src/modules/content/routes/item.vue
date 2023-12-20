@@ -26,7 +26,8 @@ import ContentNavigation from '../components/navigation.vue';
 import VersionMenu from '../components/version-menu.vue';
 import ContentNotFound from './not-found.vue';
 import { useClipboard } from '@/composables/use-clipboard';
-import { createDropdownBookmarks } from '../composables/create-dropdown-bookmarks';
+import { createDropdownBookmarks } from '@/utils/create-dropdown-bookmarks';
+import { useAddFilterFromInterface } from '@/composables/use-add-filter-from-interface';
 
 interface Props {
 	collection: string;
@@ -441,62 +442,37 @@ function revert(values: Record<string, any>) {
 	};
 }
 
-// CHANGED
-const isFilterLoading = ref('');
-
-watch(
-	() => filter.value,
-	() => {
-		setTimeout(() => {
-			isFilterLoading.value = '';
-			router.push(`/content/${collection.value}`);
-		}, 900);
+// LOGIC FOR ADDING FILTER FROM ITEMS INTERFACES
+const filterHelper = computed({
+	get() {
+		return filter.value
 	},
-	{ deep: true }
-);
-
-// UPDATE FILTER VALUE
-window.addFilterFromInterface = (newFilter: any) => {
-	if (!filter.value) {
-		filter.value = {
-			_and: [newFilter],
-		};
-	} else {
-		const isFilterExists = filter.value._and.find((filter) => {
-			for (const key in filter) {
-				if (key in newFilter && JSON.stringify(filter[key]) === JSON.stringify(newFilter[key])) return true;
-			}
-
-			return false;
-		});
-
-		if (isFilterExists) {
-			router.push(`/content/${collection.value}`);
-			isFilterLoading.value = '';
-			return;
-		}
-
-		filter.value = {
-			_and: [...filter.value._and, newFilter],
-		};
+	set(newFilter) {
+		filter.value = newFilter
 	}
-};
+})
 
-interface AddFilterArgs {
-	field: string;
-	value: string | number | boolean;
-}
+const { isFilterLoading, onAddFilter } = useAddFilterFromInterface(
+	filterHelper,
+	(isWait?: boolean) => {
+		if(isWait === false) {
+			router.push(`/content/${collection.value}`)
+		} else {
+			setTimeout(() => router.push(`/content/${collection.value}`), 900)
+		}
+	}
+)
 
-function onAddFilter(args: AddFilterArgs) {
-	const { field, value } = args;
-
-	isFilterLoading.value = field;
-
-	const newFilter = {
-		[field]: value !== null ? { _eq: value } : { _null: '' },
-	};
-
-	window.addFilterFromInterface(newFilter);
+// LOGIC FOR CREATING BOOKMARKS FROM INTERFACE WHEN BROWSING ITEMS
+function onAddBookmarks(...bookmarkData: Record<string, any>[]) {
+	createDropdownBookmarks(
+		...bookmarkData,
+		collection.value,
+		saveCurrentAsBookmark,
+		layoutOptions.value,
+		layout.value,
+		navigateBack
+	)
 }
 </script>
 
@@ -747,15 +723,7 @@ function onAddFilter(args: AddFilterArgs) {
 			is-coll-item
 			@add-filter="onAddFilter"
 			@copy-to-clipboard="copyToClipboard"
-			@create-field-bookmarks="(...args) =>
-				createDropdownBookmarks(
-					...args,
-					collection,
-					saveCurrentAsBookmark,
-					layoutOptions,
-					layout,
-					navigateBack
-				)"
+			@create-field-bookmarks="onAddBookmarks"
 		/>
 
 		<v-dialog v-model="confirmLeave" @esc="confirmLeave = false">
