@@ -34,7 +34,7 @@ const { edits, item, saving, loading, save, remove, deleting } = useItem(ref('di
 
 // LOGIC TO CREATE A COLLECTION COPY
 const { confirmCopy, copyName, savingCopy, isCopyBtnDisabled, createCopy, onCopyCancel } = useCreateCopyCollection(
-	toRef(() => (collectionInfo.value?.collection) as string),
+	collection,
 	item,
 	edits
 )
@@ -121,12 +121,10 @@ function discardAndLeave() {
 
 			<!-- COPPY COLLECTION LOGIC -->
 			<CopyDialogBtn
-				:confirm-copy="confirmCopy"
-				:copy-name="copyName"
+				v-model:confirm-copy="confirmCopy"
+				v-model:copy-name="copyName"
 				:is-copy-btn-disabled="isCopyBtnDisabled"
 				:saving-copy="savingCopy"
-				@confirm-copy="confirmCopy = $event"
-				@copy-name="copyName = $event"
 				@cancel="onCopyCancel"
 				@create-copy="createCopy"
 			/>
