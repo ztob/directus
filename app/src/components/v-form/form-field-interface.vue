@@ -19,7 +19,7 @@ const props = defineProps<{
 	rawEditorEnabled?: boolean;
 	rawEditorActive?: boolean;
 	direction?: string;
-	isFilterLoading: string;
+	isFilterLoading?: string;
 	isUnusedCollsHidden?: boolean | null;
 	searchCollections?: string | null;
 }>();
@@ -180,6 +180,13 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 		grid-template-columns: 100% auto;
 		align-items: center;
 		gap: 5px;
+			@media (max-width: 970px) {
+				grid-template-columns: auto;
+
+			:nth-child(2) {
+				justify-self: end;
+			}
+		}
 	}
 
 	&_item-half {

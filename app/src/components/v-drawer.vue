@@ -40,8 +40,8 @@ const mainEl = ref<Element>();
 provide('main-element', mainEl);
 
 const sidebarWidth = 220;
-// Half of the space of the drawer (856 / 2 = 428)
-const sidebarMaxWidth = 428;
+// Half of the space of the drawer (886 / 2 = 443)
+const sidebarMaxWidth = 443;
 
 const internalActive = computed({
 	get() {
@@ -137,7 +137,8 @@ const internalActive = computed({
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	max-width: 856px;
+	// 856
+	max-width: 886px;
 	height: 100%;
 	background-color: var(--theme--background);
 
