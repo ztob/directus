@@ -3,7 +3,7 @@ import { useFieldsStore } from '@/stores/fields';
 import { useRelationsStore } from '@/stores/relations';
 import { useCollectionsStore } from '@/stores/collections';
 import api from '@/api';
-import { Relation } from '@directus/types';
+import { Field, Relation } from '@directus/types';
 import { notify } from '@/utils/notify';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -15,8 +15,8 @@ import { unexpectedError } from '@/utils/unexpected-error';
 const restrictedRelations = ['m2o', 'm2m', 'm2a', 'translations', 'file', 'files', 'alias', 'o2a'];
 
 export function useCreateCopyCollection(
-	parentCollName: Ref<Readonly<string>>,
-	item: Ref<Readonly<Record<string, any> | null>>,
+	parentCollName: Ref<string>,
+	item: Ref<Record<string, any> | null>,
 	edits: Ref<Record<string, any>>,
 ) {
 	const fieldsStore = useFieldsStore();
@@ -78,9 +78,7 @@ export function useCreateCopyCollection(
 			const storeHydrations: Promise<void>[] = [];
 
 			// set system relations
-			const collCopyFields = fieldsForCopy.map((f) => f.field);
-
-			const relations = getSystemRelations(collCopyFields, copyCollName);
+			const relations = getSystemRelations(fieldsForCopy, copyCollName);
 
 			if (relations.length > 0) {
 				const requests = relations.map((relation) => api.post('/relations', relation));
@@ -97,7 +95,7 @@ export function useCreateCopyCollection(
 
 			edits.value = {};
 
-			// do this so that the copy is fetched and refreshed and user can see all data up date
+			// do this so that the copy is fetched and refreshed and user can see all data up to date
 			router.replace(`/settings/data-model`);
 			let timeout = null;
 
@@ -114,16 +112,16 @@ export function useCreateCopyCollection(
 		}
 	}
 
-	function getSystemRelations(fields: string[], copyCollName: string) {
+	function getSystemRelations(fields: Field[], copyCollName: string) {
 		const relations: Partial<Relation>[] = [];
 
-		const userCreatedField = fields.find((f) => f === 'user_created');
-		const userUpdatedField = fields.find((f) => f === 'user_updated');
+		const userCreatedField = fields.find((f) => f.meta?.special?.includes('user-created'));
+		const userUpdatedField = fields.find((f) => f.meta?.special?.includes('user-updated'));
 
 		if (userCreatedField) {
 			relations.push({
 				collection: copyCollName,
-				field: userCreatedField,
+				field: userCreatedField.field,
 				related_collection: 'directus_users',
 				schema: {},
 			});
@@ -132,7 +130,7 @@ export function useCreateCopyCollection(
 		if (userUpdatedField) {
 			relations.push({
 				collection: copyCollName,
-				field: fields.find((f) => f === 'user_updated'),
+				field: userUpdatedField.field,
 				related_collection: 'directus_users',
 				schema: {},
 			});
