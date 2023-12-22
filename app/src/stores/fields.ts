@@ -221,6 +221,7 @@ export const useFieldsStore = defineStore('fieldsStore', () => {
 
 				return field;
 			});
+			
 		} catch (error) {
 			// reset the changes if the api sync failed
 			fields.value = stateClone;
