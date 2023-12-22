@@ -162,7 +162,7 @@ function useForm() {
 
 			if (newField.field) result.push(newField);
 			return result;
-		}, [] as Field[]);
+		}, [] as Field[])
 
 		fields = pushGroupOptionsDown(fields);
 
@@ -170,6 +170,8 @@ function useForm() {
 	});
 
 	const fieldsMap = computed<Record<string, TFormField | undefined>>(() => {
+		// console.log(Object.fromEntries(fieldsWithConditions.value.map((field) => [field.field, field])));
+
 		return Object.fromEntries(fieldsWithConditions.value.map((field) => [field.field, field]));
 	});
 

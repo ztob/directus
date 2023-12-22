@@ -5,15 +5,19 @@ import { usePreset } from '@/composables/use-preset';
 import LayoutSidebarDetail from '@/views/private/components/layout-sidebar-detail.vue';
 import SearchInput from '@/views/private/components/search-input.vue';
 import { useLayout } from '@directus/composables';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SettingsNavigation from '../../components/navigation.vue';
+import { useFieldsStore } from '@/stores/fields';
+import { hideFormUnusedItemsField } from '@/composables/use-hide-unused-items';
 
 type Item = {
 	[field: string]: any;
 };
 
 const { t } = useI18n();
+
+const fieldsStore = useFieldsStore();
 
 const layoutRef = ref();
 const selection = ref<Item[]>([]);
@@ -70,6 +74,9 @@ function clearFilters() {
 	filter.value = null;
 	search.value = null;
 }
+
+// LOGIC TO HIDE THE HIDE_UNUSED_COLLS FIELD FOR WEBHOOKS
+hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 </script>
 
 <template>

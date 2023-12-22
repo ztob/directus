@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useCollectionsStore } from '@/stores/collections';
-import { computed, ref, toRef } from 'vue';
+import { computed, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useHideUnusedColls } from '@/modules/settings/routes/webhooks/useHideUnusedColls';
+import { useHideUnusedCollsInWebhooks } from '@/composables/use-hide-unused-items';
 
 const props = withDefaults(
 	defineProps<{
@@ -40,33 +40,29 @@ const collections = computed(() => {
 });
 
 const items = computed(() => {
-	const isHideCollsAllowed = props.isUnusedCollsHidden && props.collection === 'directus_webhooks'
-
 	if (props.searchCollections) {
-		return mapPairsForColl(collections.value)
-			.filter(coll => coll.text.toLowerCase().includes(props.searchCollections!.toLowerCase()));
+		return searchCollectionsFunc()
 	}
 
-	return mapPairsForColl(isHideCollsAllowed ? usedCollections.value : collections.value)
-
-	function mapPairsForColl(colls: typeof collections.value) {
-		return colls.map((coll) => ({
-			text: coll.name,
-			value: coll.collection,
-		}))
-	}
+	return mapPairsForColl(isHideCollsAllowed.value ? usedCollections.value : collections.value)
 });
+
+function mapPairsForColl(colls: typeof collections.value) {
+	return colls.map((coll) => ({
+		text: coll.name,
+		value: coll.collection,
+	}))
+}
 
 // THE LOGIC TO HIDE UNUSED COLLS IN DIRECTUS_WEBHOOKS (only)
 // path: directus\app\src\modules\settings\routes\webhooks\item.vue =>
 // v-form => form-field => form-field-interface.vue => this file
-const collectionsRef = ref<HTMLElement | null>(null);
 
-const { usedCollections } = useHideUnusedColls(
-	toRef(() => collections.value),
+const { usedCollections, collectionsRef, isHideCollsAllowed, searchCollectionsFunc } = useHideUnusedCollsInWebhooks(
+	collections,
 	toRef(() => props.value),
 	toRef(() => props.collection),
-	toRef(() => collectionsRef.value),
+	mapPairsForColl,
 	toRef(() => props.isUnusedCollsHidden),
 	toRef(() => props.searchCollections),
 )

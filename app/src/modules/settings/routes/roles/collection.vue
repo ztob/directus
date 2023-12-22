@@ -4,10 +4,12 @@ import { fetchAll } from '@/utils/fetch-all';
 import { translate } from '@/utils/translate-object-values';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Role } from '@directus/types';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../components/navigation.vue';
+import { useFieldsStore } from '@/stores/fields';
+import { hideFormUnusedItemsField } from '@/composables/use-hide-unused-items';
 
 type RoleBaseFields = 'id' | 'name' | 'description' | 'icon';
 
@@ -22,6 +24,8 @@ type RoleItem = Pick<Role, RoleBaseFields> &
 	};
 
 const { t } = useI18n();
+
+const fieldsStore = useFieldsStore();
 
 const router = useRouter();
 
@@ -136,6 +140,9 @@ watch(searchRoles, () => {
 		rolesSearchCopy.value = roles.value.filter(role => role.name.toLowerCase().includes(searchRoles.value!.toLowerCase()))
 	}
 })
+
+// LOGIC TO HIDE THE HIDE_UNUSED_COLLS FIELD FOR ROLES
+hideFormUnusedItemsField('directus_roles', 'hide_unused_colls')
 </script>
 
 <template>

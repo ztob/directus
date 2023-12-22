@@ -4,12 +4,12 @@ import { useCollectionsStore } from '@/stores/collections';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Permission, Collection } from '@directus/types';
 import { orderBy } from 'lodash';
-import { computed, provide, ref, watch } from 'vue';
+import { computed, provide, ref, watch, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { appMinimalPermissions, appRecommendedPermissions } from '../../app-permissions';
 import PermissionsOverviewHeader from './permissions-overview-header.vue';
 import PermissionsOverviewRow from './permissions-overview-row.vue';
-import { useNotificationsStore } from '@/stores/notifications';
+import { useHideUnusedCollsInRoles } from '@/composables/use-hide-unused-items';
 
 const props = defineProps<{
 	role?: string;
@@ -20,24 +20,18 @@ const props = defineProps<{
 	searchCollections: string | null;
 }>();
 
-type WatchArguments = [boolean, Permission[], boolean];
-
 const emit = defineEmits(['permission-change']);
 
 const { t } = useI18n();
 
 const collectionsStore = useCollectionsStore();
 
-const notificationsStore = useNotificationsStore();
-
 const { permissions, fetchPermissions, refreshing } = usePermissions();
 const { resetActive, resetSystemPermissions, resetting } = useReset();
 
 const regularCollections = computed(() => {
 	if (props.searchCollections !== null) {
-		return collectionsStore.databaseCollections.filter((coll) =>
-			coll.collection.toLowerCase().includes(props.searchCollections!)
-		);
+		return searchRegularColls()
 	}
 
 	// unused collections logic
@@ -46,11 +40,7 @@ const regularCollections = computed(() => {
 
 const systemCollections = computed(() => {
 	if (props.searchCollections !== null) {
-		const searchFilteredColls = collectionsStore.collections.filter(
-			(coll) => coll.collection.toLowerCase().includes(props.searchCollections!) && isSystemColl(coll)
-		);
-
-		return orderBy(searchFilteredColls, 'name');
+		return orderBy(searchSystemColls(), 'name');
 	}
 
 	// unused collections logic
@@ -65,148 +55,24 @@ function isSystemColl(coll: Collection) {
 	return coll.collection.startsWith('directus_') === true;
 }
 
-// THE LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
-const usedRegularCollections = ref<Collection[]>([]);
-const usedSystemCollections = ref<Collection[]>([]);
-const modifiedPermsSearchedCollsNames = ref<string[]>([]); // ['collection name']
-
-const isPermsFetched = ref(false);
-const isUsedCollsCalculated = ref(false);
-
-function filterUnusedSystemColls(permissions: Permission[], collections: Collection[]) {
-	return collections.filter((coll) => {
-		// if the permission is minimal then it should always stay
-		const isMinimalPermission = appMinimalPermissions.some((perm) => perm.collection === coll.collection);
-		if (isMinimalPermission) return true;
-		if (!isSystemColl(coll)) return false;
-
-		return permissions.some((perm) => perm.collection === coll.collection);
-	});
-}
-
-function filterUnusedRegularColls(permissions: Permission[], collections: Collection[]) {
-	return collections.filter((coll) => permissions.some((perm) => perm.collection === coll.collection));
-}
-
-watch(
-	() => [props.isUnusedCollsHidden, permissions.value, isPermsFetched.value],
-	([_, newPerms, __]: WatchArguments, [___, oldPerms, ____]: WatchArguments) => {
-		if (!props.isUnusedCollsHidden) {
-			isUsedCollsCalculated.value = false;
-			return;
-		}
-
-		// make sure we fetched permissions(we can have them or not)
-		if (!isPermsFetched.value) return;
-
-		// if reset true then we change system collections only
-		if (resetting.value) {
-			usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections);
-			return;
-		}
-
-		// if perms are modified when searching collections
-		if (props.searchCollections !== null) {
-			const isPermsAdded = newPerms.length > oldPerms.length;
-			const isPermsDeleted = newPerms.length < oldPerms.length;
-
-			if (isPermsAdded) {
-				addPermissionsModifiedFromSearch('add');
-			} else if (isPermsDeleted) {
-				addPermissionsModifiedFromSearch('delete');
-			}
-
-			return;
-		}
-
-		if (isUsedCollsCalculated.value) return;
-
-		usedRegularCollections.value = filterUnusedRegularColls(permissions.value, collectionsStore.databaseCollections);
-		usedSystemCollections.value = filterUnusedSystemColls(permissions.value, collectionsStore.collections);
-
-		const dbCollsLength = collectionsStore.databaseCollections.length;
-		const systemCollsLength = collectionsStore.collections.filter(isSystemColl).length;
-
-		const collsHidden =
-			dbCollsLength + systemCollsLength - usedRegularCollections.value.length - usedSystemCollections.value.length;
-
-		const collNum = collsHidden > 1 ? 'Collections' : 'Collection';
-
-		notificationsStore.add({
-			title: `${collsHidden} Unused ${collNum} Hidden`,
-			icon: 'visibility_off',
-			type: 'info',
-		});
-
-		isUsedCollsCalculated.value = true;
-
-		function addPermissionsModifiedFromSearch(action: string) {
-			const filterBy = action === 'add' ? newPerms : oldPerms;
-			const filterFrom = action === 'add' ? oldPerms : newPerms;
-
-			const modifiedPerms = filterBy
-				.filter((newP) => !filterFrom.some((oldP) => newP.id === oldP.id))
-				.map((perm) => perm.collection);
-
-			modifiedPermsSearchedCollsNames.value = Array.from(
-				new Set([...modifiedPermsSearchedCollsNames.value, ...modifiedPerms])
-			);
-		}
-	},
-	{ immediate: true }
-);
-
-watch(() => props.searchCollections, (newSearch, oldSearch) => {
-	// add or delete collections if some perms were changed when searching
-	if (props.searchCollections === null && modifiedPermsSearchedCollsNames.value.length) {
-		modifiedPermsSearchedCollsNames.value.forEach(colName => {
-			const isPermExist = permissions.value.some(perm => perm.collection === colName)
-			const isSystem = colName.startsWith('directus_') === true
-
-				if (isPermExist) {
-					if (isSystem) {
-						const isExistInSystem = usedSystemCollections.value.some((col) => col.collection === colName);
-
-						if (!isExistInSystem) {
-							const collToAdd = collectionsStore.collections.find((col) => col.collection === colName);
-							usedSystemCollections.value = [...usedSystemCollections.value!, collToAdd!];
-						}
-					} else {
-						const isExistInRegular = usedRegularCollections.value.some((col) => col.collection === colName);
-
-						if (!isExistInRegular) {
-							const collToAdd = collectionsStore.databaseCollections.find((col) => col.collection === colName);
-							usedRegularCollections.value = [...usedRegularCollections.value!, collToAdd!];
-						}
-					}
-				} else {
-					if (isSystem) {
-						usedSystemCollections.value = usedSystemCollections.value.filter((systemCol) => {
-							const isMinimalCollPermission = appMinimalPermissions.some((perm) => perm.collection === colName);
-							return isMinimalCollPermission || systemCol.collection !== colName;
-						});
-					} else {
-						usedRegularCollections.value = usedRegularCollections.value.filter((perm) => perm.collection !== colName);
-					}
-				}
-			});
-
-			modifiedPermsSearchedCollsNames.value = [];
-		}
-
-	// handle system colls visibility when searching
-	if(newSearch?.length && oldSearch?.length) return
-
-	if(newSearch !== null) {
-		systemVisible.value = true
-	} else {
-		systemVisible.value = lastSystemVisibleState.value
-	}
-})
+// LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
+const {
+	usedRegularCollections,
+	usedSystemCollections,
+	isPermsFetched,
+	systemVisible,
+	lastSystemVisibleState,
+	searchRegularColls,
+	searchSystemColls
+} = useHideUnusedCollsInRoles(
+	toRef(() => props.isUnusedCollsHidden),
+	permissions,
+	resetting,
+	toRef(() => props.searchCollections),
+	isSystemColl,
+	appMinimalPermissions
+)
 // ---------------------------------------
-
-const systemVisible = ref(false);
-const lastSystemVisibleState = ref(false)
 
 function onSystemColsVisibillityBtn() {
 	systemVisible.value = !systemVisible.value
