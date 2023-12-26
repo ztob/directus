@@ -170,8 +170,6 @@ function useForm() {
 	});
 
 	const fieldsMap = computed<Record<string, TFormField | undefined>>(() => {
-		// console.log(Object.fromEntries(fieldsWithConditions.value.map((field) => [field.field, field])));
-
 		return Object.fromEntries(fieldsWithConditions.value.map((field) => [field.field, field]));
 	});
 
