@@ -162,7 +162,7 @@ function useForm() {
 
 			if (newField.field) result.push(newField);
 			return result;
-		}, [] as Field[]);
+		}, [] as Field[])
 
 		fields = pushGroupOptionsDown(fields);
 

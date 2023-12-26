@@ -2,11 +2,26 @@
 import { computed } from 'vue';
 import LatencyIndicator from './latency-indicator.vue';
 import { useServerStore } from '@/stores/server';
+import { useUserStore } from '@/stores/user';
 
 const serverStore = useServerStore();
+const userStore = useUserStore();
 
-const name = computed(() => serverStore.info?.project?.project_name);
-const descriptor = computed(() => serverStore.info?.project?.project_descriptor);
+const name = computed(() => {
+	// @ts-ignore
+	const rolePrName = userStore.currentUser?.role?.project_name
+	if (rolePrName) return rolePrName
+
+	return serverStore.info?.project?.project_name
+});
+
+const descriptor = computed(() => {
+	// @ts-ignore
+	const rolePrDescriptor = userStore.currentUser?.role?.project_descriptor
+	if (rolePrDescriptor) return rolePrDescriptor
+
+	return serverStore.info?.project?.project_descriptor
+});
 </script>
 
 <template>

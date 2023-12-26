@@ -7,10 +7,11 @@ import { useServerStore } from '@/stores/server';
 import { useUserStore } from '@/stores/user';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
 import UsersInvite from '@/views/private/components/users-invite.vue';
-import { computed, onMounted, ref, toRefs } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
+import HideUnusedAndSearch from '../../../components/hide-unused-and-search.vue'
 import PermissionsOverview from './components/permissions-overview.vue';
 import RoleInfoSidebarDetail from './components/role-info-sidebar-detail.vue';
 import ModulePermissions from './components/module-permissions.vue';
@@ -20,6 +21,7 @@ import { unexpectedError } from '@/utils/unexpected-error';
 import { Permission } from '@directus/types';
 import { useSettingsStore } from '@/stores/settings';
 import { ModuleBarItem, PreviewExtra } from './types';
+import { useHideUnusedItemsSwitcher } from '@/composables/use-hide-unused-items';
 
 const props = defineProps<{
 	primaryKey: string;
@@ -200,39 +202,14 @@ async function saveAsCopy() {
 }
 
 // LOGIC FOR HIDING UNUSED COLLECTIONS (all that are - x x x x x)
-const isUnusedCollsHidden = ref(false)
-const searchCollections = ref<string | null>(null)
-
-const isCollsLoading = ref(false)
-
-async function hideUnusedCollections() {
-	isUnusedCollsHidden.value = !isUnusedCollsHidden.value
-
-	try {
-		const { data } = await api.patch(`roles/${primaryKey.value}`, {
-			hide_unused_colls: isUnusedCollsHidden.value
-		})
-
-		// set isUnusedCollsHidden to make sure the value is the same as it is in DB
-		isUnusedCollsHidden.value = data.data.hide_unused_colls
-	} catch (error) {
-		console.log(error);
-	}
-}
-
-// set isUnusedCollsHidden when the role loads
-onMounted(async () => {
-	try {
-		isCollsLoading.value = true
-		const { data } = await api.get(`roles/${primaryKey.value}`)
-
-		isUnusedCollsHidden.value = data.data.hide_unused_colls
-	} catch (error) {
-		console.log(error);
-	} finally {
-		isCollsLoading.value = false
-	}
-})
+const {
+	isUnusedItemsHidden: isUnusedCollsHidden,
+	searchItems: searchCollections,
+	hideUnusedItemsToggle: hideUnusedCollsToggle
+} = useHideUnusedItemsSwitcher(
+	() => false,
+	`/roles/${primaryKey.value}`
+)
 </script>
 
 <template>
@@ -248,34 +225,13 @@ onMounted(async () => {
 		</template>
 		<template #actions>
 
-			<!-- LOGIC TO HIDE UNUSED COLLECTIONS  -->
-			<v-input
-				v-model="searchCollections"
-				class="search"
-				type="search"
-				:placeholder="t('search_collection')"
-				:full-width="false"
-				:disabled="isCollsLoading"
-			>
-				<template #prepend>
-					<v-icon name="search" outline />
-				</template>
-				<template #append>
-					<v-icon v-if="searchCollections" clickable class="clear" name="close" @click.stop="searchCollections = null" />
-				</template>
-			</v-input>
-
-			<v-button
-				v-tooltip.bottom="t('Hide Unused Collections')"
-				rounded
-				icon
-				secondary
-				:kind="!isUnusedCollsHidden ? 'normal' : 'success'"
-				:loading="isCollsLoading"
-				@click="hideUnusedCollections">
-				<v-icon name="visibility_off" />
-			</v-button>
-			<!-- ----------------------------------------- -->
+			<!-- LOGIC TO HIDE UNUSED COLLECTIONS AND SEARCH FOR COLLS  -->
+			<HideUnusedAndSearch
+				v-model:search-val="searchCollections"
+				:is-unused-colls-hidden="isUnusedCollsHidden"
+				@hide-unused-toggle="hideUnusedCollsToggle"
+			/>
+			<!------------------------------------------- -->
 
 			<v-dialog v-if="[1, 2].includes(+primaryKey) === false" v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
@@ -327,7 +283,7 @@ onMounted(async () => {
 
 			<!-- permissions for collections -->
 			<div v-else>
-				<v-progress-linear v-if="isCollsLoading" colorful indeterminate value="70"/>
+				<v-progress-linear v-if="isUnusedCollsHidden === null" colorful indeterminate value="70"/>
 				<permissions-overview
 					v-else
 					:role="primaryKey"
@@ -393,17 +349,4 @@ onMounted(async () => {
 .roles .v-notice {
 	margin-bottom: 48px;
 }
-
-.v-input.search {
-	height: var(--v-button-height);
-	--border-radius: calc(44px / 2);
-	width: 200px;
-	margin-left: auto;
-
-	@media (min-width: 600px) {
-		width: 300px;
-		margin-top: 0px;
-	}
-}
-
 </style>
