@@ -410,6 +410,10 @@ class FlowManager {
 
 		try {
 			let result = await handler(options, {
+				operation: {
+					id: operation.id,
+					key: operation.key,
+				},
 				services,
 				env,
 				database: getDatabase(),
@@ -418,7 +422,7 @@ class FlowManager {
 				data: keyedData,
 				accountability: null,
 				...context,
-			});
+			} as any);
 
 			// Validate that the operations result is serializable and thus catching the error inside the flow execution
 			JSON.stringify(result ?? null);
