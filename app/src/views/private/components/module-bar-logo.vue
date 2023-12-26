@@ -4,13 +4,19 @@ import { useSettingsStore } from '@/stores/settings';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getRootPath } from '@/utils/get-root-path';
+import { useUserStore } from '@/stores/user';
 
 const { t } = useI18n();
 
 const requestsStore = useRequestsStore();
 const settingsStore = useSettingsStore();
+const userStore = useUserStore();
 
 const customLogoPath = computed<string | null>(() => {
+	// @ts-ignore
+	const rolePrLogo = userStore.currentUser?.role?.project_logo
+	if(rolePrLogo) return `${getRootPath()}assets/${rolePrLogo}`
+
 	if (settingsStore.settings === null) return null;
 	if (!settingsStore.settings?.project_logo) return null;
 	return `${getRootPath()}assets/${settingsStore.settings.project_logo}`;
@@ -27,10 +33,20 @@ watch(
 	},
 );
 
-const url = computed(() => settingsStore.settings?.project_url);
+const url = computed(() => {
+	const nativeUrl = settingsStore.settings?.project_url
+	// @ts-ignore
+	const rolePrUrl = userStore.currentUser?.role?.project_URL
+
+	return rolePrUrl || nativeUrl;
+});
 
 const urlTooltip = computed(() => {
-	return settingsStore.settings?.project_url ? t('view_project') : false;
+	const nativeUrl = settingsStore.settings?.project_url
+	// @ts-ignore
+	const rolePrUrl = userStore.currentUser?.role?.project_URL
+
+	return (rolePrUrl || nativeUrl) ? t('view_project') : false;
 });
 
 function stopSpinnerIfQueueIsEmpty() {

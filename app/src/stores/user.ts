@@ -12,6 +12,10 @@ type ShareUser = {
 		id: string;
 		admin_access: false;
 		app_access: false;
+		project_name: string | null;
+		project_descriptor: string | null;
+		project_URL: string | null;
+		project_logo: string | null;
 	};
 };
 
@@ -50,7 +54,18 @@ export const useUserStore = defineStore({
 			this.loading = true;
 
 			try {
-				const fields = ['*', 'avatar.id', 'role.admin_access', 'role.app_access', 'role.id', 'role.enforce_tfa'];
+				const fields = [
+					'*',
+					'avatar.id',
+					'role.admin_access',
+					'role.app_access',
+					'role.id',
+					'role.enforce_tfa',
+					'role.project_name',
+					'role.project_descriptor',
+					'role.project_URL',
+					'role.project_logo',
+				];
 
 				const { data } = await api.get(`/users/me`, { params: { fields } });
 
