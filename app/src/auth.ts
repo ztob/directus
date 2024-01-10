@@ -1,14 +1,14 @@
 import api, { resumeQueue } from '@/api';
 import { DEFAULT_AUTH_PROVIDER } from '@/constants';
 import { dehydrate, hydrate } from '@/hydrate';
+import { translateAPIError } from '@/lang';
 import { router } from '@/router';
-import { useAppStore } from '@directus/stores';
-import { RouteLocationRaw } from 'vue-router';
-import { idleTracker } from './idle';
 import { useUserStore } from '@/stores/user';
 import { notify } from '@/utils/notify';
+import { useAppStore } from '@directus/stores';
 import { AxiosError } from 'axios';
-import { translateAPIError } from '@/lang';
+import { RouteLocationRaw } from 'vue-router';
+import { idleTracker } from './idle';
 
 type LoginCredentials = {
 	identifier?: string;
@@ -38,7 +38,14 @@ export async function login({ credentials, provider, share }: LoginParams): Prom
 
 	const isSwitchingUser = credentials.id != null;
 
-	let response;
+	let response: {
+		data: {
+			data: {
+				access_token: any;
+				expires: number;
+			};
+		};
+	};
 
 	try {
 		response = await api.post<any>(getAuthEndpoint(provider, share), {
@@ -232,9 +239,11 @@ export async function logout(optionsRaw: LogoutOptions = {}): Promise<void> {
 	if (options.navigate === true) {
 		const location: RouteLocationRaw = {
 			path: `/login`,
-			query: { reason: options.reason },
+			query: {
+				reason: options.reason,
+			},
 		};
 
-		router.push(location);
+		await router.push(location);
 	}
 }

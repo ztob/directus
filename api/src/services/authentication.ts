@@ -14,6 +14,7 @@ import {
 	InvalidCredentialsError,
 	InvalidProviderError,
 	TokenExpiredError,
+	UnprocessableContentError,
 	UserSuspendedError,
 } from '@directus/errors';
 import { InvalidOtpError } from '@directus/errors';
@@ -66,12 +67,17 @@ export class AuthenticationService {
 		if (isSwitchingUser) {
 			userId = payload['id'];
 
-			session = await this.knex('directus_sessions')
-				.where('user', '=', userId)
-				.andWhere('ip', '=', this.accountability?.ip ?? '')
-				.andWhere('user_agent', '=', this.accountability?.userAgent ?? '')
-				.andWhere('origin', '=', this.accountability?.origin ?? '')
-				.first();
+			const sessions = await this.knex('directus_sessions').where('user', userId);
+
+			if (!sessions.length) {
+				await stall(STALL_TIME, timeStart);
+
+				throw new UnprocessableContentError({
+					reason: 'A session for requested user was not found.',
+				});
+			}
+
+			session = sessions.find((session) => session.user_agent === this.accountability?.userAgent);
 
 			if (!session) {
 				await stall(STALL_TIME, timeStart);
@@ -80,7 +86,7 @@ export class AuthenticationService {
 			}
 
 			if (session.expires < new Date()) {
-				await this.knex('directus_sessions').delete().where('token', '=', session.token);
+				await this.knex('directus_sessions').where('token', '=', session.token).delete();
 
 				await stall(STALL_TIME, timeStart);
 
@@ -223,7 +229,7 @@ export class AuthenticationService {
 				}
 			}
 
-			await this.knex('directus_sessions').delete().where('expires', '<', new Date()).orWhere('user', '=', user.id);
+			await this.knex('directus_sessions').where('expires', '<', new Date()).delete();
 
 			session = await this.knex('directus_sessions')
 				.returning('token')
