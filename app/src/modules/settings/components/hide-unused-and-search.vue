@@ -13,7 +13,7 @@ defineEmits(['update:search-val', 'hide-unused-toggle'])
 
 <template>
 	<v-input :model-value="searchVal" class="search" type="search" :placeholder="t('search_collection')" :full-width="false"
-		:disabled="isUnusedCollsHidden === null" @update:model-value="$emit('update:search-val', $event)">
+		@update:model-value="$emit('update:search-val', $event)">
 		<template #prepend>
 			<v-icon name="search" outline />
 		</template>
@@ -22,7 +22,7 @@ defineEmits(['update:search-val', 'hide-unused-toggle'])
 		</template>
 	</v-input>
 
-	<v-button v-tooltip.bottom="t('Hide Unused Collections')" rounded icon secondary
+	<v-button v-if="isUnusedCollsHidden !== null" v-tooltip.bottom="t('Hide Unused Collections')" rounded icon secondary
 		:kind="!isUnusedCollsHidden ? 'normal' : 'success'" :loading="isUnusedCollsHidden === null"
 		@click="$emit('hide-unused-toggle', $event)">
 		<v-icon name="visibility_off" />

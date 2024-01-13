@@ -26,6 +26,8 @@ import TranslationsCollection from './routes/translations/collection.vue';
 import TranslationsItem from './routes/translations/item.vue';
 import WebhooksCollection from './routes/webhooks/collection.vue';
 import WebhooksItem from './routes/webhooks/item.vue';
+import StorageCollection from './routes/keyvalue-storage/collection.vue';
+import StorageItem from './routes/keyvalue-storage/item.vue';
 
 export default defineModule({
 	id: 'settings',
@@ -185,6 +187,23 @@ export default defineModule({
 					name: 'settings-webhooks-item',
 					path: ':primaryKey',
 					component: WebhooksItem,
+					props: true,
+				},
+			],
+		},
+		{
+			path: 'storage',
+			component: RouterPass,
+			children: [
+				{
+					name: 'settings-storage-collection',
+					path: '',
+					component: StorageCollection,
+				},
+				{
+					name: 'settings-storage-item',
+					path: ':primaryKey',
+					component: StorageItem,
 					props: true,
 				},
 			],

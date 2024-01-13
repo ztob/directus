@@ -5,6 +5,7 @@ import { Field, Relation } from '@directus/types';
 import { computed, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import FieldListItem from './field-list-item.vue';
 import { FieldTree } from './types';
+import { GlobalItem } from '@/types/global-item';
 
 interface Props {
 	disabled?: boolean;
@@ -17,6 +18,8 @@ interface Props {
 		fields: Field[];
 		relations: Relation[];
 	} | null;
+	globalStorage?: GlobalItem[];
+	globalsLoading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -38,7 +41,9 @@ const menuActive = ref(false);
 const { collection, inject } = toRefs(props);
 const { treeList, loadFieldRelations } = useFieldTree(collection, inject);
 
-watch(() => props.modelValue, setContent, { immediate: true });
+watch(() => [props.modelValue, props.globalsLoading], () => {
+	if(!props.globalsLoading) setContent()
+}, { immediate: true });
 
 const grouplessTree = computed(() => {
 	return flattenFieldGroups(treeList.value);
@@ -243,6 +248,19 @@ function setContent() {
 				}
 
 				const fieldKey = part.replace(/({|})/g, '').trim();
+
+				// USE GLOBAL STORAGE
+				if (fieldKey.startsWith('KEYVALUE.')) {
+
+					const key = fieldKey.substring(9).trim();
+					const value = props.globalStorage?.find(item => item.key === key)?.value
+
+					if(value) {
+						return `<button contenteditable="false" data-field="${key}" ${props.disabled ? 'disabled' : ''}>
+							${key}</button>`;
+						}
+					}
+
 				const fieldPath = fieldKey.split('.');
 
 				for (let i = 0; i < fieldPath.length; i++) {
