@@ -39,6 +39,7 @@ import usersRouter from './controllers/users.js';
 import utilsRouter from './controllers/utils.js';
 import versionsRouter from './controllers/versions.js';
 import webhooksRouter from './controllers/webhooks.js';
+import keyvalueRouter from './controllers/keyvalue.js';
 import {
 	isInstalled,
 	validateDatabaseConnection,
@@ -299,6 +300,7 @@ export default async function createApp(): Promise<express.Application> {
 	app.use('/utils', utilsRouter);
 	app.use('/versions', versionsRouter);
 	app.use('/webhooks', webhooksRouter);
+	app.use('/keyvalue', keyvalueRouter);
 
 	// Register custom endpoints
 	await emitter.emitInit('routes.custom.before', { app });

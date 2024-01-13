@@ -4,7 +4,7 @@ import { hideDragImage } from '@/utils/hide-drag-image';
 import { useSync } from '@directus/composables';
 import type { ShowSelect } from '@directus/extensions';
 import { clone, throttle } from 'lodash';
-import { computed, ref, useSlots, watch } from 'vue';
+import { computed, ref, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
 import { Header, Sort } from './types';
@@ -172,8 +172,6 @@ function toggleManualSort() {
 		});
 	}
 }
-
-watch(() =>props.addAfterHeader, () => console.log(props.addAfterHeader))
 </script>
 
 <template>

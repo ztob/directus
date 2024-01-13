@@ -325,6 +325,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 
 				const primaryKey = item[primaryKeyField.value.field];
 
+
 				if (props.selectMode || selection.value?.length > 0) {
 					if (selection.value?.includes(primaryKey) === false) {
 						selection.value = selection.value.concat(primaryKey);

@@ -23,6 +23,11 @@ const dataItems = [
 		to: `/settings/webhooks`,
 	},
 	{
+		icon: 'storage',
+		name: t('KeyValue Storage'),
+		to: `/settings/storage`,
+	},
+	{
 		icon: 'bolt',
 		name: t('settings_flows'),
 		to: `/settings/flows`,
