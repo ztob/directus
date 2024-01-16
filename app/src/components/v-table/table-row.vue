@@ -110,6 +110,15 @@ const { t } = useI18n();
 					:class="{ visible: displayHovered === header.value }"
 					@click.stop="$emit('add-filter', header.value, item[header.value])"
 				/>
+
+				<a v-if="header.field?.interfaceOptions?._is_url_mode" :href="`${item[header.value]}`" target="_blank" @click.stop>
+					<v-icon
+						v-tooltip="t('Open link')"
+						name="open_in_new"
+						class="url-icon"
+						:class="{ visible: displayHovered === header.value }"
+					/>
+				</a>
 			</div>
 		</td>
 
@@ -150,7 +159,8 @@ const { t } = useI18n();
 			gap: 5px;
 
 			.add-icon,
-			.copy-icon {
+			.copy-icon,
+			.url-icon {
 				--v-icon-color: var(--foreground-subdued);
 
 				opacity: 0;
