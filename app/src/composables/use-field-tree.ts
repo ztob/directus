@@ -191,6 +191,7 @@ export function useFieldTree(
 	}
 
 	function loadFieldRelations(path: string) {
+
 		if (!visitedPaths.value.has(path)) {
 			visitedPaths.value.add(path);
 

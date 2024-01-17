@@ -6,7 +6,8 @@ import { Query } from '@directus/types';
 import { getFieldsFromTemplate } from '@directus/utils';
 import { omit } from 'lodash';
 import { render } from 'micromustache';
-import { computed, inject, ref, toRefs } from 'vue';
+import { computed, inject, onMounted, ref, toRefs } from 'vue';
+import { useGlobalStorage } from '@/composables/use-global-storage';
 
 type Link = {
 	icon: string;
@@ -29,6 +30,11 @@ const values = inject('values', ref<Record<string, any>>({}));
 
 const { collection, primaryKey } = toRefs(props);
 
+// USE GLOBAL STORAGE (key value pairs)
+const { globalStorage, getStorageItems } = useGlobalStorage('directus_keyvalue?mode=usage')
+
+onMounted(() => getStorageItems())
+
 const query = computed(() => {
 	const fields = new Set();
 
@@ -36,8 +42,11 @@ const query = computed(() => {
 		getFieldsFromTemplate(link.url ?? '').forEach((field) => fields.add(field));
 	});
 
+	// get rid of global storage items to not cause errors
+	const filteredFields = Array.from(fields).filter(f => !(f as string).includes('KEYVALUE'))
+
 	return {
-		fields: Array.from(fields),
+		fields: filteredFields,
 	} as Query;
 });
 
@@ -48,6 +57,7 @@ const fullItem = computed(() => {
 	const itemValue = item.value ?? {};
 
 	for (const field of fields.value) {
+
 		if (
 			field.meta?.special?.some((special) => RELATIONAL_TYPES.includes(special as (typeof RELATIONAL_TYPES)[number]))
 		) {
@@ -61,7 +71,28 @@ const fullItem = computed(() => {
 });
 
 const linksParsed = computed(() => {
+
 	return props.links.map((link) => {
+		const isStorageItemLink = link.url?.includes('KEYVALUE.')
+
+		// use global storage item as link
+		if(isStorageItemLink) {
+			const parsedLink = omit<Record<string, any>>(link, ['url']);
+			const itemKey = link.url?.replace(/({|})/g, '').trim().substring(9)
+
+			const itemValue = globalStorage.value.find(item => item.key === itemKey)?.value
+
+			if (itemValue) {
+				if (itemValue.startsWith('/')) {
+					parsedLink.to = itemValue;
+				} else {
+					parsedLink.href = itemValue;
+				}
+			}
+
+			return parsedLink
+		}
+
 		const parsedLink = omit<Record<string, any>>(link, ['url']);
 		const linkValue = render(link.url ?? '', fullItem.value ?? {});
 

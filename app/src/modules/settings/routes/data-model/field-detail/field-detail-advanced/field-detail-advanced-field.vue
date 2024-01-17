@@ -12,6 +12,7 @@ const required = syncFieldDetailStoreProperty('field.meta.required', false);
 
 const _add_filter = syncFieldDetailStoreProperty('field.meta.options._is_add_filter', false);
 const _make_copyable = syncFieldDetailStoreProperty('field.meta.options._is_make_copyable', false);
+const _is_url_mode = syncFieldDetailStoreProperty('field.meta.options._is_url_mode', false);
 
 const note = syncFieldDetailStoreProperty('field.meta.note');
 const translations = syncFieldDetailStoreProperty('field.meta.translations');
@@ -45,6 +46,11 @@ const isGenerated = computed(() => field.value.schema?.is_generated);
 		<div class="field half-left">
 			<div class="label type-label">Field Copy</div>
 			<v-checkbox v-model="_make_copyable" label="Make Copyable" block />
+		</div>
+
+		<div class="field half-right">
+			<div class="label type-label">Url Mode</div>
+			<v-checkbox v-model="_is_url_mode" label="Enable Url Mode" block />
 		</div>
 
 		<div v-if="type !== 'group'" class="field full">

@@ -91,9 +91,26 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 						@input="$emit('update:modelValue', $event)" @set-field-value="$emit('setFieldValue', $event)">
 					</component>
 
-					<span v-if="isMakeCopyable(field)" class="copy-icon">
-						<v-icon v-tooltip="t('Copy to clipboard')" name="copy" small @click="$emit('copy-to-clipboard', value)" />
-					</span>
+					<div
+						:class="field.meta?.options?._is_make_copyable && field.meta?.options?._is_url_mode
+							? 'field-component__two-appendings' : ''"
+					>
+						<span v-if="isMakeCopyable(field)" class="copy-icon">
+							<v-icon v-tooltip="t('Copy to clipboard')" name="copy" small @click="$emit('copy-to-clipboard', value)" />
+						</span>
+
+						<a
+							v-if="field.meta?.options?._is_url_mode"
+							:href="(value as any)"
+							target="_blank"
+							:class="field.meta?.options?._is_make_copyable && field.meta?.options?._is_url_mode
+							? 'link-icon-second' : 'link-icon'">
+							<v-icon
+								v-tooltip="t('Open link')"
+								name="open_in_new"
+							/>
+						</a>
+					</div>
 
 					<span v-if="isAddFilterIcon(field)"
 						:class="{ 'add-filter-with-icon': field.meta?.options?.iconRight, 'add-filter-without-icon': !field.meta?.options?.iconRight }">
@@ -146,7 +163,7 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 
 	.add-filter-with-icon,
 	.add-filter-without-icon,
-	.copy-icon {
+	.copy-icon, .link-icon, .link-icon-second {
 		--v-icon-color: var(--foreground-subdued);
 
 		cursor: pointer;
@@ -171,8 +188,12 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 		z-index: 1;
 	}
 
-	.copy-icon {
+	.copy-icon, .link-icon {
 		right: -35px;
+	}
+
+	.link-icon-second {
+		right: -65px;
 	}
 
 	&_item-full {
@@ -197,6 +218,11 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 		:nth-child(2) {
 			justify-self: end;
 		}
+	}
+
+	&__two-appendings {
+		display: flex;
+		gap: 5px;
 	}
 }
 </style>

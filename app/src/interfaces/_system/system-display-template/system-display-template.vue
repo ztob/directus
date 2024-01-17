@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useCollectionsStore } from '@/stores/collections';
 import type { Field } from '@directus/types';
-import { computed, inject, ref, unref } from 'vue';
+import { computed, inject, onMounted, ref, unref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useGlobalStorage } from '@/composables/use-global-storage';
 
 const props = defineProps<{
 	value: string | null;
@@ -76,6 +77,11 @@ const injectValue = computed(() => {
 
 	return { fields: [fakeVersionField] };
 });
+
+// USE GLOBAL STORAGE (key value pairs)
+const { globalStorage, globalsLoading, getStorageItems } = useGlobalStorage('directus_keyvalue?mode=usage')
+
+onMounted(() => getStorageItems())
 </script>
 
 <template>
@@ -90,6 +96,8 @@ const injectValue = computed(() => {
 			:model-value="value"
 			:disabled="disabled"
 			:inject="injectValue"
+			:global-storage="globalStorage"
+			:globals-loading="globalsLoading"
 			@update:model-value="$emit('input', $event)"
 		/>
 	</div>

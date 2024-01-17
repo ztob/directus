@@ -50,6 +50,6 @@ export const validateBatch = (scope: 'read' | 'update' | 'delete') =>
 		if (error) {
 			throw new InvalidPayloadError({ reason: error.details[0]!.message });
 		}
-
+		
 		return next();
 	});

@@ -252,6 +252,7 @@ function useForm() {
 function setValue(fieldKey: string, value: any, opts?: { force?: boolean }) {
 	const field = fieldsMap.value[fieldKey];
 
+
 	if (opts?.force !== true && (!field || isDisabled(field))) return;
 
 	const edits = props.modelValue ? cloneDeep(props.modelValue) : {};

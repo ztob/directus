@@ -10,6 +10,7 @@ const accessibleSystemCollections = {
 	directus_translations: { route: '/settings/translations' },
 	directus_webhooks: { route: '/settings/webhooks' },
 	directus_flows: { route: '/settings/flows' },
+	directus_keyvalue: { route: '/settings/storage' },
 } as const;
 
 function isSystemCollection(collection: string) {
@@ -28,7 +29,6 @@ function isAccessibleSystemCollection(collection: string): collection is keyof t
  */
 export function getSystemCollectionRoute(collection: string) {
 	if (isAccessibleSystemCollection(collection)) return accessibleSystemCollections[collection].route;
-
 	return '';
 }
 

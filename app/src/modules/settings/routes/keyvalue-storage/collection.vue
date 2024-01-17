@@ -8,7 +8,6 @@ import { useLayout } from '@directus/composables';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SettingsNavigation from '../../components/navigation.vue';
-import { hideFormUnusedItemsField } from '@/composables/use-hide-unused-items';
 
 type Item = {
 	[field: string]: any;
@@ -16,16 +15,14 @@ type Item = {
 
 const { t } = useI18n();
 
+const { layout, layoutOptions, layoutQuery, filter, search } = usePreset(ref('directus_keyvalue'));
+const { layoutWrapper } = useLayout(layout);
+const currentLayout = useExtension('layout', layout);
+const { confirmDelete, deleting, deleteError, batchDelete } = useBatchDelete();
+const { addNewLink, batchLink } = useLinks();
+
 const layoutRef = ref();
 const selection = ref<Item[]>([]);
-
-const { layout, layoutOptions, layoutQuery, filter, search } = usePreset(ref('directus_webhooks'));
-const { addNewLink, batchLink } = useLinks();
-const { confirmDelete, deleting, deleteError, batchDelete } = useBatchDelete();
-
-const { layoutWrapper } = useLayout(layout);
-
-const currentLayout = useExtension('layout', layout);
 
 async function refresh() {
 	await layoutRef.value?.state?.refresh?.();
@@ -45,9 +42,8 @@ function useBatchDelete() {
 
 		const batchPrimaryKeys = selection.value;
 
-		// await api.delete(`/webhooks/${batchPrimaryKeys}`);
 		try {
-			await api.delete(`/webhooks`, {
+			await api.delete(`/keyvalue`, {
 				data: batchPrimaryKeys
 			});
 
@@ -63,12 +59,12 @@ function useBatchDelete() {
 
 function useLinks() {
 	const addNewLink = computed<string>(() => {
-		return `/settings/webhooks/+`;
+		return `/settings/storage/+`;
 	});
 
 	const batchLink = computed<string>(() => {
 		const batchPrimaryKeys = selection.value;
-		return `/settings/webhooks/${batchPrimaryKeys}`;
+		return `/settings/storage/${batchPrimaryKeys}`;
 	});
 
 	return { addNewLink, batchLink };
@@ -78,10 +74,8 @@ function clearFilters() {
 	filter.value = null;
 	search.value = null;
 }
-
-// LOGIC TO HIDE THE HIDE_UNUSED_COLLS FIELD FOR WEBHOOKS
-hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 </script>
+
 
 <template>
 	<component
@@ -93,18 +87,16 @@ hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 		v-model:layout-query="layoutQuery"
 		:filter="filter"
 		:search="search"
-		collection="directus_webhooks"
-	>
+		collection="directus_keyvalue">
 		<private-view
-			:title="t('webhooks')"
+			:title="t('KeyValue Storage')"
 			:small-header="currentLayout?.smallHeader"
-			:header-shadow="currentLayout?.headerShadow"
-		>
+			:header-shadow="currentLayout?.headerShadow">
 			<template #headline><v-breadcrumb :items="[{ name: t('settings'), to: '/settings' }]" /></template>
 
 			<template #title-outer:prepend>
 				<v-button class="header-icon" rounded icon exact disabled>
-					<v-icon name="anchor" />
+					<v-icon name="storage" />
 				</v-button>
 			</template>
 
@@ -113,7 +105,7 @@ hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 			</template>
 
 			<template #actions>
-				<search-input v-model="search" v-model:filter="filter" collection="directus_webhooks" />
+				<search-input v-model="search" v-model:filter="filter" collection="directus_keyvalue" />
 
 				<v-dialog v-if="selection.length > 0" v-model="confirmDelete" @esc="confirmDelete = false">
 					<template #activator="{ on }">
@@ -140,7 +132,7 @@ hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 					<v-icon name="edit" />
 				</v-button>
 
-				<v-button v-tooltip.bottom="t('create_webhook')" rounded icon :to="addNewLink">
+				<v-button v-tooltip.bottom="t('Create Item')" rounded icon :to="addNewLink">
 					<v-icon name="add" />
 				</v-button>
 			</template>
@@ -157,11 +149,11 @@ hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 				</template>
 
 				<template #no-items>
-					<v-info :title="t('webhooks_count', 0)" icon="anchor" center>
-						{{ t('no_webhooks_copy') }}
+					<v-info :title="t('No Key-Value Items')" icon="storage" center>
+						{{ t('No key-value items have been configured yet') }}
 
 						<template #append>
-							<v-button :to="{ path: '/settings/webhooks/+' }">{{ t('create_webhook') }}</v-button>
+							<v-button :to="{ path: '/settings/storage/+' }">{{ t('Create Item') }}</v-button>
 						</template>
 					</v-info>
 				</template>
@@ -169,7 +161,7 @@ hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 
 			<template #sidebar>
 				<sidebar-detail icon="info" :title="t('information')" close>
-					<div v-md="t('page_help_settings_webhooks_collection')" class="page-description" />
+					<div v-md="t('Browse Key Value Items - Lists all key-value items within the project')" class="page-description" />
 				</sidebar-detail>
 				<layout-sidebar-detail v-model="layout">
 					<component :is="`layout-options-${layout}`" v-bind="layoutState" />
@@ -191,6 +183,7 @@ hideFormUnusedItemsField('directus_webhooks', 'hide_unused_colls')
 		</private-view>
 	</component>
 </template>
+
 
 <style lang="scss" scoped>
 .header-icon {
