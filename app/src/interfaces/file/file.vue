@@ -9,8 +9,12 @@ import { readableMimeType } from '@/utils/readable-mime-type';
 import { unexpectedError } from '@/utils/unexpected-error';
 import DrawerFiles from '@/views/private/components/drawer-files.vue';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
-import { computed, ref, toRefs } from 'vue';
+import { computed, ref, toRefs, Ref, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {TextFiles}from './types'
+import {useDocumentFiles} from './useDocumentFiles';
+import FileActionButtons from './file-action-buttons.vue'
+import FilePreview from './file-preview.vue'
 
 type FileInfo = {
 	id: string;
@@ -24,6 +28,8 @@ const props = defineProps<{
 	folder?: string;
 	collection: string;
 	field: string;
+	// eslint-disable-next-line vue/prop-name-casing
+	allowed_files: TextFiles[] | undefined
 }>();
 
 const emit = defineEmits<{
@@ -131,6 +137,27 @@ function useURLImport() {
 		}
 	}
 }
+
+// LOGIC TO RENDER DOCX AND TXT TEMPLATES
+const formValues: Ref<Record<string, any>> | undefined = inject('values')
+
+const {
+		previewDocxRef,
+		templateTxtText,
+		isShowPreview,
+		loadingFileStatus,
+		error,
+		fileType,
+		downloadDocxTemplate,
+		downloadTxtTemplate,
+		openPreview
+	} = useDocumentFiles(
+		file,
+		formValues,
+		props.allowed_files ?? [],
+		collection,
+		() => emit('input', null),
+	)
 </script>
 
 <template>
@@ -213,6 +240,25 @@ function useURLImport() {
 				</template>
 			</v-list>
 		</v-menu>
+
+		<!-- .DOCX PREVIEW -->
+		<file-action-buttons
+			:loading-file-status="loadingFileStatus"
+			:file-error="error"
+			:file-type="fileType"
+			@open-preview="openPreview"
+			@download-docx="downloadDocxTemplate"
+			@download-txt="downloadTxtTemplate"
+		/>
+
+		<file-preview
+			v-model="isShowPreview"
+			:file-type="fileType"
+		>
+			<div v-show="fileType === '.docx'" ref="previewDocxRef"></div>
+			<div v-show="fileType === '.txt'" style="white-space: pre-wrap;">{{ templateTxtText }}</div>
+		</file-preview>
+		<!-- ----------- -->
 
 		<drawer-item
 			v-if="file"
