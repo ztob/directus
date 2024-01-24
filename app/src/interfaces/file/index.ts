@@ -23,6 +23,27 @@ export default defineInterface({
 				note: '$t:interfaces.system-folder.field_hint',
 			},
 		},
+		{
+			field: 'allowed_files',
+			name: 'Allowed Files',
+			meta: {
+				interface: 'select-multiple-dropdown',
+				options: {
+					choices: [
+						{
+							text: '.docx',
+							value: '.docx',
+						},
+						{
+							text: '.txt',
+							value: '.txt',
+						},
+					],
+				},
+				width: 'half',
+				note: 'By default ALL files are allowed',
+			},
+		},
 	],
 	recommendedDisplays: ['file'],
 	preview: PreviewSVG,
