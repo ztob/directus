@@ -5,6 +5,7 @@ export function searchFieldsHelper(fields: Field[], search: string): Field[] {
 	return fields.filter(
 		(field) =>
 			field.name.toLowerCase().includes(search.toLowerCase().trim()) ||
-			field.type.toLowerCase().includes(search.toLowerCase().trim()),
+			field.type.toLowerCase().includes(search.toLowerCase().trim()) ||
+			field.meta?.interface?.toLowerCase().includes(search.toLowerCase().trim()),
 	);
 }
