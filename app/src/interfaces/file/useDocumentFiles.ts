@@ -1,6 +1,7 @@
 import { ComputedRef, Ref, computed, nextTick, ref, watch } from 'vue';
 import { FileType, LoadingFileStatus, TextFiles } from './types';
 import { useFieldsStore } from '@/stores/fields';
+import { FormFieldValues } from '@/types/v-form';
 
 import Docxtemplater from 'docxtemplater';
 import TxtTemplater from 'docxtemplater/js/text.js';
@@ -34,7 +35,7 @@ export function useDocumentFiles(
 	collectionName: Ref<string>,
 	primaryKey: Readonly<Ref<string | number | undefined>>,
 	isItemSavable: Readonly<Ref<boolean>>,
-	itemEdits: Readonly<Ref<{ [field: string]: any } | null>>,
+	itemEdits: Readonly<Ref<FormFieldValues | null>>,
 	fieldName: Readonly<Ref<string>>,
 	setInterfaceValueToNull: () => void,
 ): UseDocumentFilesFuncReturn {
@@ -152,7 +153,6 @@ export function useDocumentFiles(
 
 			const item = await api.get(`/items/${collName}/${itemId}?fields=*.*.*`);
 			const initialItemData = item.data.data;
-			// console.log(initialItemData);
 
 			const m2mFields = getM2MFields(collName);
 

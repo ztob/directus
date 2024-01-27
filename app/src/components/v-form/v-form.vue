@@ -14,16 +14,15 @@ import type { MenuOptions } from './form-field-menu.vue';
 import FormField from './form-field.vue';
 import type { FormField as TFormField } from './types';
 import ValidationErrors from './validation-errors.vue';
+import { FormFieldValues } from '@/types/v-form';
 
-type FieldValues = {
-	[field: string]: any;
-};
+
 
 interface Props {
 	collection?: string;
 	fields?: Field[];
-	initialValues?: FieldValues | null;
-	modelValue?: FieldValues | null;
+	initialValues?: FormFieldValues | null;
+	modelValue?: FormFieldValues | null;
 	loading?: boolean;
 	batchMode?: boolean;
 	primaryKey?: string | number;

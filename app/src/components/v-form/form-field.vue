@@ -13,6 +13,7 @@ import FormFieldRawEditor from './form-field-raw-editor.vue';
 import type { FormField } from './types';
 import CreateBookmarksDialog from './create-bookmarks-dialog.vue'
 import { isAllowedBookmarksForField } from './composables/is-allowed-bookmarks-for-field'
+import { FormFieldValues } from '@/types/v-form';
 
 interface Props {
 	field: FormField;
@@ -36,7 +37,7 @@ interface Props {
 	isBookmarksDrpdwnBtnDisabled?: boolean;
 	isCollItem?: boolean
 	isItemSavable?: boolean
-	itemEdits: { [field: string]: any } | null
+	itemEdits: FormFieldValues | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
