@@ -9,12 +9,13 @@ import { readableMimeType } from '@/utils/readable-mime-type';
 import { unexpectedError } from '@/utils/unexpected-error';
 import DrawerFiles from '@/views/private/components/drawer-files.vue';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
-import { computed, ref, toRefs, Ref, inject, watch, toRef } from 'vue';
+import { computed, ref, toRefs, Ref, inject, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {TextFiles}from './types'
 import {useDocumentFiles} from './useDocumentFiles';
 import FileActionButtons from './file-action-buttons.vue'
 import FilePreview from './file-preview.vue'
+import { FormFieldValues } from '@/types/v-form';
 
 type FileInfo = {
 	id: string;
@@ -32,7 +33,7 @@ const props = defineProps<{
 	allowed_files: TextFiles[] | undefined
 	primaryKey: any
 	isItemSavable?: boolean
-	itemEdits: { [field: string]: any } | null
+	itemEdits: FormFieldValues | null
 }>();
 
 const emit = defineEmits<{
@@ -143,8 +144,6 @@ function useURLImport() {
 
 // LOGIC TO RENDER DOCX AND TXT TEMPLATES
 const formValues: Ref<Record<string, any>> | undefined = inject('values')
-// watch(formValues, () => console.log(formValues.value), { immediate: true })
-// watch(() => props.itemEdits, () => console.log(props.itemEdits), { immediate: true })
 
 const {
 		previewDocxRef,

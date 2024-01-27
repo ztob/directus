@@ -6,6 +6,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { FormField } from './types';
 import { isAllowedBookmarksForField } from './composables/is-allowed-bookmarks-for-field'
+import { FormFieldValues } from '@/types/v-form';
 
 const props = defineProps<{
 	field: FormField;
@@ -23,7 +24,7 @@ const props = defineProps<{
 	isUnusedCollsHidden?: boolean | null;
 	searchCollections?: string | null;
 	isItemSavable?: boolean
-	itemEdits: { [field: string]: any } | null
+	itemEdits: FormFieldValues | null
 }>();
 
 defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard']);
