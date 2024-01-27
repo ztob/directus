@@ -21,6 +21,7 @@ const props = withDefaults(
 		field: Field;
 		disabled?: boolean;
 		fields?: Field[];
+		isShowFieldsType: boolean | null
 	}>(),
 	{
 		fields: () => [],
@@ -183,7 +184,14 @@ const isShowSpecPosAddIcon = ref(false)
 				>
 					<div class="label-inner">
 						<span class="name">{{ field.field }}</span>
-						<span v-if="interfaceName" class="interface">{{ interfaceName }}</span>
+						<span v-if="interfaceName && !isShowFieldsType" class="interface">{{ interfaceName }}</span>
+
+						<!-- show field type for system (_directus) collections fields -->
+						<span v-if="isShowFieldsType" class="field-type">
+							{{ (interfaceName ?? '') +
+							`${interfaceName ? '(' : ''}${formatTitle(field.type)}${interfaceName ? ')' : ''}`
+							}}
+						</span>
 					</div>
 				</div>
 			</template>
@@ -225,7 +233,7 @@ const isShowSpecPosAddIcon = ref(false)
 				</template>
 
 				<template #item="{ element }">
-					<field-select :field="element" :fields="fields" @set-nested-sort="$emit('setNestedSort', $event)" />
+					<field-select :field="element" :fields="fields" :is-show-fields-type="isShowFieldsType" @set-nested-sort="$emit('setNestedSort', $event)" />
 				</template>
 			</draggable>
 
@@ -245,8 +253,12 @@ const isShowSpecPosAddIcon = ref(false)
 								{{ field.field }}
 								<v-icon v-if="field.meta?.required === true" name="star" class="required" sup filled />
 							</span>
-							<span v-if="field.meta" class="interface">{{ interfaceName }}</span>
-							<span v-else class="interface">{{ t('db_only_click_to_configure') }}</span>
+							<span v-if="field.meta && !isShowFieldsType" class="interface">{{ interfaceName }}</span>
+
+							<!-- show field type for NOT system (_directus) collections fields -->
+							<span v-if="isShowFieldsType" class="field-type">{{ (interfaceName ? `${interfaceName}` : '-') + `(${formatTitle(field.type)})` }}</span>
+
+							<span v-if="!field.meta" class="interface">{{ t('db_only_click_to_configure') }}</span>
 						</div>
 					</div>
 				</template>
@@ -502,6 +514,10 @@ const isShowSpecPosAddIcon = ref(false)
 				@media (min-width: 600px) {
 					display: initial;
 				}
+			}
+			.field-type {
+				color: var(--theme--foreground-subdued);
+				font-family: var(--theme--fonts--monospace--font-family);
 			}
 		}
 	}
