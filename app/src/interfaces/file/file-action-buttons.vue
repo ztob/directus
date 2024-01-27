@@ -6,6 +6,9 @@ defineProps<{
 	loadingFileStatus: LoadingFileStatus
 	fileError: string | null
 	fileType: FileType
+
+	// if there are edits in the item, then we dont show the action buttons(render/download template)
+	isItemFormEdition: boolean
 }>();
 
 defineEmits(['open-preview', 'download-docx', 'download-txt']);
@@ -17,7 +20,7 @@ const { t } = useI18n();
 	<div>
 		<v-skeleton-loader v-if="loadingFileStatus === 'loading'" />
 
-		<div v-if="loadingFileStatus === 'success' && !fileError && fileType" class="preview-btn-actions">
+		<div v-if="loadingFileStatus === 'success' && !fileError && fileType && !isItemFormEdition" class="preview-btn-actions">
 			<v-button v-tooltip.bottom="t('Preview')" icon @click="$emit('open-preview')"><v-icon name="preview" /></v-button>
 			<v-button v-tooltip.bottom="t('download')" icon
 				@click="fileType === '.docx' ? $emit('download-docx') : $emit('download-txt')">

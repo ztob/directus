@@ -22,6 +22,8 @@ const props = defineProps<{
 	isFilterLoading?: string;
 	isUnusedCollsHidden?: boolean | null;
 	searchCollections?: string | null;
+	isItemSavable?: boolean
+	itemEdits: { [field: string]: any } | null
 }>();
 
 defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard']);
@@ -88,6 +90,7 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 						:type="field.type" :collection="field.collection" :field="field.field" :field-data="field"
 						:primary-key="primaryKey" :length="field.schema && field.schema.max_length" :direction="direction"
 						:is-unused-colls-hidden="isUnusedCollsHidden" :search-collections="searchCollections"
+						:is-item-savable="isItemSavable" :item-edits="itemEdits"
 						@input="$emit('update:modelValue', $event)" @set-field-value="$emit('setFieldValue', $event)">
 					</component>
 
