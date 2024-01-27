@@ -5,7 +5,7 @@ import { useShortcut } from '@/composables/use-shortcut';
 import { useCollectionsStore } from '@/stores/collections';
 import { useFieldsStore } from '@/stores/fields';
 import { useCollection } from '@directus/composables';
-import { computed, ref, toRefs, toRef } from 'vue';
+import { computed, onMounted, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
@@ -13,6 +13,8 @@ import FieldsManagement from './components/fields-management.vue';
 import formatTitle from '@directus/format-title';
 import { useCreateCopyCollection } from './composables/use-create-copy-coll'
 import CopyDialogBtn from './components/copy-dialog-btn.vue'
+import { useFieldsTypesVisibility } from './composables/use-fields-types-visibility';
+import FieldsTypeVisibilityAndSearch from './components/fields-type-visibility-and-search.vue'
 
 const props = defineProps<{
 	collection: string;
@@ -76,6 +78,18 @@ function discardAndLeave() {
 	confirmLeave.value = false;
 	router.push(leaveTo.value);
 }
+
+// logic to toggle field types visibility
+const {
+	isShowFieldsType,
+	setFieldsTypesVisibilityState,
+	toggleFieldsTypeVisibilityState
+} = useFieldsTypesVisibility(collection)
+
+onMounted(() => setFieldsTypesVisibilityState())
+
+// logic to search for fields
+const searchFields = ref<string | null>(null);
 </script>
 
 <template>
@@ -91,6 +105,13 @@ function discardAndLeave() {
 		</template>
 
 		<template #actions>
+			<!-- toggle fields types visibility and search for fields by name and type -->
+			<fields-type-visibility-and-search
+				v-model:search="searchFields"
+				:is-show-fields-type="isShowFieldsType"
+				@toggle-fields-type-visibility="toggleFieldsTypeVisibilityState($event)"
+			/>
+
 			<v-dialog v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
 					<v-button v-if="item && item.collection.startsWith('directus_') === false"
@@ -140,7 +161,7 @@ function discardAndLeave() {
 					{{ t('fields_and_layout') }}
 					<span class="instant-save">{{ t('saves_automatically') }}</span>
 				</h2>
-				<fields-management :collection="collection" />
+				<fields-management :collection="collection" :is-show-fields-type='isShowFieldsType' :search-fields="searchFields"/>
 			</div>
 
 			<router-view name="field" :collection="collection" :field="field" :type="type" />

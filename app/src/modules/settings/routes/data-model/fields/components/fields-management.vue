@@ -9,9 +9,12 @@ import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
 import FieldSelect from './field-select.vue';
 import { useRouter } from 'vue-router';
+import { searchFieldsHelper } from '../composables/search-fields-helper'
 
 const props = defineProps<{
 	collection: string;
+	isShowFieldsType: boolean | null
+	searchFields: string | null
 }>();
 
 const { t } = useI18n();
@@ -24,9 +27,16 @@ const router = useRouter();
 const fieldSortPosition = ref<number | null>(null)
 
 const parsedFields = computed(() => {
-	return orderBy(fields.value, [(o) => (o.meta?.sort ? Number(o.meta?.sort) : null), (o) => o.meta?.id]).filter(
+	const fieldsOrdered = orderBy(fields.value, [(o) => (o.meta?.sort ? Number(o.meta?.sort) : null), (o) => o.meta?.id]).filter(
 		(field) => field.field.startsWith('$') === false,
 	);
+
+	// search for fields by their names and types
+	if (props.searchFields !== null) {
+		return searchFieldsHelper(fieldsOrdered, props.searchFields)
+	}
+
+	return fieldsOrdered
 });
 
 const lockedFields = computed(() => {
@@ -182,7 +192,13 @@ async function updateFieldsSorts(newFields: Field[]) {
 <template>
 	<div class="fields-management">
 		<div v-if="lockedFields.length > 0" class="field-grid">
-			<field-select v-for="field in lockedFields" :key="field.field" disabled :field="field"/>
+			<field-select
+				v-for="field in lockedFields"
+				:key="field.field"
+				disabled
+				:field="field"
+				:is-show-fields-type="isShowFieldsType"
+			/>
 		</div>
 		<draggable
 			class="field-grid"
@@ -201,11 +217,14 @@ async function updateFieldsSorts(newFields: Field[]) {
 					<field-select
 						:field="element"
 						:fields="usableFields"
+						:is-show-fields-type="isShowFieldsType"
 						@set-nested-sort="setNestedSort"
 						@field-at-position="addFieldAtPosition"
 					/>
 				</template>
 		</draggable>
+
+		<v-notice v-if="searchFields?.trim().length && !parsedFields.length" type="info">No Fields Found</v-notice>
 
 		<v-button full-width :to="`/settings/data-model/${collection}/+`">
 			{{ t('create_field') }}
@@ -295,3 +314,4 @@ async function updateFieldsSorts(newFields: Field[]) {
 	transition: transform 0.5s;
 }
 </style>
+../composables/use-search-fields
