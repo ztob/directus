@@ -721,6 +721,7 @@ function onAddBookmarks(...bookmarkData: Record<string, any>[]) {
 			:is-filter-loading="isFilterLoading"
 			:is-bookmarks-drpdwn-btn-disabled="hasEdits"
 			is-coll-item
+			:is-item-savable="isSavable"
 			@add-filter="onAddFilter"
 			@copy-to-clipboard="copyToClipboard"
 			@create-field-bookmarks="onAddBookmarks"

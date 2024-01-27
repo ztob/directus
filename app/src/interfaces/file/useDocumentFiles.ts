@@ -1,4 +1,4 @@
-import { Ref, nextTick, ref, watch } from 'vue';
+import { ComputedRef, Ref, computed, nextTick, ref, watch } from 'vue';
 import { FileType, LoadingFileStatus, TextFiles } from './types';
 import { useFieldsStore } from '@/stores/fields';
 
@@ -21,6 +21,7 @@ interface UseDocumentFilesFuncReturn {
 	loadingFileStatus: Ref<LoadingFileStatus>;
 	error: Ref<string | null>;
 	fileType: Ref<FileType>;
+	isItemFormEdition: ComputedRef<boolean>
 	downloadDocxTemplate: () => void;
 	downloadTxtTemplate: () => void;
 	openPreview: () => void;
@@ -31,6 +32,10 @@ export function useDocumentFiles(
 	formValues: Ref<Record<string, any>> | undefined,
 	allowedFiles: TextFiles[],
 	collectionName: Ref<string>,
+	primaryKey: Readonly<Ref<string | number | undefined>>,
+	isItemSavable: Readonly<Ref<boolean>>,
+	itemEdits: Readonly<Ref<{ [field: string]: any } | null>>,
+	fieldName: Readonly<Ref<string>>,
 	setInterfaceValueToNull: () => void,
 ): UseDocumentFilesFuncReturn {
 	const previewDocxRef = ref<HTMLElement | null>(null);
@@ -84,6 +89,9 @@ export function useDocumentFiles(
 				}
 			}
 
+			// if item is being created then we dont show: 1) action buttons: render template nor download template; 2) errors of rendering templates
+			if (primaryKey.value === '+') return;
+
 			if (isDocx) {
 				fileType.value = '.docx';
 				renderDocxTemplate(docxType);
@@ -95,6 +103,15 @@ export function useDocumentFiles(
 		{ immediate: true },
 	);
 
+	// if there are edits in the item(except the file interface), then we dont show the action buttons(render/download template)
+	const isItemFormEdition = computed(() => {
+		if(isItemSavable.value && itemEdits.value && Object.keys(itemEdits.value).length) {
+			return Object.keys(itemEdits.value).some(key => key !== fieldName.value)
+		}
+
+		return false
+	})
+
 	return {
 		// @ts-ignore
 		previewDocxRef,
@@ -103,6 +120,7 @@ export function useDocumentFiles(
 		loadingFileStatus,
 		error,
 		fileType,
+		isItemFormEdition,
 		downloadDocxTemplate,
 		downloadTxtTemplate,
 		openPreview,
@@ -134,6 +152,7 @@ export function useDocumentFiles(
 
 			const item = await api.get(`/items/${collName}/${itemId}?fields=*.*.*`);
 			const initialItemData = item.data.data;
+			// console.log(initialItemData);
 
 			const m2mFields = getM2MFields(collName);
 
