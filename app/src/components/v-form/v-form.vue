@@ -45,6 +45,7 @@ interface Props {
 	searchCollections?: string | null
 	isBookmarksDrpdwnBtnDisabled?: boolean;
 	isCollItem?: boolean
+	isItemSavable?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -423,6 +424,8 @@ function useRawEditor() {
 					:search-collections="searchCollections"
 					:is-bookmarks-drpdwn-btn-disabled="isBookmarksDrpdwnBtnDisabled"
 					:is-coll-item="isCollItem"
+					:is-item-savable="isItemSavable"
+					:item-edits="modelValue"
 					@update:model-value="setValue(fieldName, $event)"
 					@set-field-value="setValue($event.field, $event.value, { force: true })"
 					@unset="unsetValue(fieldsMap[fieldName]!)"

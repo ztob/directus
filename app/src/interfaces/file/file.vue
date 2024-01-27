@@ -9,7 +9,7 @@ import { readableMimeType } from '@/utils/readable-mime-type';
 import { unexpectedError } from '@/utils/unexpected-error';
 import DrawerFiles from '@/views/private/components/drawer-files.vue';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
-import { computed, ref, toRefs, Ref, inject } from 'vue';
+import { computed, ref, toRefs, Ref, inject, watch, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {TextFiles}from './types'
 import {useDocumentFiles} from './useDocumentFiles';
@@ -30,6 +30,9 @@ const props = defineProps<{
 	field: string;
 	// eslint-disable-next-line vue/prop-name-casing
 	allowed_files: TextFiles[] | undefined
+	primaryKey: any
+	isItemSavable?: boolean
+	itemEdits: { [field: string]: any } | null
 }>();
 
 const emit = defineEmits<{
@@ -140,6 +143,8 @@ function useURLImport() {
 
 // LOGIC TO RENDER DOCX AND TXT TEMPLATES
 const formValues: Ref<Record<string, any>> | undefined = inject('values')
+// watch(formValues, () => console.log(formValues.value), { immediate: true })
+// watch(() => props.itemEdits, () => console.log(props.itemEdits), { immediate: true })
 
 const {
 		previewDocxRef,
@@ -148,6 +153,7 @@ const {
 		loadingFileStatus,
 		error,
 		fileType,
+		isItemFormEdition,
 		downloadDocxTemplate,
 		downloadTxtTemplate,
 		openPreview
@@ -156,6 +162,10 @@ const {
 		formValues,
 		props.allowed_files ?? [],
 		collection,
+		toRef(() => props.primaryKey),
+		toRef(() => props.isItemSavable),
+		toRef(() => props.itemEdits),
+		toRef(() => props.field),
 		() => emit('input', null),
 	)
 </script>
@@ -246,6 +256,7 @@ const {
 			:loading-file-status="loadingFileStatus"
 			:file-error="error"
 			:file-type="fileType"
+			:is-item-form-edition="isItemFormEdition"
 			@open-preview="openPreview"
 			@download-docx="downloadDocxTemplate"
 			@download-txt="downloadTxtTemplate"

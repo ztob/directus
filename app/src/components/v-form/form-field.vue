@@ -35,6 +35,8 @@ interface Props {
 	searchCollections?: string | null
 	isBookmarksDrpdwnBtnDisabled?: boolean;
 	isCollItem?: boolean
+	isItemSavable?: boolean
+	itemEdits: { [field: string]: any } | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -186,7 +188,7 @@ function isBookmarkCreationAllowed(fieldInterface: string | null | undefined, fi
 				:batch-mode="batchMode" :batch-active="batchActive" :disabled="isDisabled" :primary-key="primaryKey"
 				:raw-editor-enabled="rawEditorEnabled" :raw-editor-active="rawEditorActive" :direction="direction"
 				:is-filter-loading="isFilterLoading" :is-unused-colls-hidden="isUnusedCollsHidden"
-				:search-collections="searchCollections" @update:model-value="emitValue($event)"
+				:search-collections="searchCollections" :is-item-savable="isItemSavable" :item-edits="itemEdits" @update:model-value="emitValue($event)"
 				@set-field-value="$emit('setFieldValue', $event)" @add-filter="$emit('add-filter', $event)"
 				@copy-to-clipboard="$emit('copy-to-clipboard', $event)">
 
