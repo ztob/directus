@@ -5,13 +5,14 @@ import { Collection } from '@/types/collections';
 import { translate } from '@/utils/translate-object-values';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { merge, sortBy } from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
 import SettingsNavigation from '../../../components/navigation.vue';
 import CollectionDialog from './components/collection-dialog.vue';
 import CollectionItem from './components/collection-item.vue';
 import CollectionOptions from './components/collection-options.vue';
+import { hideField } from './composables/hide-field'
 
 const { t } = useI18n();
 
@@ -142,6 +143,9 @@ async function onSort(updates: Collection[], removeGroup = false) {
 		unexpectedError(error);
 	}
 }
+
+// hide field in collection details
+onMounted(() => hideField('directus_collections', 'show_fields_type'));
 </script>
 
 <template>
