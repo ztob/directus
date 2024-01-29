@@ -4,28 +4,15 @@ import { fetchAll } from '@/utils/fetch-all';
 import { translate } from '@/utils/translate-object-values';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { Role } from '@directus/types';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../components/navigation.vue';
-import { useFieldsStore } from '@/stores/fields';
 import { hideFormUnusedItemsField } from '@/composables/use-hide-unused-items';
-
-type RoleBaseFields = 'id' | 'name' | 'description' | 'icon';
-
-type RoleResponse = Pick<Role, RoleBaseFields | 'admin_access'> & {
-	users: [{ count: { id: number } }];
-};
-
-type RoleItem = Pick<Role, RoleBaseFields> &
-	Partial<Pick<Role, 'admin_access'>> & {
-		public?: boolean;
-		count?: number;
-	};
+import { RoleItem, RoleResponse } from './types/roles'
+import { useSelectDeleteRoles } from './composables/use-select-delete-roles'
 
 const { t } = useI18n();
-
-const fieldsStore = useFieldsStore();
 
 const router = useRouter();
 
@@ -143,6 +130,10 @@ watch(searchRoles, () => {
 
 // LOGIC TO HIDE THE HIDE_UNUSED_COLLS FIELD FOR ROLES
 hideFormUnusedItemsField('directus_roles', 'hide_unused_colls')
+
+// logic to handle selected roles
+const { selectedRoles, deleting, confirmDelete, deleteSelectedRoles } = useSelectDeleteRoles(fetchRoles)
+
 </script>
 
 <template>
@@ -171,6 +162,28 @@ hideFormUnusedItemsField('directus_roles', 'hide_unused_colls')
 				</template>
 			</v-input>
 
+			<v-dialog v-model="confirmDelete" @esc="confirmDelete = false">
+				<template #activator="{ on }">
+					<v-button v-if="selectedRoles.length" v-tooltip.bottom="t('delete_label')" rounded icon
+						class="action-delete" secondary @click="on">
+						<v-icon name="delete" />
+					</v-button>
+				</template>
+
+				<v-card>
+					<v-card-title>{{ t('delete_are_you_sure') }}</v-card-title>
+
+					<v-card-actions>
+						<v-button secondary @click="confirmDelete = false">
+							{{ t('cancel') }}
+						</v-button>
+						<v-button kind="danger" :loading="deleting" @click="deleteSelectedRoles">
+							{{ t('delete_label') }}
+						</v-button>
+					</v-card-actions>
+				</v-card>
+			</v-dialog>
+
 			<v-button v-tooltip.bottom="t('create_role')" rounded icon :to="addNewLink">
 				<v-icon name="add" />
 			</v-button>
@@ -188,12 +201,14 @@ hideFormUnusedItemsField('directus_roles', 'hide_unused_colls')
 
 		<div class="roles">
 			<v-table
+				v-model="selectedRoles"
 				v-model:headers="tableHeaders"
 				show-resize
 				:items="searchRoles ? rolesSearchCopy : roles"
 				fixed-header
 				item-key="id"
 				:loading="loading"
+				show-select="multiple"
 				@click:row="navigateToRole"
 			>
 				<template #[`item.icon`]="{ item }">
@@ -257,5 +272,10 @@ hideFormUnusedItemsField('directus_roles', 'hide_unused_colls')
 		width: 300px;
 		margin-top: 0px;
 	}
+}
+
+.action-delete {
+	--v-button-background-color-hover: var(--theme--danger) !important;
+	--v-button-color-hover: var(--white) !important;
 }
 </style>
