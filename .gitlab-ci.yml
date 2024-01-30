@@ -44,7 +44,7 @@ after_script:
 docker_build:
   stage: crawless-directus
   variables:
-    CI_DEBUG_TRACE: 'false'
+    CI_DEBUG_TRACE: 'true'
     IMAGE_NAME: $CI_REGISTRY_IMAGE
   retry: 2
   script:
