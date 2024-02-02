@@ -44,6 +44,8 @@ if [ -z "$COLLECTION_BUILDER_EXTENSION" ]; then
 	skip_migrations="add-collection-builder ${skip_migrations}"
 fi
 
+echo $skip_migrations
+
 tree
 
 for folder in *
