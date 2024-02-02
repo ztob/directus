@@ -73,17 +73,10 @@ async function onSubmit() {
 			credentials.otp = otp.value;
 		}
 
-		await login({ provider: provider.value, credentials });
-
-		const redirectQuery = router.currentRoute.value.query.redirect as string;
-
-		let lastPage: string | null | undefined;
-
-		if (userStore.currentUser && 'last_page' in userStore.currentUser) {
-			lastPage = userStore.currentUser.last_page;
-		}
-
-		router.push(redirectQuery || lastPage || '/content');
+		await login({
+			provider: provider.value,
+			credentials,
+		});
 	} catch (err: any) {
 		if (err.response?.data?.errors?.[0]?.extensions?.code === 'INVALID_OTP' && requiresTFA.value === false) {
 			requiresTFA.value = true;
