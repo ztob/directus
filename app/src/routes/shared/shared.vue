@@ -120,7 +120,12 @@ async function authenticate() {
 
 	try {
 		const credentials = { share: shareId, password: password.value };
-		await login({ share: true, credentials });
+
+		await login({
+			share: true,
+			redirect: false,
+			credentials,
+		});
 	} catch (err: any) {
 		if (err?.response?.data?.errors?.[0]?.extensions?.code === 'INVALID_CREDENTIALS') {
 			passwordWrong.value = true;
