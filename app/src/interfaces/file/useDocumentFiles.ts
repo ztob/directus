@@ -22,7 +22,7 @@ interface UseDocumentFilesFuncReturn {
 	loadingFileStatus: Ref<LoadingFileStatus>;
 	error: Ref<string | null>;
 	fileType: Ref<FileType>;
-	isItemFormEdition: ComputedRef<boolean>
+	isItemFormEdition: ComputedRef<boolean>;
 	downloadDocxTemplate: () => void;
 	downloadTxtTemplate: () => void;
 	openPreview: () => void;
@@ -106,12 +106,12 @@ export function useDocumentFiles(
 
 	// if there are edits in the item(except the file interface), then we dont show the action buttons(render/download template)
 	const isItemFormEdition = computed(() => {
-		if(isItemSavable.value && itemEdits.value && Object.keys(itemEdits.value).length) {
-			return Object.keys(itemEdits.value).some(key => key !== fieldName.value)
+		if (isItemSavable.value && itemEdits.value && Object.keys(itemEdits.value).length) {
+			return Object.keys(itemEdits.value).some((key) => key !== fieldName.value);
 		}
 
-		return false
-	})
+		return false;
+	});
 
 	return {
 		// @ts-ignore
@@ -134,7 +134,8 @@ export function useDocumentFiles(
 
 			loadingFileStatus.value = 'loading';
 
-			const content = await loadDocxFile(`/assets/${file.value!.id}`);
+			const content = await loadDocxFile(`/assets/${file.value!.id}/${file.value!.filename_download}`);
+			// const { data: content } = await api.get(`/assets/${file.value!.id}`);
 
 			const zip = new PizZip(content as LoadData);
 
