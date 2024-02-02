@@ -25,7 +25,7 @@ ls -la
 skip_extensions="payments-api payments-hook payments-module services-module orders-module chat chat-display dashboard leads areas saved-searches area-hook collab-hook collab-hook-v2 marketplace-filters workflows-defaults extended-api operator-whitelist"
 
 # Corresponding migrations to skip
-skip_migrations="add-chat add-saved-searches add-collaboration collection-builder"
+skip_migrations="add-chat add-saved-searches add-collaboration"
 
 # Skip payment extension
 if [ -z "$PAYMENT_EXTENSION" ]; then
@@ -36,6 +36,12 @@ fi
 if [ -z "$DEVICES_EXTENSION" ]; then
 	skip_extensions="devices ${skip_extensions}"
 	skip_migrations="add-devices ${skip_migrations}"
+fi
+
+# Skip loading custom extensions if not set
+if [ -z "$CLEAN_BUILD" ]; then
+	skip_extensions="collection-builder ${skip_extensions}"
+	skip_migrations="collection-builder ${skip_migrations}"
 fi
 
 tree
