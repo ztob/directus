@@ -38,8 +38,8 @@ if [ -z "$DEVICES_EXTENSION" ]; then
 	skip_migrations="add-devices ${skip_migrations}"
 fi
 
-# Skip loading custom extensions if not set
-if [ -z "$CLEAN_BUILD" ]; then
+# Skip loading collection-builder extensions if not set
+if [ -z "$COLLECTION_BUILDER_EXTENSION" ]; then
 	skip_extensions="collection-builder ${skip_extensions}"
 	skip_migrations="collection-builder ${skip_migrations}"
 fi
