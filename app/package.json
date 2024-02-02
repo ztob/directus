@@ -159,6 +159,7 @@
 	"dependencies": {
 		"docx-preview": "0.3.0",
 		"docxtemplater": "3.43.1",
+		"jszip": "3.10.1",
 		"pizzip": "3.1.4"
 	}
 }
