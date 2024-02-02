@@ -134,7 +134,10 @@ export function useDocumentFiles(
 
 			loadingFileStatus.value = 'loading';
 
-			const content = await loadDocxFile(`/assets/${file.value!.id}/${file.value!.filename_download}`);
+			const token = (api.defaults.headers.common['Authorization'] as string | undefined)?.split(' ')[1] || null
+
+			const content = await loadDocxFile(`/assets/${file.value!.id}${token ? '?access_token=' + token : ''}`);
+
 			// const { data: content } = await api.get(`/assets/${file.value!.id}`);
 
 			const zip = new PizZip(content as LoadData);
