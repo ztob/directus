@@ -25,7 +25,7 @@ ls -la
 skip_extensions="payments-api payments-hook payments-module services-module orders-module chat chat-display dashboard leads areas saved-searches area-hook collab-hook collab-hook-v2 marketplace-filters workflows-defaults extended-api operator-whitelist"
 
 # Corresponding migrations to skip
-skip_migrations="add-chat add-saved-searches add-collaboration"
+skip_migrations="add-chat add-saved-searches add-collaboration update-collections-ttl-and-disposable"
 
 # Skip payment extension
 if [ -z "$PAYMENT_EXTENSION" ]; then
