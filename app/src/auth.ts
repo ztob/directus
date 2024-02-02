@@ -23,6 +23,7 @@ type LoginParams = {
 	credentials: LoginCredentials;
 	provider?: string;
 	share?: boolean;
+	redirect?: boolean;
 };
 
 function getAuthEndpoint(provider?: string, share?: boolean) {
@@ -32,7 +33,7 @@ function getAuthEndpoint(provider?: string, share?: boolean) {
 	return `/auth/login/${provider}`;
 }
 
-export async function login({ credentials, provider, share }: LoginParams): Promise<void> {
+export async function login({ credentials, provider, share, redirect = true }: LoginParams): Promise<void> {
 	const appStore = useAppStore();
 	const userStore = useUserStore();
 
@@ -93,6 +94,18 @@ export async function login({ credentials, provider, share }: LoginParams): Prom
 	await hydrate(isSwitchingUser);
 
 	userStore.unsaveCurrentUser();
+
+	if (redirect) {
+		const redirectQuery = router.currentRoute.value.query.redirect as string;
+
+		let lastPage: string | null | undefined;
+
+		if (userStore.currentUser && 'last_page' in userStore.currentUser) {
+			lastPage = userStore.currentUser.last_page;
+		}
+
+		router.push(redirectQuery || lastPage || '/content');
+	}
 }
 
 let refreshTimeout: any;
