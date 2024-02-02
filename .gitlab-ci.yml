@@ -59,7 +59,7 @@ docker_build:
     - main
 
 docker_build_clean:
-  stage: crawless-directus-clean
+  stage: crawless-directus
   variables:
     CI_DEBUG_TRACE: 'false'
     IMAGE_NAME: $CI_REGISTRY_IMAGE
