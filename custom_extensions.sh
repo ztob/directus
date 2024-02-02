@@ -41,7 +41,7 @@ fi
 # Skip loading collection-builder extensions if not set
 if [ -z "$COLLECTION_BUILDER_EXTENSION" ]; then
 	skip_extensions="collection-builder ${skip_extensions}"
-	skip_migrations="collection-builder ${skip_migrations}"
+	skip_migrations="add-collection-builder ${skip_migrations}"
 fi
 
 tree
