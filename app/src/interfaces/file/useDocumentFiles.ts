@@ -195,7 +195,7 @@ export function useDocumentFiles(
 	}
 
 	function downloadDocxTemplate() {
-		saveAs(templateDocxBlob.value as Blob, `item ${formValues?.value.id}.docx`);
+		saveAs(templateDocxBlob.value as Blob, `${file.value?.title} Result.docx`);
 	}
 	// ------
 
@@ -250,7 +250,7 @@ export function useDocumentFiles(
 	function downloadTxtTemplate() {
 		const downloadLink = document.createElement('a');
 		downloadLink.href = URL.createObjectURL(templateTxtBlob.value as Blob);
-		downloadLink.download = `item ${formValues?.value.id}.txt`;
+		downloadLink.download = `${file.value?.title} Result.txt`;
 		document.body.appendChild(downloadLink);
 		downloadLink.click();
 		document.body.removeChild(downloadLink);
