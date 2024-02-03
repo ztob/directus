@@ -9,13 +9,14 @@ import { readableMimeType } from '@/utils/readable-mime-type';
 import { unexpectedError } from '@/utils/unexpected-error';
 import DrawerFiles from '@/views/private/components/drawer-files.vue';
 import DrawerItem from '@/views/private/components/drawer-item.vue';
-import { computed, ref, toRefs, Ref, inject, toRef } from 'vue';
+import { computed, ref, toRefs, Ref, inject, toRef, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {TextFiles}from './types'
 import {useDocumentFiles} from './useDocumentFiles';
 import FileActionButtons from './file-action-buttons.vue'
 import FilePreview from './file-preview.vue'
 import { FormFieldValues } from '@/types/v-form';
+import { useGlobalStorage } from '@/composables/use-global-storage';
 
 type FileInfo = {
 	id: string;
@@ -34,6 +35,8 @@ const props = defineProps<{
 	primaryKey: any
 	isItemSavable?: boolean
 	itemEdits: FormFieldValues | null
+	// eslint-disable-next-line vue/prop-name-casing
+	use_storage: boolean
 }>();
 
 const emit = defineEmits<{
@@ -145,6 +148,12 @@ function useURLImport() {
 // LOGIC TO RENDER DOCX AND TXT TEMPLATES
 const formValues: Ref<Record<string, any>> | undefined = inject('values')
 
+const { globalStorage: keyValueStorage, getStorageItems } = useGlobalStorage('directus_keyvalue?mode=usage')
+
+onMounted(() => {
+	if (props.use_storage) getStorageItems()
+})
+
 const {
 		previewDocxRef,
 		templateTxtText,
@@ -161,6 +170,7 @@ const {
 		formValues,
 		props.allowed_files ?? [],
 		collection,
+		props.use_storage ? keyValueStorage : null,
 		toRef(() => props.primaryKey),
 		toRef(() => props.isItemSavable),
 		toRef(() => props.itemEdits),
@@ -250,7 +260,7 @@ const {
 			</v-list>
 		</v-menu>
 
-		<!-- .DOCX PREVIEW -->
+		<!-- .DOCX and .TXT PREVIEW -->
 		<file-action-buttons
 			:loading-file-status="loadingFileStatus"
 			:file-error="error"
@@ -264,6 +274,9 @@ const {
 		<file-preview
 			v-model="isShowPreview"
 			:file-type="fileType"
+			:file="file"
+			@download-docx="downloadDocxTemplate"
+			@download-txt="downloadTxtTemplate"
 		>
 			<div v-show="fileType === '.docx'" ref="previewDocxRef"></div>
 			<div v-show="fileType === '.txt'" style="white-space: pre-wrap;">{{ templateTxtText }}</div>

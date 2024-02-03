@@ -2,6 +2,7 @@ import { ComputedRef, Ref, computed, nextTick, ref, watch } from 'vue';
 import { FileType, LoadingFileStatus, TextFiles } from './types';
 import { useFieldsStore } from '@/stores/fields';
 import { FormFieldValues } from '@/types/v-form';
+import { GlobalItem } from '@/types/global-item';
 
 import Docxtemplater from 'docxtemplater';
 import TxtTemplater from 'docxtemplater/js/text.js';
@@ -33,6 +34,7 @@ export function useDocumentFiles(
 	formValues: Ref<Record<string, any>> | undefined,
 	allowedFiles: TextFiles[],
 	collectionName: Ref<string>,
+	keyValueStorage: Ref<GlobalItem[]> | null,
 	primaryKey: Readonly<Ref<string | number | undefined>>,
 	isItemSavable: Readonly<Ref<boolean>>,
 	itemEdits: Readonly<Ref<FormFieldValues | null>>,
@@ -134,7 +136,7 @@ export function useDocumentFiles(
 
 			loadingFileStatus.value = 'loading';
 
-			const token = (api.defaults.headers.common['Authorization'] as string | undefined)?.split(' ')[1] || null
+			const token = (api.defaults.headers.common['Authorization'] as string | undefined)?.split(' ')[1] || null;
 
 			const content = await loadDocxFile(`/assets/${file.value!.id}${token ? '?access_token=' + token : ''}`);
 
@@ -165,6 +167,10 @@ export function useDocumentFiles(
 			// modify m2m fields data if there are m2m fields
 			if (m2mFields.length) {
 				modifyM2MFields(m2mFields, itemData, collName, itemId);
+			}
+
+			if (keyValueStorage?.value) {
+				integrateKeyValueStorageIntoDataTemplate(itemData, keyValueStorage.value);
 			}
 
 			doc.render(itemData);
@@ -233,6 +239,10 @@ export function useDocumentFiles(
 				modifyM2MFields(m2mFields, itemData, collName, itemId);
 			}
 
+			if (keyValueStorage?.value) {
+				integrateKeyValueStorageIntoDataTemplate(itemData, keyValueStorage.value);
+			}
+
 			const result = doc.render(itemData);
 
 			const _templateTxtBlob = new Blob([result], { type: 'text/plain' });
@@ -288,6 +298,14 @@ export function useDocumentFiles(
 					}
 				});
 			}
+		});
+	}
+
+	function integrateKeyValueStorageIntoDataTemplate(itemData: Record<string, any>, storage: GlobalItem[]) {
+		itemData.KEYVALUE = {};
+
+		storage.forEach((item) => {
+			itemData.KEYVALUE[item.key] = item.value;
 		});
 	}
 
