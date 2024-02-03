@@ -44,6 +44,17 @@ export default defineInterface({
 				note: 'By default ALL files are allowed',
 			},
 		},
+		{
+			field: 'use_storage',
+			name: 'Use KeyValue Storage',
+			meta: {
+				interface: 'boolean',
+				width: 'half',
+			},
+			schema: {
+				default_value: false,
+			},
+		}
 	],
 	recommendedDisplays: ['file'],
 	preview: PreviewSVG,
