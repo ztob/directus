@@ -150,6 +150,7 @@ async function openFieldDetail() {
 }
 
 async function onGroupSortChange(fields: Field[]) {
+
 	const updates = fields.map((field, index) => ({
 		field: field.field,
 		meta: {

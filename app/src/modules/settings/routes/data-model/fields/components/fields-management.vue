@@ -200,6 +200,7 @@ async function updateFieldsSorts(newFields: Field[]) {
 				:is-show-fields-type="isShowFieldsType"
 			/>
 		</div>
+
 		<draggable
 			class="field-grid"
 			:model-value="usableFields.filter((field) => isNil(field?.meta?.group))"
