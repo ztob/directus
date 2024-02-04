@@ -146,7 +146,7 @@ router.patch(
 
 			for (const currentField of currentFields) {
 				const fieldToUpdate = req.body.find((f: FieldRaw) => f.field === currentField['field']);
-				
+
 				const attributesChanged = getChangedAttributes(fieldToUpdate, currentField as Field);
 
 				if ((attributesChanged.length === 1 && attributesChanged[0] !== 'meta.sort') || attributesChanged.length > 1) {
@@ -307,7 +307,7 @@ function getChangedAttributes(fieldFromBody: FieldRaw, currentField: Field) {
 
 	// All attributes in meta must match (but some may be missing)
 	for (const attr in fieldFromBody.meta) {
-		if (Object.prototype.hasOwnProperty.call(fieldFromBody, attr)) {
+		if (Object.prototype.hasOwnProperty.call(fieldFromBody.meta, attr)) {
 			if (!isEqual((fieldFromBody.meta as any)[attr], (currentField.meta as any)[attr])) {
 				changedFields.push(`meta.${attr}`);
 			}
