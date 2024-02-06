@@ -577,9 +577,6 @@ importers:
       docxtemplater:
         specifier: 3.43.1
         version: 3.43.1
-      jszip:
-        specifier: 3.10.1
-        version: 3.10.1
       pizzip:
         specifier: 3.1.4
         version: 3.1.4
