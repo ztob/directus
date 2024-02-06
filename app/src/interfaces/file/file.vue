@@ -36,7 +36,8 @@ const props = defineProps<{
 	isItemSavable?: boolean
 	itemEdits: FormFieldValues | null
 	// eslint-disable-next-line vue/prop-name-casing
-	use_storage: boolean
+	use_storage: boolean;
+	suffixes: string | null // {{someItemInterface}}{{someItemInterface}}{{someItemInterface}}.....
 }>();
 
 const emit = defineEmits<{
@@ -175,6 +176,7 @@ const {
 		toRef(() => props.isItemSavable),
 		toRef(() => props.itemEdits),
 		toRef(() => props.field),
+		toRef(() => props.suffixes),
 		() => emit('input', null),
 	)
 </script>

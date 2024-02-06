@@ -11,6 +11,11 @@ const props = defineProps<{
 	collectionField?: string;
 	collectionName?: string;
 	injectVersionField?: boolean;
+
+	// add additional custom boolean to be able to add to the treeList options
+	// another option: current_date for the File Component
+	// (comming from index.ts from File component)
+	isFileInterface?: boolean
 }>();
 
 defineEmits<{
@@ -98,6 +103,7 @@ onMounted(() => getStorageItems())
 			:inject="injectValue"
 			:global-storage="globalStorage"
 			:globals-loading="globalsLoading"
+			:is-file-interface="isFileInterface"
 			@update:model-value="$emit('input', $event)"
 		/>
 	</div>
