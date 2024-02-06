@@ -3,8 +3,8 @@
 	"private": true,
 	"homepage": "https://directus.io",
 	"scripts": {
-		"start:front": "pnpm --filter app dev",
 		"start:back": "pnpm --filter api dev",
+		"start:front": "pnpm --filter app dev",
 		"build": "pnpm --recursive --filter '!docs' run build",
 		"format": "prettier --cache --check .",
 		"lint": "eslint --cache .",
