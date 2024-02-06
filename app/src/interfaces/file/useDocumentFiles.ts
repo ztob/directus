@@ -39,6 +39,7 @@ export function useDocumentFiles(
 	isItemSavable: Readonly<Ref<boolean>>,
 	itemEdits: Readonly<Ref<FormFieldValues | null>>,
 	fieldName: Readonly<Ref<string>>,
+	downloadSuffixes: Readonly<Ref<string | null>>,
 	setInterfaceValueToNull: () => void,
 ): UseDocumentFilesFuncReturn {
 	const previewDocxRef = ref<HTMLElement | null>(null);
@@ -46,6 +47,7 @@ export function useDocumentFiles(
 	const templateDocxBlob = ref<Blob | null>(null);
 	const templateTxtBlob = ref<Blob | null>(null);
 	const templateTxtText = ref<string | null>(null);
+	const templateItemData = ref<Record<string, any> | null>(null);
 
 	const isShowPreview = ref(false);
 	const loadingFileStatus = ref<LoadingFileStatus>('');
@@ -140,8 +142,6 @@ export function useDocumentFiles(
 
 			const content = await loadDocxFile(`/assets/${file.value!.id}${token ? '?access_token=' + token : ''}`);
 
-			// const { data: content } = await api.get(`/assets/${file.value!.id}`);
-
 			const zip = new PizZip(content as LoadData);
 
 			const doc = new Docxtemplater(zip, {
@@ -170,8 +170,12 @@ export function useDocumentFiles(
 			}
 
 			if (keyValueStorage?.value) {
+				// add KEYVALUE global storage to the data template
 				integrateKeyValueStorageIntoDataTemplate(itemData, keyValueStorage.value);
 			}
+
+			// add current_date and current_datetime to the data template
+			addDateTimesToTemplate(itemData);
 
 			doc.render(itemData);
 
@@ -182,6 +186,7 @@ export function useDocumentFiles(
 			});
 
 			templateDocxBlob.value = fileBlob;
+			templateItemData.value = itemData;
 			loadingFileStatus.value = 'success';
 		} catch (err: any) {
 			generateFileError(err);
@@ -201,7 +206,14 @@ export function useDocumentFiles(
 	}
 
 	function downloadDocxTemplate() {
-		saveAs(templateDocxBlob.value as Blob, `${file.value?.title} Result.docx`);
+		if (!downloadSuffixes.value) {
+			saveAs(templateDocxBlob.value as Blob, `${file.value?.title} Result.docx`);
+			return;
+		}
+
+		const suffixesStr = getFileSuffixesValuesByTemplateData(downloadSuffixes.value, templateItemData.value!);
+
+		saveAs(templateDocxBlob.value as Blob, `${file.value?.title}-${suffixesStr}.docx`);
 	}
 	// ------
 
@@ -240,8 +252,12 @@ export function useDocumentFiles(
 			}
 
 			if (keyValueStorage?.value) {
+				// add KEYVALUE global storage to the data template
 				integrateKeyValueStorageIntoDataTemplate(itemData, keyValueStorage.value);
 			}
+
+			// add current_date and current_datetime to the data template
+			addDateTimesToTemplate(itemData);
 
 			const result = doc.render(itemData);
 
@@ -250,6 +266,8 @@ export function useDocumentFiles(
 			templateTxtBlob.value = _templateTxtBlob;
 
 			templateTxtText.value = result;
+
+			templateItemData.value = itemData;
 
 			loadingFileStatus.value = 'success';
 		} catch (err: any) {
@@ -260,7 +278,14 @@ export function useDocumentFiles(
 	function downloadTxtTemplate() {
 		const downloadLink = document.createElement('a');
 		downloadLink.href = URL.createObjectURL(templateTxtBlob.value as Blob);
-		downloadLink.download = `${file.value?.title} Result.txt`;
+
+		if(!downloadSuffixes.value) {
+			downloadLink.download = `${file.value?.title} Result.txt`;
+		} else {
+			const suffixesStr = getFileSuffixesValuesByTemplateData(downloadSuffixes.value, templateItemData.value!);
+			downloadLink.download = `${file.value?.title}-${suffixesStr}.txt`
+		}
+		
 		document.body.appendChild(downloadLink);
 		downloadLink.click();
 		document.body.removeChild(downloadLink);
@@ -307,6 +332,32 @@ export function useDocumentFiles(
 		storage.forEach((item) => {
 			itemData.KEYVALUE[item.key] = item.value;
 		});
+	}
+
+	function addDateTimesToTemplate(itemData: Record<string, any>) {
+		const dateNow = new Date();
+
+		const options: Pick<Intl.DateTimeFormatOptions, 'year' | 'month' | 'day'> = {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		};
+
+		const currentDate = new Intl.DateTimeFormat('en-US', options).format(dateNow);
+		const isoDateString = dateNow.toISOString();
+
+		itemData.current_date = currentDate;
+		itemData.current_datetime = isoDateString;
+	}
+
+	function getFileSuffixesValuesByTemplateData(suffixesStr: string, itemData: Record<string, any>) {
+		const suffixesArr = suffixesStr.replace(/({|})/g, ' ').trim().split(' ').filter(Boolean);
+
+		return suffixesArr.map((suffix) => {
+			const keys = suffix.split('.');
+			const value = keys.reduce((acc, key) => acc?.[key], itemData);
+			return value !== undefined && value !== null && typeof value !== 'object' ? value : 'undefined';
+		}).join('-');
 	}
 
 	function generateFileError(err: string) {

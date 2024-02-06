@@ -20,6 +20,11 @@ interface Props {
 	} | null;
 	globalStorage?: GlobalItem[];
 	globalsLoading?: boolean
+
+	// add additional custom boolean to be able to add to the treeList options
+	// another option: current_date for the File Component
+	// (comming from index.ts from File component)
+	isFileInterface?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -269,6 +274,13 @@ function setContent() {
 
 				const field = findTree(grouplessTree.value, fieldPath);
 
+				// return Current Date btn for the display template if the current_date (for the File component only)
+				if (field === undefined && fieldPath[0] === 'current_date') {
+					return `<button contenteditable="false" data-field="${fieldKey}" ${props.disabled ? 'disabled' : ''}>
+						Current Date
+						</button>`;
+				}
+
 				if (!field) return '';
 
 				return `<button contenteditable="false" data-field="${fieldKey}" ${props.disabled ? 'disabled' : ''}>${
@@ -280,6 +292,24 @@ function setContent() {
 		contentEl.value.innerHTML = newInnerHTML;
 	}
 }
+
+// add to the treeList options
+// another option - 'current_date' for the File Component
+// (comming from index.ts from File component)
+const treeListExtended = computed(() => {
+	if (!props.isFileInterface) return treeList.value
+
+	return [...treeList.value, {
+		collection,
+		field: 'current_date',
+		key: 'current_date',
+		name: 'Current Date',
+		path: 'current_date',
+		relatedCollection: undefined,
+		type: 'string'
+	}
+	]
+})
 </script>
 
 <template>
@@ -307,7 +337,7 @@ function setContent() {
 		</template>
 
 		<v-list v-if="!disabled" :mandatory="false" @toggle="loadFieldRelations($event.value)">
-			<field-list-item v-for="field in treeList" :key="field.field" :field="field" :depth="depth" @add="addField" />
+			<field-list-item v-for="field in treeListExtended" :key="field.field" :field="field" :depth="depth" @add="addField" />
 		</v-list>
 	</v-menu>
 </template>
