@@ -157,6 +157,7 @@
 		"wellknown": "0.5.0"
 	},
 	"dependencies": {
+		"angular-expressions": "1.2.1",
 		"docx-preview": "0.3.0",
 		"docxtemplater": "3.43.1",
 		"pizzip": "3.1.4"

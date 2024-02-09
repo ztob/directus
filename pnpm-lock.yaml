@@ -571,6 +571,9 @@ importers:
 
   app:
     dependencies:
+      angular-expressions:
+        specifier: 1.2.1
+        version: 1.2.1
       docx-preview:
         specifier: 0.3.0
         version: 0.3.0
@@ -10924,6 +10927,10 @@ packages:
       '@algolia/requester-node-http': 4.20.0
       '@algolia/transporter': 4.20.0
     dev: true
+
+  /angular-expressions@1.2.1:
+    resolution: {integrity: sha512-pUnlViwIJ0L3KXh1a5gJGuMuGvxwbTbxkGINt7F6259p5UtksRpQ9Q5GhYb6VyfVfKtR65QAJgDhml3zpgmFuA==}
+    dev: false
 
   /ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
