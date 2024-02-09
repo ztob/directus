@@ -1,3 +1,4 @@
+import { InvalidPayloadError, ServiceUnavailableError } from '@directus/errors';
 import { handlePressure } from '@directus/pressure';
 import cookieParser from 'cookie-parser';
 import type { Request, RequestHandler, Response } from 'express';
@@ -21,6 +22,7 @@ import flowsRouter from './controllers/flows.js';
 import foldersRouter from './controllers/folders.js';
 import graphqlRouter from './controllers/graphql.js';
 import itemsRouter from './controllers/items.js';
+import keyvalueRouter from './controllers/keyvalue.js';
 import notFoundHandler from './controllers/not-found.js';
 import notificationsRouter from './controllers/notifications.js';
 import operationsRouter from './controllers/operations.js';
@@ -39,7 +41,6 @@ import usersRouter from './controllers/users.js';
 import utilsRouter from './controllers/utils.js';
 import versionsRouter from './controllers/versions.js';
 import webhooksRouter from './controllers/webhooks.js';
-import keyvalueRouter from './controllers/keyvalue.js';
 import {
 	isInstalled,
 	validateDatabaseConnection,
@@ -48,7 +49,6 @@ import {
 } from './database/index.js';
 import emitter from './emitter.js';
 import env from './env.js';
-import { InvalidPayloadError, ServiceUnavailableError } from '@directus/errors';
 import { getExtensionManager } from './extensions/index.js';
 import { getFlowManager } from './flows.js';
 import logger, { expressLogger } from './logger.js';
@@ -127,7 +127,7 @@ export default async function createApp(): Promise<express.Application> {
 				maxMemoryHeapUsed: env['PRESSURE_LIMITER_MAX_MEMORY_HEAP_USED'],
 				error: new ServiceUnavailableError({ service: 'api', reason: 'Under pressure' }),
 				retryAfter: env['PRESSURE_LIMITER_RETRY_AFTER'],
-			}),
+			})
 		);
 	}
 
@@ -141,7 +141,7 @@ export default async function createApp(): Promise<express.Application> {
 						scriptSrc: ["'self'", "'unsafe-eval'"],
 
 						// grafana
-						defaultSrc: ['*.crawless.com'],
+						defaultSrc: env['CONTENT_SECURITY_POLICY_DIRECTIVES_defaultSrc_disable'] ? undefined : ['*.crawless.com'],
 
 						// Even though this is recommended to have enabled, it breaks most local
 						// installations. Making this opt-in rather than opt-out is a little more
@@ -156,9 +156,9 @@ export default async function createApp(): Promise<express.Application> {
 						connectSrc: ["'self'", 'https://*'],
 					},
 				},
-				getConfigFromEnv('CONTENT_SECURITY_POLICY_'),
-			),
-		),
+				getConfigFromEnv('CONTENT_SECURITY_POLICY_')
+			)
+		)
 	);
 
 	if (env['HSTS_ENABLED']) {
