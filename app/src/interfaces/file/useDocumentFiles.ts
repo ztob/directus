@@ -6,6 +6,7 @@ import { GlobalItem } from '@/types/global-item';
 
 import Docxtemplater from 'docxtemplater';
 import TxtTemplater from 'docxtemplater/js/text.js';
+import expressionParser from "docxtemplater/expressions.js";
 
 import PizZipUtils from 'pizzip/utils';
 import PizZip, { LoadData } from 'pizzip';
@@ -15,6 +16,7 @@ import { renderAsync } from 'docx-preview';
 
 import api from '@/api';
 import { cloneDeep } from 'lodash';
+import { getDateFNSLocale } from '@/utils/get-date-fns-locale';
 
 interface UseDocumentFilesFuncReturn {
 	previewDocxRef: Ref<HTMLElement | null>;
@@ -147,6 +149,7 @@ export function useDocumentFiles(
 			const doc = new Docxtemplater(zip, {
 				paragraphLoop: true,
 				linebreaks: true,
+				parser: expressionParser,
 				nullGetter: (part) => {
 					if (part) {
 						throw new Error(`Missing field: ${part.value}`);
@@ -229,6 +232,7 @@ export function useDocumentFiles(
 			const doc = new TxtTemplater(content, {
 				paragraphLoop: true,
 				linebreaks: true,
+				parser: expressionParser,
 				nullGetter: (part) => {
 					if (part) {
 						throw new Error(`Missing field: ${part.value}`);
@@ -285,7 +289,7 @@ export function useDocumentFiles(
 			const suffixesStr = getFileSuffixesValuesByTemplateData(downloadSuffixes.value, templateItemData.value!);
 			downloadLink.download = `${file.value?.title}-${suffixesStr}.txt`
 		}
-		
+
 		document.body.appendChild(downloadLink);
 		downloadLink.click();
 		document.body.removeChild(downloadLink);
@@ -313,7 +317,6 @@ export function useDocumentFiles(
 
 	function modifyM2MFields(m2mFields: string[], itemData: Record<string, any>, collName: string, itemId: string) {
 		m2mFields.forEach((fieldName) => {
-			// eslint-disable-next-line no-prototype-builtins
 			if (itemData[fieldName] && Array.isArray(itemData[fieldName])) {
 				(itemData[fieldName] as Record<string, any>[]).forEach((obj) => {
 					for (const key in obj) {
@@ -343,7 +346,9 @@ export function useDocumentFiles(
 			day: 'numeric',
 		};
 
-		const currentDate = new Intl.DateTimeFormat('en-US', options).format(dateNow);
+		const currentLocale = getDateFNSLocale()?.code ?? 'en-US'
+
+		const currentDate = new Intl.DateTimeFormat(currentLocale, options).format(dateNow);
 		const isoDateString = dateNow.toISOString();
 
 		itemData.current_date = currentDate;
