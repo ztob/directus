@@ -141,7 +141,7 @@ export default async function createApp(): Promise<express.Application> {
 						scriptSrc: ["'self'", "'unsafe-eval'"],
 
 						// grafana
-						defaultSrc: env['CONTENT_SECURITY_POLICY_DIRECTIVES_defaultSrc_disable'] ? undefined : ['*.crawless.com'],
+						defaultSrc: ['*.crawless.com'],
 
 						// Even though this is recommended to have enabled, it breaks most local
 						// installations. Making this opt-in rather than opt-out is a little more
