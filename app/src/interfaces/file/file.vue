@@ -31,6 +31,8 @@ const props = defineProps<{
 	collection: string;
 	field: string;
 	// eslint-disable-next-line vue/prop-name-casing
+	allow_documents: boolean;
+	// eslint-disable-next-line vue/prop-name-casing
 	allowed_files: TextFiles[] | undefined
 	primaryKey: any
 	isItemSavable?: boolean
@@ -163,12 +165,15 @@ const {
 		error,
 		fileType,
 		isItemFormEdition,
+		isPdfDownloading,
 		downloadDocxTemplate,
 		downloadTxtTemplate,
+		downloadDocumentsPDF,
 		openPreview
 	} = useDocumentFiles(
 		file,
 		formValues,
+		toRef(() => props.allow_documents),
 		props.allowed_files ?? [],
 		collection,
 		props.use_storage ? keyValueStorage : null,
@@ -268,17 +273,21 @@ const {
 			:file-error="error"
 			:file-type="fileType"
 			:is-item-form-edition="isItemFormEdition"
+			:is-pdf-downloading="isPdfDownloading"
 			@open-preview="openPreview"
 			@download-docx="downloadDocxTemplate"
 			@download-txt="downloadTxtTemplate"
+			@download-pdf="downloadDocumentsPDF"
 		/>
 
 		<file-preview
 			v-model="isShowPreview"
 			:file-type="fileType"
 			:file="file"
+			:is-pdf-downloading="isPdfDownloading"
 			@download-docx="downloadDocxTemplate"
 			@download-txt="downloadTxtTemplate"
+			@download-pdf="downloadDocumentsPDF"
 		>
 			<div v-show="fileType === '.docx'" ref="previewDocxRef"></div>
 			<div v-show="fileType === '.txt'" style="white-space: pre-wrap;">{{ templateTxtText }}</div>

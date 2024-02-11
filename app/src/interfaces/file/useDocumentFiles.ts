@@ -6,13 +6,14 @@ import { GlobalItem } from '@/types/global-item';
 
 import Docxtemplater from 'docxtemplater';
 import TxtTemplater from 'docxtemplater/js/text.js';
-import expressionParser from "docxtemplater/expressions.js";
+import expressionParser from 'docxtemplater/expressions.js';
 
 import PizZipUtils from 'pizzip/utils';
 import PizZip, { LoadData } from 'pizzip';
 
 import { saveAs } from 'file-saver';
 import { renderAsync } from 'docx-preview';
+import html2pdf from 'html2pdf.js';
 
 import api from '@/api';
 import { cloneDeep } from 'lodash';
@@ -26,14 +27,17 @@ interface UseDocumentFilesFuncReturn {
 	error: Ref<string | null>;
 	fileType: Ref<FileType>;
 	isItemFormEdition: ComputedRef<boolean>;
+	isPdfDownloading: Ref<boolean>;
 	downloadDocxTemplate: () => void;
 	downloadTxtTemplate: () => void;
+	downloadDocumentsPDF: () => Promise<void>;
 	openPreview: () => void;
 }
 
 export function useDocumentFiles(
 	file: Ref<Record<string, any> | null>,
 	formValues: Ref<Record<string, any>> | undefined,
+	isDocumentsUploadAllowed: Readonly<Ref<boolean>>,
 	allowedFiles: TextFiles[],
 	collectionName: Ref<string>,
 	keyValueStorage: Ref<GlobalItem[]> | null,
@@ -53,6 +57,7 @@ export function useDocumentFiles(
 
 	const isShowPreview = ref(false);
 	const loadingFileStatus = ref<LoadingFileStatus>('');
+	const isPdfDownloading = ref(false);
 	const error = ref<string | null>(null);
 	const fileType = ref<FileType>(null);
 
@@ -67,6 +72,7 @@ export function useDocumentFiles(
 			fileType.value = null;
 
 			if (!file.value) return;
+			if (!isDocumentsUploadAllowed.value) return;
 
 			loadingFileStatus.value = '';
 			error.value = null;
@@ -128,8 +134,10 @@ export function useDocumentFiles(
 		error,
 		fileType,
 		isItemFormEdition,
+		isPdfDownloading,
 		downloadDocxTemplate,
 		downloadTxtTemplate,
+		downloadDocumentsPDF,
 		openPreview,
 	};
 
@@ -283,11 +291,11 @@ export function useDocumentFiles(
 		const downloadLink = document.createElement('a');
 		downloadLink.href = URL.createObjectURL(templateTxtBlob.value as Blob);
 
-		if(!downloadSuffixes.value) {
+		if (!downloadSuffixes.value) {
 			downloadLink.download = `${file.value?.title} Result.txt`;
 		} else {
 			const suffixesStr = getFileSuffixesValuesByTemplateData(downloadSuffixes.value, templateItemData.value!);
-			downloadLink.download = `${file.value?.title}-${suffixesStr}.txt`
+			downloadLink.download = `${file.value?.title}-${suffixesStr}.txt`;
 		}
 
 		document.body.appendChild(downloadLink);
@@ -295,6 +303,40 @@ export function useDocumentFiles(
 		document.body.removeChild(downloadLink);
 	}
 	// --------------
+
+	async function downloadDocumentsPDF() {
+		const opts = {
+			filename: `${file.value?.title} Result.pdf`,
+			image: { type: 'jpeg', quality: 0.99 },
+			html2canvas: { scale: 2 },
+			jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+		};
+
+		const div = document.createElement('div');
+
+		try {
+			isPdfDownloading.value = true
+
+			if(fileType.value === '.docx') {
+				await renderAsync(templateDocxBlob.value, div);
+			} else if(fileType.value === '.txt') {
+				div.innerHTML = templateTxtText.value as string
+				div.style.whiteSpace = 'pre-wrap';
+				div.style.color = 'black';
+			}
+
+			if (downloadSuffixes.value) {
+				const suffixesStr = getFileSuffixesValuesByTemplateData(downloadSuffixes.value, templateItemData.value!);
+				opts.filename = `${file.value?.title}-${suffixesStr}.pdf`;
+			}
+
+			await html2pdf().set(opts).from(div).save();
+		} catch (err: any) {
+			generateFileError(err);
+		} finally {
+			isPdfDownloading.value = false
+		}
+	}
 
 	function openPreview() {
 		isShowPreview.value = true;
@@ -346,7 +388,7 @@ export function useDocumentFiles(
 			day: 'numeric',
 		};
 
-		const currentLocale = getDateFNSLocale()?.code ?? 'en-US'
+		const currentLocale = getDateFNSLocale()?.code ?? 'en-US';
 
 		const currentDate = new Intl.DateTimeFormat(currentLocale, options).format(dateNow);
 		const isoDateString = dateNow.toISOString();
@@ -358,11 +400,13 @@ export function useDocumentFiles(
 	function getFileSuffixesValuesByTemplateData(suffixesStr: string, itemData: Record<string, any>) {
 		const suffixesArr = suffixesStr.replace(/({|})/g, ' ').trim().split(' ').filter(Boolean);
 
-		return suffixesArr.map((suffix) => {
-			const keys = suffix.split('.');
-			const value = keys.reduce((acc, key) => acc?.[key], itemData);
-			return value !== undefined && value !== null && typeof value !== 'object' ? value : 'undefined';
-		}).join('-');
+		return suffixesArr
+			.map((suffix) => {
+				const keys = suffix.split('.');
+				const value = keys.reduce((acc, key) => acc?.[key], itemData);
+				return value !== undefined && value !== null && typeof value !== 'object' ? value : 'undefined';
+			})
+			.join('-');
 	}
 
 	function generateFileError(err: string) {
