@@ -160,6 +160,7 @@
 		"angular-expressions": "1.2.1",
 		"docx-preview": "0.3.0",
 		"docxtemplater": "3.43.1",
+		"html2pdf.js": "0.10.1",
 		"pizzip": "3.1.4"
 	}
 }

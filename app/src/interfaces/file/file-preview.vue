@@ -6,9 +6,10 @@ defineProps<{
 	modelValue: boolean
 	fileType: FileType
 	file: Record<string, any> | null
+	isPdfDownloading: boolean;
 }>();
 
-defineEmits(['update:model-value', 'download-docx', 'download-txt']);
+defineEmits(['update:model-value', 'download-docx', 'download-txt', 'download-pdf']);
 
 const { t } = useI18n();
 </script>
@@ -21,10 +22,20 @@ const { t } = useI18n();
 			<v-card-text>
 				<slot/>
 			</v-card-text>
-			<v-card-actions>
-				<v-button @click="fileType === '.docx' ? $emit('download-docx') : $emit('download-txt')">
-				{{ t('download') }}
-			</v-button>
+			<v-card-actions class="file-preview_bts">
+				<v-button
+				v-tooltip.top="t('Download As .pdf')"
+				:loading="isPdfDownloading"
+				@click="$emit('download-pdf')">
+				{{ t('Download .pdf') }}
+				</v-button>
+
+				<v-button
+					v-tooltip.top="t(`Download As ${fileType}`)"
+					@click="fileType === '.docx' ? $emit('download-docx') : $emit('download-txt')">
+					{{ t(`Download ${fileType}`) }}
+				</v-button>
+
 				<v-button secondary @click="$emit('update:model-value', false)">{{ t('Exit') }}</v-button>
 			</v-card-actions>
 		</div>
