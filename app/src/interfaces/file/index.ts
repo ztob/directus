@@ -12,7 +12,10 @@ export default defineInterface({
 	localTypes: ['file'],
 	group: 'relational',
 	relational: true,
-	options: ({ collection }) => {
+	// @ts-ignore
+	options: (options) => {
+
+		const isAllowDocumentsUpload = options.field.meta?.options?.allow_documents ?? false
 
 		return [
 			{
@@ -26,6 +29,18 @@ export default defineInterface({
 				},
 			},
 			{
+				field: 'allow_documents',
+				name: 'Allow Template',
+				meta: {
+					interface: 'boolean',
+					width: 'full',
+				},
+				schema: {
+					default_value: false,
+				},
+			},
+			...(isAllowDocumentsUpload ?
+			[{
 				field: 'allowed_files',
 				name: 'Allowed Files',
 				meta: {
@@ -63,14 +78,16 @@ export default defineInterface({
 				meta: {
 					interface: 'system-display-template',
 					options: {
-						collectionName: collection,
+						collectionName: options.collection,
 						// add additional custom boolean to be able to add to the treeList options
 						// another option: current_date for the File Component
 						isFileInterface: true
 					},
 					width: 'full',
 				},
-			},
+			}]
+			:
+			[])
 		]
 	},
 	recommendedDisplays: ['file'],
