@@ -309,6 +309,7 @@ function startExport() {
 function exportDataLocal() {
 	const endpoint = getEndpoint(collection.value);
 
+
 	// Usually getEndpoint contains leading slash, but here we need to remove it
 	const url = getPublicURL() + endpoint.substring(1);
 

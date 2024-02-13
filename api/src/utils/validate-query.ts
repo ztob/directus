@@ -22,6 +22,7 @@ const querySchema = Joi.object({
 	export: Joi.string().valid('csv', 'json', 'xml', 'yaml'),
 	version: Joi.string(),
 	use_display_values: Joi.boolean(),
+	is_items_read_file_interface: Joi.boolean(),
 	aggregate: Joi.object(),
 	deep: Joi.object(),
 	alias: Joi.object(),

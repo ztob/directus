@@ -188,6 +188,9 @@ export function useDocumentFiles(
 			// add current_date and current_datetime to the data template
 			addDateTimesToTemplate(itemData);
 
+			// inject fields with displays as [`${fielName}_display`] = displayValue to the data template
+			await injectFieldsWithDisplaysToTemplate(collName, itemId, itemData);
+
 			doc.render(itemData);
 
 			const fileBlob = doc.getZip().generate({
@@ -270,6 +273,9 @@ export function useDocumentFiles(
 
 			// add current_date and current_datetime to the data template
 			addDateTimesToTemplate(itemData);
+
+			// inject fields with displays as [`${fielName}_display`] = displayValue to the data template
+			await injectFieldsWithDisplaysToTemplate(collName, itemId, itemData);
 
 			const result = doc.render(itemData);
 
@@ -407,6 +413,35 @@ export function useDocumentFiles(
 				return value !== undefined && value !== null && typeof value !== 'object' ? value : 'undefined';
 			})
 			.join('-');
+	}
+
+	async function injectFieldsWithDisplaysToTemplate(collName: string, itemId: string, itemData: Record<string, any>) {
+		const collFields = fieldsStore.getFieldsForCollection(collName);
+		const filedsWithDisplays = collFields.filter((f) => f.meta?.display).map((f) => f.field);
+
+		// fetch for fields that have displays and get their displays values
+		try {
+			const resp = await api.get(`/items/${collName}/${itemId}`, {
+				params: {
+					fields: filedsWithDisplays,
+					use_display_values: true,
+					is_items_read_file_interface: true,
+				},
+			});
+
+			const itemFieldsDisplays = resp.data.data;
+
+			const displaysKeys = Object.keys(itemFieldsDisplays);
+
+			if (displaysKeys.length) {
+				// inject the displays into itemData rendering template
+				displaysKeys.forEach((key) => {
+					itemData[`${key}_display`] = itemFieldsDisplays[key];
+				});
+			}
+		} catch (err: any) {
+			generateFileError(err);
+		}
 	}
 
 	function generateFileError(err: string) {
