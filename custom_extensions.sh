@@ -38,6 +38,7 @@ if [ -z "$DEVICES_EXTENSION" ]; then
 	skip_migrations="add-devices ${skip_migrations}"
 fi
 
+<<<<<<< Updated upstream
 # Skip loading collection-builder extensions if not set
 if [ -z "$COLLECTION_BUILDER_EXTENSION" ]; then
 	skip_extensions="collection-builder ${skip_extensions}"
@@ -46,6 +47,13 @@ fi
 
 echo $skip_migrations
 
+=======
+# Skip loading workflow extensions if not set
+if [ -z "$WORKFLOW_EXTENSION" ]; then
+	skip_extensions="run-task ${skip_extensions}"
+fi
+
+>>>>>>> Stashed changes
 tree
 
 for folder in *
