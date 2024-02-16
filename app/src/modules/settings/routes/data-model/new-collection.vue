@@ -12,7 +12,25 @@ import { reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-const defaultSystemFields = {
+interface SystemField {
+  enabled: boolean;
+  inputDisabled: boolean;
+  name: string;
+  label: string;
+  icon: string;
+}
+
+interface DefaultSystemFields {
+	status: SystemField;
+	sort: SystemField;
+	dateCreated: SystemField;
+	userCreated: SystemField;
+	dateUpdated: SystemField;
+	userUpdated: SystemField;
+	uniqueId: SystemField;
+}
+
+const defaultSystemFields: DefaultSystemFields = {
 	status: {
 		enabled: false,
 		inputDisabled: false,
@@ -87,7 +105,7 @@ const archiveField = ref<string>();
 const archiveValue = ref<string>();
 const unarchiveValue = ref<string>();
 
-const systemFields = reactive(cloneDeep(defaultSystemFields));
+const systemFields = reactive<DefaultSystemFields>(cloneDeep(defaultSystemFields));
 
 const saving = ref(false);
 
@@ -388,6 +406,20 @@ function getSystemRelations() {
 
 	return relations;
 }
+
+// logic for checking all system fields to true except the 'uniqueId' field
+function checkAllSystemFields() {
+	const fieldException = 'uniqueId'
+
+	for(const fieldName of Object.keys(systemFields)) {
+		// @ts-ignore
+		const fieldData: SystemField = systemFields[fieldName];
+
+		if(fieldData && fieldName !== fieldException) {
+			fieldData.enabled = true
+		}
+	}
+}
 </script>
 
 <template>
@@ -505,6 +537,17 @@ function getSystemRelations() {
 			>
 				<v-icon name="arrow_forward" />
 			</v-button>
+
+			<v-button
+				v-if="currentTab[0] === 'optional_system_fields'"
+				v-tooltip.bottom="'Check All Fields'"
+				icon
+				rounded
+				@click="checkAllSystemFields"
+			>
+				<v-icon name="select_check_box" />
+			</v-button>
+
 			<v-button
 				v-if="currentTab[0] === 'optional_system_fields'"
 				v-tooltip.bottom="t('finish_setup')"
