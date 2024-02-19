@@ -22,6 +22,7 @@ ls -la ./directus-custom-extensions-release
 
 \cp -r ./directus-custom-extensions-release/hooks/marketplace-filters ${DIRECTUS_HOOKS}
 \cp -r ./directus-custom-extensions-release/hooks/workflows-defaults ${DIRECTUS_HOOKS}
+\cp -r ./directus-custom-extensions-release/hooks/user-fields-permissions ${DIRECTUS_HOOKS}
 \cp -r ./directus-custom-extensions-release/interfaces/filter-ext ${DIRECTUS_INTERFACES}
 
 \cp -r ./directus-custom-extensions-release/endpoints/extended-api ${DIRECTUS_ENDPOINTS}
