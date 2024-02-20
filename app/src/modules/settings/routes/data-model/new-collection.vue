@@ -8,7 +8,7 @@ import { notify } from '@/utils/notify';
 import { unexpectedError } from '@/utils/unexpected-error';
 import { DeepPartial, Field, Relation } from '@directus/types';
 import { cloneDeep } from 'lodash';
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -407,17 +407,21 @@ function getSystemRelations() {
 	return relations;
 }
 
-// logic for checking all system fields to true except the 'uniqueId' field
-function checkAllSystemFields() {
-	const fieldException = 'uniqueId'
+// logic for (un)checking all system fields except the 'uniqueId' field
+const fieldException = 'uniqueId'
+const systemFieldsNames = Object.keys(systemFields).filter(fieldName => fieldName !== fieldException)
 
-	for(const fieldName of Object.keys(systemFields)) {
+const isAllFieldsChecked = computed(() => {
+	// @ts-ignore
+	return systemFieldsNames.every(fieldName => (systemFields[fieldName] as SystemField).enabled === true)
+})
+
+function checkUncheckSystemFields() {
+	const toggleVal = !isAllFieldsChecked.value;
+
+	for(const fieldName of systemFieldsNames) {
 		// @ts-ignore
-		const fieldData: SystemField = systemFields[fieldName];
-
-		if(fieldData && fieldName !== fieldException) {
-			fieldData.enabled = true
-		}
+		(systemFields[fieldName] as SystemField).enabled = toggleVal
 	}
 }
 </script>
@@ -540,12 +544,12 @@ function checkAllSystemFields() {
 
 			<v-button
 				v-if="currentTab[0] === 'optional_system_fields'"
-				v-tooltip.bottom="'Check All Fields'"
+				v-tooltip.bottom="`${isAllFieldsChecked ? 'Unc' : 'C'}heck All Fields`"
 				icon
 				rounded
-				@click="checkAllSystemFields"
+				@click="checkUncheckSystemFields"
 			>
-				<v-icon name="select_check_box" />
+				<v-icon :name="`${isAllFieldsChecked ? 'check_box_outline_blank' : 'select_check_box'}`" />
 			</v-button>
 
 			<v-button
