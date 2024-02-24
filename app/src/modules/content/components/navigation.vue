@@ -17,7 +17,22 @@ const { t } = useI18n();
 const { currentCollection } = toRefs(props);
 const { activeGroups, showHidden } = useNavigation(currentCollection);
 
-const search = ref('');
+const fakeSearch = ref('')
+
+// in order to persist the search value for navigation we use local storage to keep the value there +
+// we have fakeSearch ti make the computed trigger when there are changes in the search(local storage)
+const search = computed({
+	get() {
+		fakeSearch.value
+		return localStorage.getItem('coll_item_nav_search') || '';
+	},
+	set(val) {
+		const newSearch = val || ''
+		localStorage.setItem('coll_item_nav_search', newSearch);
+		fakeSearch.value = newSearch
+	}
+});
+
 
 const collectionsStore = useCollectionsStore();
 
