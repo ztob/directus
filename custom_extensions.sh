@@ -47,7 +47,7 @@ fi
 # Skip loading activity-count extensions if not set
 if [ -z "$ACTIVITY_COUNT_EXTENSION" ]; then
 	skip_extensions="activity-count ${skip_extensions}"
-	skip_migrations="activity-count-collection ${skip_migrations}"
+	skip_migrations="add-directus-activity-count-collection ${skip_migrations}"
 fi
 
 # Skip loading workflow extensions if not set
