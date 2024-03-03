@@ -47,7 +47,7 @@ fi
 # Skip loading activity-count extensions if not set
 if [ -z "$ACTIVITY_COUNT_EXTENSION" ]; then
 	skip_extensions="activity-count ${skip_extensions}"
-	skip_migrations="activity-count-collection ${skip_migrations}"
+	skip_migrations="add-directus-activity-count-collection ${skip_migrations}"
 fi
 
 # Skip loading workflow extensions if not set
@@ -130,16 +130,29 @@ if [ ! -d "migrations" ]; then
     exit 0
 fi
 cd migrations
-for migration in *
+for migration in *.js
 do
-    # Skip migrations
-    migration_name=$(basename "$migration" .js | cut -c 16-)
+    # Extract the portion between the first dash (-) and the .js extension
+    migration_name=$(echo "$migration" | sed -e 's/^[^-]*-\(.*\)\.js/\1/')
+
     if echo "$skip_migrations" | grep -qw "$migration_name"; then
-    	  echo "Skip migration ${migration}"
+        echo "Skip migration ${migration}"
         continue
     fi
     echo "Adding migration ${migration}"
-    cp ${migration} ${DIRECTUS_EXTENSIONS}/migrations/
+    cp "${migration}" "${DIRECTUS_EXTENSIONS}/migrations/"
 done
+
+# for migration in *
+# do
+#     # Skip migrations
+#     migration_name=$(basename "$migration" .js | cut -c 16-)
+#     if echo "$skip_migrations" | grep -qw "$migration_name"; then
+#     	  echo "Skip migration ${migration}"
+#         continue
+#     fi
+#     echo "Adding migration ${migration}"
+#     cp ${migration} ${DIRECTUS_EXTENSIONS}/migrations/
+# done
 
 cd ..
