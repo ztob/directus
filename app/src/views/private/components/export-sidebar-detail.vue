@@ -60,6 +60,7 @@ const exportSettings = reactive({
 	fields: props.layoutQuery?.fields ?? fields.value?.map((field) => field.field),
 	sort: `${primaryKeyField.value?.field ?? ''}`,
 	use_display_values: false,
+	items_count_suffix: false
 });
 
 watch(
@@ -104,8 +105,8 @@ const format = ref('csv');
 const location = ref('download');
 const folder = ref<string | null>(null);
 
-const prefix = ref('');
-const suffix = ref('');
+const prefix = ref<string | null>('');
+const suffix = ref<string | null>('');
 
 const lockedToFiles = ref<{ previousLocation: string } | null>(null);
 
@@ -113,17 +114,17 @@ const itemCountTotal = ref<number>();
 const itemCount = ref<number>();
 const itemCountLoading = ref(false);
 
-const getItemCount = async () => {
+const getItemCount = async (): Promise<number> => {
 	itemCountLoading.value = true;
 
 	try {
 		const aggregate = primaryKeyField.value?.field
 			? {
-					countDistinct: [primaryKeyField.value.field],
-			  }
+				countDistinct: [primaryKeyField.value.field],
+			}
 			: {
-					count: ['*'],
-			  };
+				count: ['*'],
+			};
 
 		const response = await api.get(getEndpoint(collection.value), {
 			params: {
@@ -143,7 +144,7 @@ const getItemCount = async () => {
 		}
 
 		itemCount.value = count;
-		return count;
+		return count as number;
 	} finally {
 		itemCountLoading.value = false;
 	}
@@ -306,18 +307,23 @@ function startExport() {
 	}
 }
 
-function exportDataLocal() {
+async function exportDataLocal() {
 	const endpoint = getEndpoint(collection.value);
 
 
 	// Usually getEndpoint contains leading slash, but here we need to remove it
 	const url = getPublicURL() + endpoint.substring(1);
 
+	// show items count as suffix in the file name if items_count_suffix === true
+	const newSuffix = exportSettings.items_count_suffix
+		? await configureSuffix(suffix.value)
+		: suffix.value;
+
 	const params: Record<string, unknown> = {
 		access_token: (api.defaults.headers.common['Authorization'] as string).substring(7),
 		export: format.value,
 		prefix: prefix.value,
-		suffix: suffix.value,
+		suffix: newSuffix,
 	};
 
 	if (exportSettings.sort && exportSettings.sort !== '') params.sort = exportSettings.sort;
@@ -341,6 +347,12 @@ async function exportDataFiles() {
 	exporting.value = true;
 
 	try {
+		
+		// show items count as suffix in the file name if items_count_suffix === true
+		const newSuffix = exportSettings.items_count_suffix
+		? await configureSuffix(suffix.value)
+		: suffix.value;
+
 		await api.post(`/utils/export/${collection.value}`, {
 			query: {
 				...exportSettings,
@@ -350,7 +362,7 @@ async function exportDataFiles() {
 			file: {
 				folder: folder.value,
 				prefix: prefix.value,
-				suffix: suffix.value,
+				suffix: newSuffix,
 			},
 		});
 
@@ -366,6 +378,16 @@ async function exportDataFiles() {
 		unexpectedError(error);
 	} finally {
 		exporting.value = false;
+	}
+}
+
+async function configureSuffix(suffix: string | null) {
+	try {
+		const itemsCount = await getItemCount()
+		return (suffix ?? '').concat(`${suffix ? '-' : ''}count-${itemsCount ?? 0}`)
+	} catch (error) {
+		unexpectedError(error);
+		return ''
 	}
 }
 
@@ -396,14 +418,8 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 								</div>
 							</template>
 							<template #input>
-								<input
-									id="import-file"
-									ref="fileInput"
-									type="file"
-									accept="text/csv, application/json"
-									hidden
-									@change="onChange"
-								/>
+								<input id="import-file" ref="fileInput" type="file" accept="text/csv, application/json" hidden
+									@change="onChange" />
 								<label v-tooltip="file && file.name" for="import-file" class="import-file-label"></label>
 								<span class="import-file-text" :class="{ 'no-file': !file }">
 									{{ file ? file.name : t('import_data_input_placeholder') }}
@@ -433,32 +449,18 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 					{{ t('export_items') }}
 				</v-button>
 
-				<button
-					v-tooltip.bottom="t('presentation_text_values_cannot_be_reimported')"
-					class="download-local"
-					@click="$emit('download')"
-				>
+				<button v-tooltip.bottom="t('presentation_text_values_cannot_be_reimported')" class="download-local"
+					@click="$emit('download')">
 					{{ t('download_page_as_csv') }}
 				</button>
 			</div>
 		</div>
 
-		<v-drawer
-			v-model="exportDialogActive"
-			:title="t('export_items')"
-			icon="import_export"
-			persistent
-			@esc="exportDialogActive = false"
-			@cancel="exportDialogActive = false"
-		>
+		<v-drawer v-model="exportDialogActive" :title="t('export_items')" icon="import_export" persistent
+			@esc="exportDialogActive = false" @cancel="exportDialogActive = false">
 			<template #actions>
-				<v-button
-					v-tooltip.bottom="location === 'download' ? t('download_file') : t('start_export')"
-					rounded
-					icon
-					:loading="exporting"
-					@click="startExport"
-				>
+				<v-button v-tooltip.bottom="location === 'download' ? t('download_file') : t('start_export')" rounded icon
+					:loading="exporting" @click="startExport">
 					<v-icon :name="location === 'download' ? 'download' : 'start'" />
 				</v-button>
 			</template>
@@ -477,27 +479,24 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 
 				<div class="field half-left">
 					<p class="type-label">{{ t('format') }}</p>
-					<v-select
-						v-model="format"
-						:items="[
-							{
-								text: t('csv'),
-								value: 'csv',
-							},
-							{
-								text: t('json'),
-								value: 'json',
-							},
-							{
-								text: t('xml'),
-								value: 'xml',
-							},
-							{
-								text: t('yaml'),
-								value: 'yaml',
-							},
-						]"
-					/>
+					<v-select v-model="format" :items="[
+						{
+							text: t('csv'),
+							value: 'csv',
+						},
+						{
+							text: t('json'),
+							value: 'json',
+						},
+						{
+							text: t('xml'),
+							value: 'xml',
+						},
+						{
+							text: t('yaml'),
+							value: 'yaml',
+						},
+					]" />
 				</div>
 
 				<div class="field half-right">
@@ -507,14 +506,10 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 
 				<div class="field half-left">
 					<p class="type-label">{{ t('export_location') }}</p>
-					<v-select
-						v-model="location"
-						:disabled="lockedToFiles !== null"
-						:items="[
-							{ value: 'download', text: t('download_file') },
-							{ value: 'files', text: t('file_library') },
-						]"
-					/>
+					<v-select v-model="location" :disabled="lockedToFiles !== null" :items="[
+						{ value: 'download', text: t('download_file') },
+						{ value: 'files', text: t('file_library') },
+					]" />
 				</div>
 
 				<div class="field half-right">
@@ -570,22 +565,15 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 
 				<div class="field half-left">
 					<p class="type-label">{{ t('sort_field') }}</p>
-					<interface-system-field
-						:value="sortField"
-						:collection-name="collection"
-						allow-primary-key
-						@input="sortField = $event"
-					/>
+					<interface-system-field :value="sortField" :collection-name="collection" allow-primary-key
+						@input="sortField = $event" />
 				</div>
 				<div class="field half-right">
 					<p class="type-label">{{ t('sort_direction') }}</p>
-					<v-select
-						v-model="sortDirection"
-						:items="[
-							{ value: 'ASC', text: t('sort_asc') },
-							{ value: 'DESC', text: t('sort_desc') },
-						]"
-					/>
+					<v-select v-model="sortDirection" :items="[
+						{ value: 'ASC', text: t('sort_asc') },
+						{ value: 'DESC', text: t('sort_desc') },
+					]" />
 				</div>
 
 				<!-- Use formatted display values instead -->
@@ -594,26 +582,28 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 					<interface-boolean v-model="exportSettings.use_display_values" />
 				</div>
 
+				<!-- Add items count as suffix -->
+				<div class="field half-right">
+					<p class="type-label">Items Count</p>
+					<interface-boolean v-model="exportSettings.items_count_suffix" />
+					<span class="count_suffix_descr">
+						Show the number of items as suffix in the file name
+					</span>
+				</div>
+
 				<div class="field full">
 					<p class="type-label">{{ t('full_text_search') }}</p>
 					<v-input v-model="exportSettings.search" :placeholder="t('search')" />
 				</div>
 				<div class="field full">
 					<p class="type-label">{{ t('filter') }}</p>
-					<interface-system-filter
-						:value="exportSettings.filter"
-						:collection-name="collection"
-						@input="exportSettings.filter = $event"
-					/>
+					<interface-system-filter :value="exportSettings.filter" :collection-name="collection"
+						@input="exportSettings.filter = $event" />
 				</div>
 				<div class="field full">
 					<p class="type-label">{{ t('field', 2) }}</p>
-					<interface-system-fields
-						:value="exportSettings.fields"
-						:collection-name="collection"
-						allow-select-all
-						@input="exportSettings.fields = $event"
-					/>
+					<interface-system-fields :value="exportSettings.fields" :collection-name="collection" allow-select-all
+						@input="exportSettings.fields = $event" />
 				</div>
 			</div>
 		</v-drawer>
@@ -747,6 +737,16 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 
 	&:hover {
 		color: var(--theme--primary);
+	}
+}
+
+.count_suffix_descr {
+	max-width: 300px;
+	color: var(--theme--foreground-subdued);
+	line-height: 22px;
+
+	&:not(:last-child) {
+		margin-bottom: 24px;
 	}
 }
 </style>
