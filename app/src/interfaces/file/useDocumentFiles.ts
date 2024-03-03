@@ -313,20 +313,37 @@ export function useDocumentFiles(
 	async function downloadDocumentsPDF() {
 		const opts = {
 			filename: `${file.value?.title} Result.pdf`,
-			image: { type: 'jpeg', quality: 0.99 },
-			html2canvas: { scale: 2 },
-			jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+			image: { type: 'jpeg', quality: 1 },
+
+			// OPTION 1 (renderAsync all options switched off)
+			jsPDF: {
+				unit: 'in',
+				format: 'ledger', // good: government-letter
+				orientation: 'portrait',
+			},
+			pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+			enableLinks: true,
+			html2canvas: {
+				scale: 2,
+			},
+			// --------------------
+
+			// OPTION 2 as same as opt1 but renderAsync inWrapper: false
 		};
 
 		const div = document.createElement('div');
 
 		try {
-			isPdfDownloading.value = true
+			isPdfDownloading.value = true;
 
-			if(fileType.value === '.docx') {
-				await renderAsync(templateDocxBlob.value, div);
-			} else if(fileType.value === '.txt') {
-				div.innerHTML = templateTxtText.value as string
+			if (fileType.value === '.docx') {
+				await renderAsync(templateDocxBlob.value, div, undefined, {
+					// ignoreHeight: true,
+					// inWrapper: false,
+					// breakPages: false,
+				});
+			} else if (fileType.value === '.txt') {
+				div.innerHTML = templateTxtText.value as string;
 				div.style.whiteSpace = 'pre-wrap';
 				div.style.color = 'black';
 			}
@@ -340,7 +357,7 @@ export function useDocumentFiles(
 		} catch (err: any) {
 			generateFileError(err);
 		} finally {
-			isPdfDownloading.value = false
+			isPdfDownloading.value = false;
 		}
 	}
 
