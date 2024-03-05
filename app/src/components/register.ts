@@ -75,6 +75,8 @@ import VWorkspace from './v-workspace.vue';
 import VWorkspaceTile from './v-workspace-tile.vue';
 import VErrorBoundary from './v-error-boundary.vue';
 
+import ItemCountInfo from './v-item-count-info.vue';
+
 export function registerComponents(app: App): void {
 	app.component('VAvatar', VAvatar);
 	app.component('VBadge', VBadge);
@@ -153,4 +155,6 @@ export function registerComponents(app: App): void {
 	app.component('DrawerFiles', DrawerFiles);
 	app.component('DrawerItem', DrawerItem);
 	app.component('DrawerBatch', DrawerBatch);
+
+	app.component('ItemCountInfo', ItemCountInfo);
 }

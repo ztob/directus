@@ -71,10 +71,10 @@ onUnmounted(() => {
 
 		<div class="spacer" />
 
-		<slot name="actions:prepend" />
+		<slot name="actions:prepend"/>
 
 		<header-bar-actions :show-sidebar-toggle="showSidebarToggle" @toggle:sidebar="$emit('toggle:sidebar')">
-			<slot name="actions" />
+			<slot name="actions"/>
 		</header-bar-actions>
 
 		<slot name="actions:append" />

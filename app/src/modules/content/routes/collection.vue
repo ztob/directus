@@ -438,7 +438,7 @@ function usePermissions() {
 			</template>
 
 			<template #actions:prepend>
-				<component :is="`layout-actions-${layout || 'tabular'}`" v-bind="layoutState" />
+				<component :is="`layout-actions-${layout || 'tabular'}`" v-bind="layoutState"/>
 			</template>
 
 			<template #actions>
