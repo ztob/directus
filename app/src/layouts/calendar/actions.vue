@@ -5,16 +5,18 @@ export default {
 </script>
 
 <script setup lang="ts">
+
 defineProps<{
 	itemCount?: number;
 	showingCount?: string;
+	// collection: string;
 }>();
 </script>
 
 <template>
 	<transition name="fade">
 		<span v-if="itemCount" class="item-count">
-			{{ showingCount }}
+			<item-count-info :showing-count="showingCount" :item-count="itemCount"/>
 		</span>
 	</transition>
 </template>

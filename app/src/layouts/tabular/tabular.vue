@@ -477,7 +477,6 @@ function onAddBookmarks(...bookmarkData: Record<string, any>[]) {
 						</v-list-item-content>
 					</v-list-item>
 
-					<!-- Custom actions -->
 					<v-divider />
 
 					<v-list-item clickable @click="copyValues(header.value)">
