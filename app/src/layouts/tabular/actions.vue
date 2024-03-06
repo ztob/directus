@@ -16,9 +16,9 @@ export default defineComponent({
 
 <template>
 	<transition name="fade">
-		<span v-if="itemCount" class="item-count">
-			<item-count-info :showing-count="showingCount" :item-count="itemCount" />
-		</span>
+		<div v-if="itemCount" class="item-count">
+			<v-item-count-info :showing-count="showingCount" :item-count="itemCount" />
+		</div>
 	</transition>
 </template>
 

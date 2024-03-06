@@ -423,7 +423,7 @@ const { createAllowed, updateAllowed, deleteAllowed, selectAllowed } = useRelati
 				<div class="spacer" />
 
 				<div v-if="totalItemCount" class="item-count">
-					<item-count-info :showing-count="showingCount" :item-count="totalItemCount" />
+					<v-item-count-info :showing-count="showingCount" :item-count="totalItemCount" />
 				</div>
 
 				<div v-if="enableSearchFilter && (totalItemCount > 10 || search || searchFilter)" class="search">
