@@ -38,11 +38,13 @@ const props = withDefaults(
 		splitViewMinWidth?: number;
 		sidebarShadow?: boolean;
 		is_prevent_main_content_scroll?: boolean;
+		hideAllNavigation?: boolean;
 	}>(),
 	{
 		headerShadow: true,
 		splitViewMinWidth: 0,
-	},
+		hideAllNavigation: false,
+	}
 );
 
 const emit = defineEmits(['update:splitView']);
@@ -266,6 +268,7 @@ function getWidth(input: unknown, fallback: number): number {
 
 	<div v-else class="private-view" :class="{ appearance, 'full-screen': fullScreen, splitView }">
 		<aside
+			v-if="!hideAllNavigation"
 			id="navigation"
 			role="navigation"
 			aria-label="Module Navigation"
