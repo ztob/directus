@@ -347,7 +347,7 @@ async function exportDataFiles() {
 	exporting.value = true;
 
 	try {
-		
+
 		// show items count as suffix in the file name if items_count_suffix === true
 		const newSuffix = exportSettings.items_count_suffix
 		? await configureSuffix(suffix.value)
@@ -501,7 +501,14 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 
 				<div class="field half-right">
 					<p class="type-label">{{ t('limit') }}</p>
-					<v-input v-model="exportSettings.limit" type="number" :min="-1" :step="1" :placeholder="t('unlimited')" />
+					<v-input v-model="exportSettings.limit" type="number" :min="-1" :step="1" :placeholder="t('unlimited')">
+						<template v-if="exportSettings.limit !== null && exportSettings.limit !== undefined" #append>
+							<v-icon
+								clickable
+								name="close"
+								@click.stop="exportSettings.limit = null" />
+						</template>
+					</v-input>
 				</div>
 
 				<div class="field half-left">
@@ -530,20 +537,20 @@ const createAllowed = computed<boolean>(() => hasPermission(collection.value, 'c
 
 						<p v-else-if="itemCountTotal && exportCount >= itemCountTotal">
 							{{
-								t('exporting_all_items_in_collection', {
-									total: itemCountTotal ? n(itemCountTotal) : '??',
-									collection: collectionInfo?.name,
-								})
+							t('exporting_all_items_in_collection', {
+							total: itemCountTotal ? n(itemCountTotal) : '??',
+							collection: collectionInfo?.name,
+							})
 							}}
 						</p>
 
 						<p v-else-if="itemCountTotal && exportCount < itemCountTotal">
 							{{
-								t('exporting_limited_items_in_collection', {
-									count: n(exportCount),
-									total: itemCountTotal ? n(itemCountTotal) : '??',
-									collection: collectionInfo?.name,
-								})
+							t('exporting_limited_items_in_collection', {
+							count: n(exportCount),
+							total: itemCountTotal ? n(itemCountTotal) : '??',
+							collection: collectionInfo?.name,
+							})
 							}}
 						</p>
 
