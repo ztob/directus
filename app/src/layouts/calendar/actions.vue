@@ -5,6 +5,7 @@ export default {
 </script>
 
 <script setup lang="ts">
+import VItemCountInfo from '@/components/v-item-count-info.vue'
 
 defineProps<{
 	itemCount?: number;

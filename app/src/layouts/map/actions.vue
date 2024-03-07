@@ -8,6 +8,7 @@ defineProps<{
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import VItemCountInfo from '@/components/v-item-count-info.vue'
 
 export default defineComponent({
 	inheritAttrs: false,
