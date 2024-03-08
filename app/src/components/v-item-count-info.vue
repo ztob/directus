@@ -18,42 +18,34 @@ const { showingCount, itemCount } = toRefs(props)
 
 const { copyToClipboard } = useClipboard();
 
-const itemCountComponent = computed(() => {
-	return {
-		template: generateItemCountTemplate(),
-		data: () => ({ totalItemsCount: itemCount.value }),
-		methods: { copyToClipboard },
-	};
-})
+const itemCountLastInd = computed(() =>
+	showingCount.value?.lastIndexOf(String(itemCount.value)) ?? -1
+)
 
-function generateItemCountTemplate() {
-	// just for any case make sure to always replace the last number thats compatible with itemCount.value
-	const itemCountLastInd = showingCount.value?.lastIndexOf(String(itemCount.value)) ?? -1
-	const templatePrefix = showingCount.value?.slice(0, itemCountLastInd) ?? '';
-	const templateSuffix = showingCount.value?.slice(itemCountLastInd + String(itemCount.value).length) ?? '';
+const prefix = computed(() =>
+	itemCountLastInd.value !== -1 ? showingCount.value!.slice(0, itemCountLastInd.value) : ''
+)
 
-	return showingCount.value && itemCountLastInd !== -1
-		? templatePrefix
-		+ `<span
-					class="total-count"
-					v-tooltip.bottom="'${t('Copy To Clipboard')}'"
-					@click="() => copyToClipboard(totalItemsCount)"
-				>
-					{{ totalItemsCount }}
-				</span>`
-		+ templateSuffix
-		: (showingCount.value ?? '');
-}
+const suffix = computed(() =>
+	itemCountLastInd.value !== -1 ? showingCount.value!.slice(itemCountLastInd.value + String(itemCount.value).length) : ''
+)
 </script>
 
 <template>
-	<div class="coll-items-info">
-		<component :is="itemCountComponent" />
+	<div>
+		<div v-if="!prefix && !suffix">{{ showingCount }}</div>
+		<div v-else>
+			<span>{{ prefix }}</span>
+			<span v-tooltip.bottom="t('Copy To Clipboard')" class="total-items-count" @click="copyToClipboard(itemCount)">
+				{{ itemCount }}
+			</span>
+			<span>{{ suffix }}</span>
+		</div>
 	</div>
 </template>
 
 <style lang="scss" scoped>
-.coll-items-info :deep(.total-count) {
+.total-items-count {
 	color: var(--theme--primary);
 	text-decoration: underline;
 	cursor: pointer;
