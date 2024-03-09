@@ -719,7 +719,7 @@ function onAddBookmarks(...bookmarkData: Record<string, any>[]) {
 			:primary-key="internalPrimaryKey"
 			:validation-errors="validationErrors"
 			:is-filter-loading="isFilterLoading"
-			:is-bookmarks-drpdwn-btn-disabled="hasEdits"
+			:is-item-being-edited="hasEdits"
 			is-coll-item
 			:is-item-savable="isSavable"
 			@add-filter="onAddFilter"

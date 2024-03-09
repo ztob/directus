@@ -6,6 +6,7 @@ const bookmarksFromInterfaces = [
 	{ 'select-multiple-dropdown': true, type: 'csv' },
 	{ 'select-radio': true },
 	{ 'select-multiple-checkbox-tree': true, type: 'csv' },
+	{ 'select-dropdown-m2o': true }
 ];
 
 // LOGIC FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS
