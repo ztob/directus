@@ -6,3 +6,9 @@ export type FormField = DeepPartial<Field> & {
 	hideLabel?: boolean;
 	hideLoader?: boolean;
 };
+
+export interface FieldChoice {
+	text: string;
+	value: string | number | boolean;
+	children?: FieldChoice[] | null;
+}

@@ -27,7 +27,7 @@ const props = defineProps<{
 	itemEdits: FormFieldValues | null
 }>();
 
-defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard']);
+defineEmits(['update:modelValue', 'setFieldValue', 'add-filter', 'copy-to-clipboard', 'm2o-field-value']);
 
 const { t } = useI18n();
 
@@ -92,7 +92,9 @@ function getClassForDropdown(fieldInterface: string | null | undefined, fieldWid
 						:primary-key="primaryKey" :length="field.schema && field.schema.max_length" :direction="direction"
 						:is-unused-colls-hidden="isUnusedCollsHidden" :search-collections="searchCollections"
 						:is-item-savable="isItemSavable" :item-edits="itemEdits"
-						@input="$emit('update:modelValue', $event)" @set-field-value="$emit('setFieldValue', $event)">
+						@input="$emit('update:modelValue', $event)" @set-field-value="$emit('setFieldValue', $event)"
+						@m2o-field-value="$emit('m2o-field-value', $event)"
+						>
 					</component>
 
 					<div

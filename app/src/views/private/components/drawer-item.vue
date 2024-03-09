@@ -439,6 +439,7 @@ function useActions() {
 					:fields="fields"
 					:validation-errors="!junctionField ? validationErrors : undefined"
 					is-coll-item
+					:is-item-being-edited="hasEdits"
 					:is-filter-loading="isFilterLoading"
 					@add-filter="(...args) => $emit('add-filter', ...args)"
 					@create-field-bookmarks="(...args) => $emit('create-field-bookmarks', ...args)"

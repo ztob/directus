@@ -16,8 +16,6 @@ import type { FormField as TFormField } from './types';
 import ValidationErrors from './validation-errors.vue';
 import { FormFieldValues } from '@/types/v-form';
 
-
-
 interface Props {
 	collection?: string;
 	fields?: Field[];
@@ -42,7 +40,7 @@ interface Props {
 	isFilterLoading?: string;
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
-	isBookmarksDrpdwnBtnDisabled?: boolean;
+	isItemBeingEdited?: boolean;
 	isCollItem?: boolean
 	isItemSavable?: boolean
 }
@@ -421,7 +419,7 @@ function useRawEditor() {
 					:is-filter-loading="isFilterLoading"
 					:is-unused-colls-hidden="isUnusedCollsHidden"
 					:search-collections="searchCollections"
-					:is-bookmarks-drpdwn-btn-disabled="isBookmarksDrpdwnBtnDisabled"
+					:is-item-being-edited="isItemBeingEdited"
 					:is-coll-item="isCollItem"
 					:is-item-savable="isItemSavable"
 					:item-edits="modelValue"

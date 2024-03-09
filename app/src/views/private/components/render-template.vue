@@ -5,7 +5,7 @@ import { getDefaultDisplayForType } from '@/utils/get-default-display-for-type';
 import { translate } from '@/utils/translate-literal';
 import { Field } from '@directus/types';
 import { get } from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
 	template: string;
@@ -137,6 +137,13 @@ function handleObject(fieldKey: string) {
 		field: field.field,
 	};
 }
+
+// logic for emitting the configured values of m2o fields out of which to create bookmarks
+const emit = defineEmits(['m2o-field-value']);
+
+watch(parts, () => {
+	emit('m2o-field-value', parts.value[0] ?? null)
+}, {immediate: true})
 </script>
 
 <template>
@@ -160,7 +167,7 @@ function handleObject(fieldKey: string) {
 					<span>{{ part.value }}</span>
 				</template>
 			</v-error-boundary>
-			<span v-else-if="typeof part === 'string'" :dir="direction">{{ translate(part) }}</span>
+			<span v-else-if="typeof part === 'string'" :dir="direction" @click="console.log(part)">{{ translate(part) }}</span>
 			<span v-else>{{ part }}</span>
 		</template>
 	</div>
