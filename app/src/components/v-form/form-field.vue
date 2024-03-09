@@ -10,7 +10,7 @@ import FormFieldInterface from './form-field-interface.vue';
 import FormFieldLabel from './form-field-label.vue';
 import FormFieldMenu, { type MenuOptions } from './form-field-menu.vue';
 import FormFieldRawEditor from './form-field-raw-editor.vue';
-import type { FormField } from './types';
+import type { FieldChoice, FormField } from './types';
 import CreateBookmarksDialog from './create-bookmarks-dialog.vue'
 import { isAllowedBookmarksForField } from './composables/is-allowed-bookmarks-for-field'
 import { FormFieldValues } from '@/types/v-form';
@@ -34,7 +34,7 @@ interface Props {
 	isFilterLoading?: string;
 	isUnusedCollsHidden?: boolean | null
 	searchCollections?: string | null
-	isBookmarksDrpdwnBtnDisabled?: boolean;
+	isItemBeingEdited?: boolean;
 	isCollItem?: boolean
 	isItemSavable?: boolean
 	itemEdits: FormFieldValues | null
@@ -162,10 +162,37 @@ function useComputedValues() {
 	}
 }
 
-// LOGIC FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS
-function isBookmarkCreationAllowed(fieldInterface: string | null | undefined, fieldType: Type) {
-	return isAllowedBookmarksForField(fieldInterface, fieldType)
+// logic for enable/disable bm btn
+function isCreateBookmarksDialogBtnDisabled() {
+	// for m2o fields we check whether there is modelvalue. modelvalue is enough to enable the btn
+	if(props.field.meta?.interface === 'select-dropdown-m2o') {
+		if(!props.modelValue) return true
+		return props.isItemBeingEdited
+	}
+
+	// for all other interfaces we see whether there are choices in options and whether item is being edited
+	return !Boolean(props.field.meta?.options?.choices) || Boolean(props.isItemBeingEdited)
 }
+
+// logic for configuring choices for m2o fields and other fields
+const m2oFieldValue = ref(null)
+
+const fieldBookmarkChoices = computed<FieldChoice[]>(() => {
+	const m2oFieldVal = m2oFieldValue.value ?? null
+
+	if(props.field.meta?.interface === 'select-dropdown-m2o') {
+		// configure the option for m2o field
+		return m2oFieldVal ? [
+			{
+				text: m2oFieldVal,
+				value: m2oFieldVal
+			}
+		] : []
+	}
+
+	// configure options for other fields that are not m2o
+	return props.field.meta?.options?.choices ?? []
+})
 </script>
 
 <template>
@@ -191,13 +218,15 @@ function isBookmarkCreationAllowed(fieldInterface: string | null | undefined, fi
 				:is-filter-loading="isFilterLoading" :is-unused-colls-hidden="isUnusedCollsHidden"
 				:search-collections="searchCollections" :is-item-savable="isItemSavable" :item-edits="itemEdits" @update:model-value="emitValue($event)"
 				@set-field-value="$emit('setFieldValue', $event)" @add-filter="$emit('add-filter', $event)"
-				@copy-to-clipboard="$emit('copy-to-clipboard', $event)">
+				@copy-to-clipboard="$emit('copy-to-clipboard', $event)"
+				@m2o-field-value="m2oFieldValue = $event"
+				>
 
 				<!-- DIALOG FOR CREATING BOOKMARKS FOR SELECTION COMPONENTS WHEN BROWSING COLLS ITEMS-->
 				<template #add-bookmarks>
-					<CreateBookmarksDialog v-if="isBookmarkCreationAllowed(field.meta?.interface!, field.type!) && isCollItem"
-						:is-disabled="!field.meta?.options?.choices || isBookmarksDrpdwnBtnDisabled"
-						:choices="field.meta?.options?.choices ?? []" :field-name="field.field"
+					<CreateBookmarksDialog v-if="isAllowedBookmarksForField(field.meta?.interface!, field.type!) && isCollItem"
+						:is-bookmark-btn-disabled="isCreateBookmarksDialogBtnDisabled()"
+						:choices="fieldBookmarkChoices" :field-name="field.field"
 						:field-interface="field.meta?.interface" :field-model-value="modelValue ?? null"
 						:is-allow-other="field.meta?.options?.allowOther ?? null"
 						@create-field-bookmarks="(...args) => $emit('create-field-bookmarks', ...args)" />

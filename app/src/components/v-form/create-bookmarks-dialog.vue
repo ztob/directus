@@ -1,20 +1,15 @@
 <script setup lang="ts">
-import { computed, Ref, ref, toRefs, watch } from 'vue';
+import { computed, Ref, ref, toRefs, watch, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
-
-interface Choice {
-	text: string;
-	value: string | number | boolean;
-	children?: Choice[] | null
-}
+import { FieldChoice } from './types';
 
 type FieldInterfaceType = string | null | undefined
 type FieldModelValueType = string[] | string | null
 
 interface Props {
 	fieldName: string;
-	isDisabled: boolean;
-	choices: Choice[];
+	isBookmarkBtnDisabled: boolean;
+	choices: FieldChoice[];
 	fieldInterface: FieldInterfaceType;
 	fieldModelValue: FieldModelValueType;
 	isAllowOther: boolean | null;
@@ -32,19 +27,21 @@ const dialogOpen = ref(false)
 const isShowItemsCount = ref(true)
 
 const { allChoices, checkedChoices, selectedChoicesForBookmarks } = configureDialogChoices(
-	props.choices,
+	toRef(() => props.choices),
 	props.fieldInterface,
 	fieldModelValue,
 	isAllowOther
 )
 
 function configureDialogChoices(
-	choices: Choice[],
+	choices: Ref<FieldChoice[]>,
 	fieldInterface: FieldInterfaceType,
 	fieldModelValue: Ref<FieldModelValueType>,
 	isAllowOther: Ref<boolean | null>
 ) {
-	const _choices = ref(choices)
+	const _choices = ref(choices.value)
+
+	watch(choices, () => _choices.value = choices.value)
 
 	// get all of the choices including the other custom choices
 	const allChoices = computed({
@@ -70,7 +67,7 @@ function configureDialogChoices(
 
 			return _choices.value
 
-			function removeSameChoices(choices: Choice[]) {
+			function removeSameChoices(choices: FieldChoice[]) {
 				return choices.filter((choice, index, self) => {
 					const existingChoice = self.findIndex(c => c.value === choice.value);
 					return existingChoice === index;
@@ -84,7 +81,7 @@ function configureDialogChoices(
 
 	// get the choices for select-multiple-checkbox-tree comp because it has nested children choices
 	if (fieldInterface === 'select-multiple-checkbox-tree') {
-		allChoices.value = getCheckboxTreeChoices(choices)
+		allChoices.value = getCheckboxTreeChoices(choices.value)
 	}
 
 	const _checkedChoices = ref(allChoices.value.map(choice => choice.value))
@@ -110,7 +107,7 @@ function configureDialogChoices(
 
 	return { allChoices, checkedChoices, selectedChoicesForBookmarks }
 
-	function getCheckboxTreeChoices(choices: Choice[], configuredChoices: Choice[] = []) {
+	function getCheckboxTreeChoices(choices: FieldChoice[], configuredChoices: FieldChoice[] = []) {
 		for (const choice of choices) {
 			configuredChoices.push(choice);
 
@@ -129,7 +126,7 @@ function configureDialogChoices(
 <template>
 	<v-dialog v-model="dialogOpen" @esc="dialogOpen = false">
 		<template #activator="{ on }">
-			<v-button small icon :disabled="isDisabled" @click="on">
+			<v-button small icon :disabled="isBookmarkBtnDisabled" @click="on">
 				<v-icon v-tooltip.bottom="t('create_bookmark')" name="bookmark" />
 			</v-button>
 		</template>

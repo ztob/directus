@@ -37,7 +37,7 @@ const props = withDefaults(
 	},
 );
 
-const emit = defineEmits(['input']);
+const emit = defineEmits(['input', 'm2o-field-value']);
 
 const values = inject('values', ref<Record<string, any>>({}));
 
@@ -182,6 +182,7 @@ function onSelection(selection: (number | string)[] | null) {
 						:collection="relationInfo.relatedCollection.collection"
 						:item="displayItem"
 						:template="displayTemplate"
+						@m2o-field-value="$emit('m2o-field-value', $event)"
 					/>
 				</div>
 			</template>
