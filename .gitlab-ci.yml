@@ -57,6 +57,7 @@ docker_build:
     - crawless
   only:
     - main
+    - test-time
 
 docker_build_clean:
   stage: crawless-directus
@@ -73,6 +74,7 @@ docker_build_clean:
     - crawless
   only:
     - main
+    - test-time
 
 #docker_test_build:
 #  stage: crawless-directus-tests
@@ -112,6 +114,7 @@ docker_api2_build:
     - crawless
   only:
     - main
+    - test-time
 
 docker_api2_v10_build:
   stage: crawless-directus-api2-v10
