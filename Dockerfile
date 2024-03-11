@@ -150,6 +150,8 @@ RUN mkdir -p ./snapshots
 
 RUN tree
 
+USER root
+
 CMD : \
 	&& node cli.js bootstrap \
 	&& pm2-runtime start ecosystem.config.cjs \
