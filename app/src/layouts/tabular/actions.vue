@@ -25,14 +25,14 @@ export default defineComponent({
 <style lang="scss" scoped>
 .item-count {
 	position: relative;
-	display: none;
+	// display: none;
 	margin: 0 8px;
 	color: var(--theme--foreground-subdued);
 	white-space: nowrap;
 
-	@media (min-width: 600px) {
-		display: inline;
-	}
+	// @media (min-width: 600px) {
+	// 	display: inline;
+	// }
 }
 
 .fade-enter-active,
