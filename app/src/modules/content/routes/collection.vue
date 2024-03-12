@@ -72,6 +72,7 @@ const {
 
 // // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
+
 const exportFiltersMerged = computed<Filter>(() => {
 	// Merge filters in order of specificity
 	return mergeFilters(filter.value, mergeFilters(exportFilter.value, archiveFilter.value));
@@ -534,6 +535,17 @@ function usePermissions() {
 					:disabled="createAllowed === false"
 				>
 					<v-icon name="add" />
+				</v-button>
+
+				<!-- REDIRECT TO COLLECTION SETTINGS -->
+				<v-button
+					v-if="userStore?.currentUser?.role?.admin_access === true"
+					v-tooltip.bottom="t('Go To Settings')"
+					rounded
+					icon
+					:to="`/settings/data-model/${collection}`"
+				>
+					<v-icon name="settings" />
 				</v-button>
 			</template>
 
