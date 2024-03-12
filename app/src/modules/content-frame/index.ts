@@ -4,7 +4,6 @@ import { addQueryToPath } from '@/utils/add-query-to-path';
 import { getCollectionRoute, getItemRoute, getSystemCollectionRoute } from './utils/get-route';
 import RouterPass from '@/utils/router-passthrough';
 import { Collection } from '@directus/types';
-import { defineModule } from '@directus/utils';
 import { isNil, orderBy } from 'lodash';
 import { ref } from 'vue';
 import { LocationQuery, NavigationGuard } from 'vue-router';
@@ -15,6 +14,7 @@ import NoCollections from './routes/no-collections.vue';
 import ItemNotFound from './routes/not-found.vue';
 import Preview from './routes/preview.vue';
 import { router } from '@/router';
+import { defineModule } from '@directus/extensions';
 
 const checkForSystem: NavigationGuard = (to, from) => {
 	if (!to.params?.collection) return;
@@ -56,7 +56,7 @@ const getArchiveValue = (query: LocationQuery) => {
 router.beforeEach((to, from) => {
 	if (from.path.startsWith('/content-frame')) {
 		const isTowardsContentModule = to.matched.some((route) => route.name == 'content');
-		
+
 		if (isTowardsContentModule) {
 			// Do not allow the user to navigate to the main content module
 			// Instead, keep everything from the `to` route, but change the name to `content-frame`

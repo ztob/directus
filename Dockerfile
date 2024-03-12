@@ -141,10 +141,16 @@ RUN if [[ -z "$COLAB_EXTENSION" ]] ; then echo "Colab extension disabled" ; else
 
 RUN chown -R node:node /directus
 
+RUN apk add --no-cache tree
+
 USER node
 
 RUN mkdir -p ./uploads
 RUN mkdir -p ./snapshots
+
+RUN tree
+
+USER root
 
 CMD : \
 	&& node cli.js bootstrap \

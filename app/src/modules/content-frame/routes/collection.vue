@@ -71,6 +71,7 @@ const {
 
 // // Use a custom filter for the export sidebar detail
 const exportFilter = ref(null);
+
 const exportFiltersMerged = computed<Filter>(() => {
 	// Merge filters in order of specificity
 	return mergeFilters(filter.value, mergeFilters(exportFilter.value, archiveFilter.value));
@@ -99,6 +100,7 @@ watch(
 		if (layout.value === null) {
 			layout.value = 'tabular';
 		}
+		
 		// Update the export filter
 		const presetForAllLayouts = await presetsStore.getPresetForCollection(collection.value);
 		exportFilter.value = presetForAllLayouts?.layout_options?.['_export_filter'] || null;
